@@ -22,7 +22,9 @@ function setupCapture(game) {
   window.__step = (n = 1, dt = 1000 / 30) => {
     for (let i = 0; i < n; i++) {
       window.__capTime += dt;
+      window.__stepping = true;
       game.step(window.__capTime + 1000, dt);
+      window.__stepping = false;
     }
     return window.__capTime;
   };

@@ -438,7 +438,8 @@ export default class Game extends Phaser.Scene {
   }
 
   update(time, delta) {
-    if (this.tiempo) this.updateTiempo(delta);
+    // En modo grabación el reloj solo avanza con los cuadros grabados
+    if (this.tiempo && (!window.__capture || window.__stepping)) this.updateTiempo(delta);
     if (!this.comboFrame) return;
     this.comboFrame.clear();
     if (this.combo >= 4 && !this.over) {
