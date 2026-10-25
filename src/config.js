@@ -46,5 +46,8 @@ export const BUILDINGS = [
 // Recompensa diaria (7 días); el día 7 también da un poder épico
 export const DAILY = [10, 15, 20, 25, 30, 40, 50];
 
+// Bloque dorado: a veces una pieza trae una casilla de oro; al limpiarla da ladrillos extra
+export const ORO = { chance: 0.18, ladrillos: 3, puntos: 50 };
+
 // Modo Contrarreloj: 60 s, cada línea suma tiempo; trabarse cuesta tiempo
 export const TIEMPO = { dur: 60000, porLinea: 1000, castigo: 3000, alerta: 10000 };

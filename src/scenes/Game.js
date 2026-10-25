@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
   W, H, N, CELL, BX, BY, TRAY_Y, SLOTS, TRAY_CELL, COLORS, HEX, SCORE, BRICKS,
-  COMBO_GRACE, LINES_PER_OFFER, MAX_POWERS, BUILDINGS, TIEMPO,
+  COMBO_GRACE, LINES_PER_OFFER, MAX_POWERS, BUILDINGS, TIEMPO, ORO,
 } from '../config.js';
 import { size, canPlace, anyFit, makeTray, findLines, rotate } from '../pieces.js';
 import { save, persist, isBuilt, today, ayer } from '../save.js';
@@ -96,6 +96,7 @@ export default class Game extends Phaser.Scene {
     this.fire = flame([0xff4e1f, 0xff9a2e, 0xffd84a]);
     this.rainbow = flame([0xff5a5f, 0xffa62b, 0xffd93d, 0x6bcb77, 0x4d96ff, 0x9b5de5, 0xf15bb5]);
     this.comboFrame = this.add.graphics().setDepth(4);
+    this.time.addEvent({ delay: 600, loop: true, callback: () => this.brilloOro() });
 
     this.input.on('pointermove', this.onMove, this);
     this.input.on('pointerup', this.onUp, this);
@@ -184,6 +185,7 @@ export default class Game extends Phaser.Scene {
   }
 
   blockTex(color) {
+    if (color === 'gold') return 'block_gold';
     const tema = this.tema || (this.tema = temaBloques(isBuilt('pozo')));
     if (tema === 'agua') return 'water_' + ((COLORS.indexOf(color) % 3) + 1);
     if (tema === 'muertos') return 'muertos_' + ((COLORS.indexOf(color) % 4) + 1);
@@ -209,12 +211,12 @@ export default class Game extends Phaser.Scene {
   makePiece(def, slot, animate) {
     const { rows, cols } = size(def.cells);
     const c = this.add.container(SLOTS[slot], TRAY_Y).setDepth(20);
-    def.cells.forEach(([r, cc]) => {
-      const im = this.add.image((cc - (cols - 1) / 2) * TRAY_CELL, (r - (rows - 1) / 2) * TRAY_CELL, this.blockTex(def.color));
+    def.cells.forEach(([r, cc], k) => {
+      const im = this.add.image((cc - (cols - 1) / 2) * TRAY_CELL, (r - (rows - 1) / 2) * TRAY_CELL, this.blockTex(k === def.gold ? 'gold' : def.color));
       im.setDisplaySize(TRAY_CELL, TRAY_CELL);
       c.add(im);
     });
-    const piece = { cells: def.cells, color: def.color, rows, cols, c, slot, used: false };
+    const piece = { cells: def.cells, color: def.color, gold: def.gold, rows, cols, c, slot, used: false };
     c.setInteractive(new Phaser.Geom.Rectangle(-150, -105, 300, 210), Phaser.Geom.Rectangle.Contains);
     c.on('pointerdown', (p) => this.startDrag(piece, p));
     if (animate) {
@@ -230,7 +232,47 @@ export default class Game extends Phaser.Scene {
       return;
     }
     this.pieces.forEach((p) => p.c && p.c.destroy());
-    this.pieces = makeTray(this.board).map((d, i) => this.makePiece(d, i, animate));
+    const defs = makeTray(this.board);
+    if (Math.random() < ORO.chance) {
+      const d = defs[Math.floor(Math.random() * defs.length)];
+      d.gold = Math.floor(Math.random() * d.cells.length);
+      if (!save.oroVisto && !window.__capture) {
+        save.oroVisto = true;
+        persist();
+        this.time.delayedCall(500, () => toast(this, '¡Bloque DORADO! Limpia su línea para ganar ladrillos extra', this.tiempo ? 1655 : 352, 2800));
+      }
+    }
+    this.pieces = defs.map((d, i) => this.makePiece(d, i, animate));
+  }
+
+  // Brillos de vez en cuando sobre los bloques dorados del tablero
+  brilloOro() {
+    const list = [];
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (this.board[r][c] === 'gold') list.push([r, c]);
+    if (!list.length || !this.sparks) return;
+    const [r, c] = list[Math.floor(Math.random() * list.length)];
+    const { x, y } = this.cellXY(r, c);
+    this.sparks.explode(2, x + Phaser.Math.Between(-30, 30), y + Phaser.Math.Between(-30, 30));
+  }
+
+  premioOro(oros) {
+    const n = oros.length;
+    oros.forEach(([r, c], i) => {
+      const { x, y } = this.cellXY(r, c);
+      this.time.delayedCall(i * 90, () => {
+        this.sparks.explode(16, x, y);
+        this.fx.yellow.explode(10, x, y);
+      });
+    });
+    const { x, y } = this.cellXY(oros[0][0], oros[0][1]);
+    this.addScore(ORO.puntos * n);
+    this.addBricks(ORO.ladrillos * n, x, y);
+    this.time.delayedCall(260, () => {
+      floatText(this, W / 2, BY + 120, `¡ORO! +${ORO.ladrillos * n}`, 90, '#ffe14a', '#7a3d00');
+      this.cameras.main.flash(140, 255, 220, 90);
+      sfx.coin();
+      this.time.delayedCall(120, () => sfx.coin());
+    });
   }
 
   startDrag(piece, p) {
@@ -295,7 +337,7 @@ export default class Game extends Phaser.Scene {
   snapshot() {
     this.undoSnap = {
       board: this.board.map((r) => [...r]),
-      pieces: this.pieces.map((p) => ({ cells: (p.cells || []).map((x) => [...x]), color: p.color, used: p.used })),
+      pieces: this.pieces.map((p) => ({ cells: (p.cells || []).map((x) => [...x]), color: p.color, gold: p.gold, used: p.used })),
       score: this.score, runBricks: this.runBricks, combo: this.combo, miss: this.miss,
       linesTotal: this.linesTotal, nextOffer: this.nextOffer,
     };
@@ -307,9 +349,10 @@ export default class Game extends Phaser.Scene {
     this.atorado = false;
     pc.c.destroy();
     pc.c = null;
-    pc.cells.forEach(([dr, dc]) => {
-      this.board[r + dr][c + dc] = pc.color;
-      this.addBlock(r + dr, c + dc, pc.color, true);
+    pc.cells.forEach(([dr, dc], k) => {
+      const col = k === pc.gold ? 'gold' : pc.color;
+      this.board[r + dr][c + dc] = col;
+      this.addBlock(r + dr, c + dc, col, true);
     });
     this.addScore(pc.cells.length * SCORE.perCell);
     sfx.place();
@@ -353,8 +396,10 @@ export default class Game extends Phaser.Scene {
     const cy = cells.reduce((a, [r]) => a + r, 0) / cells.length;
     const { x, y } = this.cellXY(cy, cx);
 
+    const oros = cells.filter(([r, c]) => this.board[r][c] === 'gold');
     this.clearCells(cells);
     this.addScore(pts);
+    if (oros.length) this.premioOro(oros);
     this.addBricks(bricks, x, y);
     sfx.clear(this.combo);
     vibe(n > 1 ? 40 : 20);
@@ -408,7 +453,7 @@ export default class Game extends Phaser.Scene {
       im.setDepth(12);
       this.tweens.add({
         targets: im, scaleX: 0, scaleY: 0, angle: 25, delay: 80 + i * stagger, duration: 220, ease: 'Back.In',
-        onStart: () => { if (color && this.fx[color]) this.fx[color].explode(9, im.x, im.y); },
+        onStart: () => { const fc = color === 'gold' ? 'yellow' : color; if (fc && this.fx[fc]) this.fx[fc].explode(9, im.x, im.y); },
         onComplete: () => im.destroy(),
       });
     });
@@ -552,7 +597,8 @@ export default class Game extends Phaser.Scene {
   // ---------- Poderes ----------
   showOffer() {
     this.busy = true;
-    const ids = rollOffer();
+    // window.__forceOffer solo se usa al grabar videos
+    const ids = (window.__capture && window.__forceOffer) || rollOffer();
     const layer = this.add.container(0, 0).setDepth(300);
     const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7).setInteractive();
     layer.add(dim);
@@ -587,6 +633,7 @@ export default class Game extends Phaser.Scene {
       });
       return card;
     });
+    this._offerCards = cards;
   }
 
   makeCard(id) {

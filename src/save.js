@@ -13,6 +13,7 @@ const DEFAULT = {
   reto: { last: null, racha: 0 },
   muertos: { flores: 0, tema: false },
   tiempo: { record: 0, partidas: 0 },
+  oroVisto: false,
 };
 
 function load() {

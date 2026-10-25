@@ -376,6 +376,40 @@ function ofrenda(g) {
   g.fillStyle(0xd08a3a, 1); g.fillEllipse(cx, gy - 168, 50, 22);
 }
 
+// Bloque dorado: se arma sobre el bloque amarillo (imagen o dibujo) con brillo de oro y una estrella
+function makeOro(scene) {
+  const T = scene.textures;
+  if (T.exists('block_gold')) return;
+  const src = T.get('block_yellow').getSourceImage();
+  const s = Math.max(src.width, src.height);
+  const ct = T.createCanvas('block_gold', s, s);
+  const ctx = ct.getContext();
+  ctx.drawImage(src, 0, 0, s, s);
+  ctx.globalCompositeOperation = 'source-atop';
+  const gr = ctx.createLinearGradient(0, 0, s, s);
+  gr.addColorStop(0, 'rgba(255,248,190,0.65)');
+  gr.addColorStop(0.45, 'rgba(255,196,40,0.45)');
+  gr.addColorStop(1, 'rgba(190,110,0,0.55)');
+  ctx.fillStyle = gr;
+  ctx.fillRect(0, 0, s, s);
+  ctx.globalCompositeOperation = 'source-over';
+  const pts = starPts(s / 2, s / 2 + s * 0.02, s * 0.27, 0.45, 5);
+  ctx.beginPath();
+  pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+  ctx.closePath();
+  ctx.fillStyle = '#fff7cc';
+  ctx.strokeStyle = '#b06a00';
+  ctx.lineWidth = s * 0.045;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.beginPath();
+  ctx.ellipse(s * 0.3, s * 0.22, s * 0.12, s * 0.05, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ct.refresh();
+}
+
 export function makeTextures(scene) {
   const T = scene.textures;
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
@@ -411,6 +445,7 @@ export function makeTextures(scene) {
   gen('fx_dot', 24, 24, (gg) => { gg.fillStyle(0xffffff, 1); gg.fillCircle(12, 12, 12); });
   gen('fx_star', 48, 48, (gg) => { gg.fillStyle(0xffffff, 1); gg.fillPoints(starPts(24, 24, 24, 0.3, 4), true); });
   g.destroy();
+  makeOro(scene);
   gradient(scene, 'grad_game', '#161c4e', '#3e2680');
   gradient(scene, 'grad_menu', '#22184e', '#e0785a');
   gradient(scene, 'grad_sky', '#6eb9fa', '#ffe1be');

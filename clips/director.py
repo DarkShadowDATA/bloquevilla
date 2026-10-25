@@ -4,7 +4,7 @@ from cap import FPS
 CELL, BX, BY = 110, 100, 420
 SLOTS = [230, 540, 850]
 TRAY_Y = 1470
-COLOR = {'r': 'red', 'o': 'orange', 'y': 'yellow', 'g': 'green', 'b': 'blue', 'p': 'purple', 'k': 'pink'}
+COLOR = {'G': 'gold', 'r': 'red', 'o': 'orange', 'y': 'yellow', 'g': 'green', 'b': 'blue', 'p': 'purple', 'k': 'pink'}
 
 SETUP_JS = """(cfg) => {
   const g = window.__game.scene.getScene('Game');
