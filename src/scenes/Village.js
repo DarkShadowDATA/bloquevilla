@@ -64,7 +64,7 @@ export default class Village extends Phaser.Scene {
     ids.forEach((id) => {
       (DECO_POS[id] || []).forEach(([x, y, size], k) => {
         const im = this.add.image(x, y, KEY[id]).setOrigin(0.5, 1);
-        im.setScale(size / im.width);
+        im.setScale(size / Math.max(im.width, im.height));
         if (anim) {
           const s0 = im.scaleX;
           im.setScale(s0 * 0.05);
@@ -78,11 +78,11 @@ export default class Village extends Phaser.Scene {
         }
         if (id === 'arboles') this.tweens.add({ targets: im, angle: { from: -1.5, to: 1.5 }, duration: 2200 + k * 300, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
         if (id === 'farolas' && noche) {
-          const glow = this.add.circle(x, y - size * 1.55, size * 0.5, 0xffd76a, 0.35).setDepth(im.depth);
+          const glow = this.add.circle(x, y - im.displayHeight * 0.84, im.displayWidth * 0.6, 0xffd76a, 0.35).setDepth(im.depth);
           this.tweens.add({ targets: glow, alpha: { from: 0.45, to: 0.2 }, duration: 900 + k * 120, yoyo: true, repeat: -1 });
         }
         if (id === 'fuente') {
-          this.add.particles(x, y - size * 0.78, 'fx_dot', {
+          this.add.particles(x, y - im.displayHeight * 0.85, 'fx_dot', {
             speed: { min: 60, max: 140 }, angle: { min: 240, max: 300 }, gravityY: 300, lifespan: 700,
             scale: { start: 0.45, end: 0.1 }, tint: [0xbfeaff, 0x8fd8ff, 0xffffff], frequency: 60, alpha: 0.9,
           }).setDepth(im.depth + 0.1);
