@@ -51,3 +51,32 @@ export const ORO = { chance: 0.18, ladrillos: 3, puntos: 50 };
 
 // Modo Contrarreloj: 60 s, cada línea suma tiempo; trabarse cuesta tiempo
 export const TIEMPO = { dur: 60000, porLinea: 1000, castigo: 3000, alerta: 10000 };
+
+// Tienda: todo se compra con ladrillos
+export const TIENDA = {
+  poderes: [
+    { id: 'martillo', precio: 15 },
+    { id: 'cambio', precio: 15 },
+    { id: 'bomba', precio: 30 },
+    { id: 'rayo', precio: 50 },
+  ],
+  temas: [
+    { id: 'neon', name: 'Neón', desc: 'Bloques que brillan en la oscuridad', precio: 150 },
+    { id: 'caramelo', name: 'Caramelo', desc: 'Bloques de dulce con rayitas', precio: 150 },
+  ],
+  deco: [
+    { id: 'arboles', name: 'Árboles', desc: 'Sombra para tu pueblo', precio: 30 },
+    { id: 'farolas', name: 'Farolas', desc: 'Iluminan el camino', precio: 40 },
+    { id: 'flores', name: 'Jardines', desc: 'Flores junto al camino', precio: 50 },
+    { id: 'banderines', name: 'Banderines', desc: 'Fiesta en la entrada', precio: 60 },
+    { id: 'fuente', name: 'Fuente', desc: 'El centro del pueblo', precio: 90 },
+  ],
+};
+// Decoraciones en el pueblo: [x, y del suelo, tamaño]
+export const DECO_POS = {
+  arboles: [[70, 880, 210], [1020, 1030, 200], [55, 1330, 190], [1030, 1430, 200]],
+  farolas: [[440, 905, 110], [655, 1170, 110], [420, 1505, 110], [665, 1690, 110]],
+  flores: [[700, 845, 180], [405, 1095, 180], [690, 1455, 180], [385, 1725, 180]],
+  banderines: [[540, 520, 560]],
+  fuente: [[548, 1335, 210]],
+};

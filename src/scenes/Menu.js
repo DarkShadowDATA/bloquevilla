@@ -55,7 +55,12 @@ export default class Menu extends Phaser.Scene {
     } else if (save.tiempo.record) {
       tb60.label.setText(`Contrarreloj · récord ${save.tiempo.record.toLocaleString('es-MX')}`).setFontSize(36);
     }
-    button(this, W / 2, 1418, 640, 104, 'Mi pueblo', 0xff8c2b, () => this.scene.start('Village'), { size: 46 });
+    button(this, W / 2 - 165, 1418, 310, 104, 'Mi pueblo', 0xff8c2b, () => this.scene.start('Village'), { size: 40 });
+    button(this, W / 2 + 165, 1418, 310, 104, '  Tienda', 0xd8a020, () => this.scene.start('Shop'), { size: 40, iconKey: 'ui_tienda' });
+    if (!save.tienda.visto) {
+      const nv = txt(this, W / 2 + 290, 1372, '¡NUEVO!', 26, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12).setDepth(5);
+      this.tweens.add({ targets: nv, scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
+    }
 
     if (dailyAvailable()) {
       const b = button(this, W / 2, 1540, 640, 112, '  Regalo diario', 0xd84a8a, () => this.openDaily(), { size: 42, iconKey: 'ui_regalo' });
@@ -71,9 +76,10 @@ export default class Menu extends Phaser.Scene {
     const temas = ['clasico'];
     if (isBuilt('pozo')) temas.push('agua');
     if (save.muertos.tema) temas.push('muertos');
+    save.tienda.temas.forEach((t) => temas.push(t));
     if (temas.length > 1) {
       if (!temas.includes(save.theme)) save.theme = 'clasico';
-      const nombre = { clasico: eventoActivo() ? 'Evento' : 'Clásico', agua: 'Agua', muertos: 'Día de Muertos' };
+      const nombre = { clasico: eventoActivo() ? 'Evento' : 'Clásico', agua: 'Agua', muertos: 'Día de Muertos', neon: 'Neón', caramelo: 'Caramelo' };
       const label = () => `Bloques: ${nombre[save.theme]}`;
       const tb = button(this, W / 2, 1668, 480, 90, label(), 0x2c6ab0, () => {
         save.theme = temas[(temas.indexOf(save.theme) + 1) % temas.length];
@@ -81,7 +87,7 @@ export default class Menu extends Phaser.Scene {
         tb.label.setText(label());
       }, { size: 34 });
     }
-    txt(this, W / 2, H - 60, 'v0.4 · Bloque dorado', 24, '#ffffffaa', { weight: '500' });
+    txt(this, W / 2, H - 60, 'v0.5 · Tienda', 24, '#ffffffaa', { weight: '500' });
   }
 
   bannerEvento() {

@@ -376,6 +376,109 @@ function ofrenda(g) {
   g.fillStyle(0xd08a3a, 1); g.fillEllipse(cx, gy - 168, 50, 22);
 }
 
+
+// ---------- Tienda: temas y decoraciones (si existe una imagen con el mismo nombre, se usa la imagen) ----------
+function neonBlock(g, s, hex) {
+  const r = s * 0.18;
+  g.fillStyle(0x0b0b22, 1); g.fillRoundedRect(4, 4, s - 8, s - 8, r);
+  g.fillStyle(hex, 0.16); g.fillRoundedRect(10, 10, s - 20, s - 20, r * 0.8);
+  g.lineStyle(14, hex, 0.25); g.strokeRoundedRect(10, 10, s - 20, s - 20, r * 0.8);
+  g.lineStyle(6, hex, 1); g.strokeRoundedRect(12, 12, s - 24, s - 24, r * 0.75);
+  g.lineStyle(2, shade(hex, 0.7), 1); g.strokeRoundedRect(13, 13, s - 26, s - 26, r * 0.7);
+  g.fillStyle(shade(hex, 0.6), 0.9); g.fillCircle(s * 0.3, s * 0.28, s * 0.045);
+}
+
+function carameloBlock(g, s, hex) {
+  const r = s * 0.24;
+  g.fillStyle(shade(hex, -0.3), 1); g.fillRoundedRect(3, 5, s - 6, s - 6, r);
+  g.fillStyle(shade(hex, 0.15), 1); g.fillRoundedRect(3, 3, s - 6, s - 10, r);
+  g.fillStyle(0xffffff, 0.55);
+  for (let k = -2; k < 4; k++) {
+    const x = k * s * 0.3;
+    g.fillPoints([{ x: x + s * 0.12, y: s - 8 }, { x: x + s * 0.27, y: s - 8 }, { x: x + s * 0.27 + s * 0.6, y: 6 }, { x: x + s * 0.12 + s * 0.6, y: 6 }], true);
+  }
+  g.fillStyle(shade(hex, -0.3), 1);
+  g.fillRect(0, 0, 3, s); g.fillRect(s - 3, 0, 3, s);
+  g.lineStyle(6, shade(hex, 0.35), 1); g.strokeRoundedRect(6, 6, s - 12, s - 16, r * 0.85);
+  g.fillStyle(0xffffff, 0.8); g.fillEllipse(s * 0.32, s * 0.24, s * 0.3, s * 0.1);
+}
+
+function farola(g, w, h) {
+  const cx = w / 2;
+  g.fillStyle(0x000000, 0.18); g.fillEllipse(cx, h - 8, w * 0.7, 14);
+  g.fillStyle(0x3a3448, 1); g.fillRect(cx - 7, h * 0.28, 14, h * 0.7);
+  g.fillRoundedRect(cx - 20, h - 26, 40, 20, 6);
+  g.fillStyle(0xffd76a, 0.28); g.fillCircle(cx, h * 0.2, w * 0.46);
+  g.fillStyle(0x3a3448, 1); g.fillTriangle(cx - 30, h * 0.12, cx + 30, h * 0.12, cx, h * 0.03);
+  g.fillStyle(0xfff0b0, 1); g.fillRoundedRect(cx - 20, h * 0.12, 40, h * 0.14, 8);
+  g.fillStyle(0x3a3448, 1); g.fillRect(cx - 24, h * 0.26, 48, 8);
+}
+
+function arbol(g, w, h) {
+  const cx = w / 2;
+  g.fillStyle(0x000000, 0.18); g.fillEllipse(cx, h - 10, w * 0.7, 22);
+  g.fillStyle(0x8a5a32, 1); g.fillRoundedRect(cx - 14, h * 0.55, 28, h * 0.43, 8);
+  [[0, 0.36, 0.3, 0x4f9e3c], [-0.2, 0.46, 0.24, 0x5cae45], [0.2, 0.46, 0.24, 0x5cae45], [0, 0.24, 0.24, 0x6ec452], [-0.1, 0.3, 0.12, 0x86d866]].forEach(([dx, dy, rr, col]) => {
+    g.fillStyle(col, 1); g.fillCircle(cx + dx * w, dy * h, rr * w);
+  });
+  g.fillStyle(0xff5a5f, 1); [[-0.15, 0.4], [0.18, 0.34], [0.05, 0.5]].forEach(([dx, dy]) => g.fillCircle(cx + dx * w, dy * h, w * 0.035));
+}
+
+function jardin(g, w, h) {
+  g.fillStyle(0x3f8a34, 1); g.fillEllipse(w / 2, h * 0.72, w * 0.92, h * 0.42);
+  g.fillStyle(0x56a845, 1); g.fillEllipse(w / 2, h * 0.66, w * 0.8, h * 0.32);
+  const cols = [0xff5f8f, 0xffd23f, 0xffffff, 0xb46cff, 0xff8a2b];
+  for (let i = 0; i < 9; i++) {
+    const x = w * (0.16 + (i % 5) * 0.17), y = h * (0.52 + Math.floor(i / 5) * 0.16) + (i % 2) * 6;
+    const col = cols[i % cols.length];
+    g.fillStyle(col, 1);
+    for (let k = 0; k < 5; k++) { const a = (k / 5) * Math.PI * 2; g.fillCircle(x + Math.cos(a) * 11, y + Math.sin(a) * 11, 10); }
+    g.fillStyle(0xffe066, 1); g.fillCircle(x, y, 7);
+  }
+}
+
+function fuente(g, w, h) {
+  const cx = w / 2;
+  g.fillStyle(0x000000, 0.2); g.fillEllipse(cx, h - 14, w * 0.95, 34);
+  g.fillStyle(0x9a94a8, 1); g.fillEllipse(cx, h * 0.78, w * 0.92, h * 0.24);
+  g.fillStyle(0xbab4c8, 1); g.fillRect(cx - w * 0.46, h * 0.66, w * 0.92, h * 0.12);
+  g.fillStyle(0xd0cade, 1); g.fillEllipse(cx, h * 0.66, w * 0.92, h * 0.16);
+  g.fillStyle(0x5ab8ee, 1); g.fillEllipse(cx, h * 0.665, w * 0.78, h * 0.11);
+  g.fillStyle(0xbab4c8, 1); g.fillRect(cx - 12, h * 0.36, 24, h * 0.3);
+  g.fillStyle(0xd0cade, 1); g.fillEllipse(cx, h * 0.37, w * 0.4, h * 0.07);
+  g.fillStyle(0x8fd8ff, 0.9);
+  [[-1], [1]].forEach(([d]) => {
+    for (let k = 0; k < 7; k++) g.fillCircle(cx + d * (w * 0.06 + k * w * 0.04), h * (0.3 + k * k * 0.008), 7 - k * 0.5);
+  });
+  g.fillStyle(0xbfeaff, 1); g.fillEllipse(cx, h * 0.22, 26, 60);
+}
+
+function banderines(g, w, h) {
+  g.lineStyle(5, 0x5a3a2a, 1);
+  g.beginPath();
+  const pts = [];
+  for (let i = 0; i <= 20; i++) { const t = i / 20; pts.push({ x: 10 + t * (w - 20), y: 20 + Math.sin(t * Math.PI) * h * 0.25 }); }
+  g.strokePoints(pts);
+  const cols = [0xff5a5f, 0xffd23f, 0x4d96ff, 0x6bcb77, 0xff8a2b, 0xb46cff];
+  for (let i = 0; i < 11; i++) {
+    const t = (i + 0.5) / 11, x = 10 + t * (w - 20), y = 20 + Math.sin(t * Math.PI) * h * 0.25;
+    g.fillStyle(cols[i % cols.length], 1);
+    g.fillTriangle(x - w * 0.035, y, x + w * 0.035, y, x, y + h * 0.5);
+  }
+}
+
+function tiendaIcon(g, s) {
+  g.fillStyle(0xfff3d6, 1); g.fillRoundedRect(s * 0.16, s * 0.42, s * 0.68, s * 0.46, 10);
+  g.fillStyle(0x8a5a32, 1); g.fillRoundedRect(s * 0.4, s * 0.6, s * 0.2, s * 0.28, 6);
+  for (let k = 0; k < 5; k++) {
+    g.fillStyle(k % 2 ? 0xffffff : 0xff5a5f, 1);
+    const x = s * (0.1 + k * 0.16);
+    g.fillRect(x, s * 0.2, s * 0.16, s * 0.18);
+    g.fillCircle(x + s * 0.08, s * 0.38, s * 0.08);
+  }
+  g.fillStyle(0x3a3448, 1); g.fillRect(s * 0.1, s * 0.16, s * 0.8, s * 0.06);
+}
+
 // Bloque dorado: se arma sobre el bloque amarillo (imagen o dibujo) con brillo de oro y una estrella
 function makeOro(scene) {
   const T = scene.textures;
@@ -441,6 +544,16 @@ export function makeTextures(scene) {
   gen('card_back', 300, 430, (gg) => card(gg, 0xa046dc, true));
   ['ladrillo', 'estrella', 'candado', 'regalo', 'trofeo', 'ajustes', 'sonido', 'musica'].forEach((id) => gen('ui_' + id, 128, 128, (gg) => uiIcon(gg, id)));
   // efectos (siempre dibujados con código)
+  COLORS.forEach((c) => {
+    gen('neon_' + c, CELL, CELL, (gg, sz) => neonBlock(gg, sz, HEX[c]));
+    gen('caramelo_' + c, CELL, CELL, (gg, sz) => carameloBlock(gg, sz, HEX[c]));
+  });
+  gen('deco_farola', 120, 230, (gg, w, h) => farola(gg, w, h));
+  gen('deco_arbol', 220, 260, (gg, w, h) => arbol(gg, w, h));
+  gen('deco_flores', 160, 110, (gg, w, h) => jardin(gg, w, h));
+  gen('deco_fuente', 240, 240, (gg, w, h) => fuente(gg, w, h));
+  gen('deco_banderines', 600, 120, (gg, w, h) => banderines(gg, w, h));
+  gen('ui_tienda', 128, 128, (gg) => tiendaIcon(gg, 128));
   gen('fx_square', 18, 18, (gg) => { gg.fillStyle(0xffffff, 1); gg.fillRoundedRect(0, 0, 18, 18, 4); });
   gen('fx_dot', 24, 24, (gg) => { gg.fillStyle(0xffffff, 1); gg.fillCircle(12, 12, 12); });
   gen('fx_star', 48, 48, (gg) => { gg.fillStyle(0xffffff, 1); gg.fillPoints(starPts(24, 24, 24, 0.3, 4), true); });

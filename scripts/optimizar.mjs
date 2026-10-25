@@ -14,6 +14,8 @@ const SIZES = [
   ['block_', [128, 128]],
   ['water_', [128, 128]],
   ['muertos_', [128, 128]],
+  ['neon_', [128, 128]],
+  ['caramelo_', [128, 128]],
   ['deco_', [1100, 1100]],
   ['evento_', [1100, 400]],
   ['bg_', [1080, 1920]],
@@ -41,7 +43,7 @@ for (const f of files) {
   const rule = SIZES.find(([p]) => name.startsWith(p));
   const [w, h] = rule ? rule[1] : [512, 512];
   const isBg = name.startsWith('bg_');
-  const isBlock = name.startsWith('block_') || name.startsWith('water_') || name.startsWith('muertos_');
+  const isBlock = ['block_', 'water_', 'muertos_', 'neon_', 'caramelo_'].some((p) => name.startsWith(p));
   const fit = isBg ? 'cover' : isBlock ? 'fill' : 'inside';
   // Quita el margen transparente para que cada imagen llene su espacio en el juego
   const trimmed = isBg ? await sharp(src).toBuffer() : await sharp(src).trim({ threshold: 8 }).toBuffer();

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { W, H, BUILDINGS } from '../config.js';
+import { W, H, BUILDINGS, DECO_POS } from '../config.js';
 import { save, persist, isBuilt } from '../save.js';
 import { eventoActivo } from '../evento.js';
 import { sfx, vibe } from '../sfx.js';
@@ -17,14 +17,16 @@ export default class Village extends Phaser.Scene {
     if (!this.textures.exists('bg_village')) this.drawScenery();
     if (eventoActivo()) this.decorarMuertos();
 
-    button(this, 120, 110, 170, 84, 'Menú', 0x2c3070, () => this.scene.start('Menu'), { size: 32 });
-    this.brickChip = chip(this, 905, 110, 230, 'ui_ladrillo', save.bricks);
-    this.progress = this.add.graphics();
-    this.progressText = txt(this, W / 2, 215, '', 38, '#ffffff', { stroke: '#1e3a5a', strokeW: 8 });
+    button(this, 120, 110, 170, 84, 'Menú', 0x2c3070, () => this.scene.start('Menu'), { size: 32 }).setDepth(50);
+    this.brickChip = chip(this, 905, 110, 230, 'ui_ladrillo', save.bricks).setDepth(50);
+    this.progress = this.add.graphics().setDepth(50);
+    this.progressText = txt(this, W / 2, 215, '', 38, '#ffffff', { stroke: '#1e3a5a', strokeW: 8 }).setDepth(50);
     this.drawProgress();
 
     this.plots = BUILDINGS.map((b, i) => this.makePlot(b, i));
-    button(this, W / 2, 1790, 640, 130, 'Jugar', 0x5ac85a, () => this.scene.start('Game', { reto: false }), { size: 60 });
+    this.decoraciones();
+    button(this, 650, 1790, 540, 130, 'Jugar', 0x5ac85a, () => this.scene.start('Game', { reto: false }), { size: 60 }).setDepth(50);
+    button(this, 205, 1790, 290, 130, '  Decorar', 0xd8a020, () => this.scene.start('Shop', { tab: 'deco' }), { size: 38, iconKey: 'ui_tienda' }).setDepth(50);
 
     if (save.built.length === BUILDINGS.length) {
       toast(this, '¡Zona 1 completa! La zona 2 llega pronto', 330, 3000);
@@ -52,6 +54,41 @@ export default class Village extends Phaser.Scene {
       x: { min: 0, max: W }, y: -20, lifespan: 9000, speedY: { min: 40, max: 90 }, speedX: { min: -30, max: 30 },
       scale: { start: 0.5, end: 0.3 }, tint: [0xff9a0f, 0xffc21f, 0xff6a00], frequency: 450, alpha: 0.85,
     }).setDepth(3);
+  }
+
+  // Lo comprado en la tienda (árboles, farolas, jardines, banderines, fuente)
+  decoraciones(ids = save.tienda.deco, anim = false) {
+    const KEY = { arboles: 'deco_arbol', farolas: 'deco_farola', flores: 'deco_flores', banderines: 'deco_banderines', fuente: 'deco_fuente' };
+    const noche = eventoActivo();
+    ids.forEach((id) => {
+      (DECO_POS[id] || []).forEach(([x, y, size], k) => {
+        const im = this.add.image(x, y, KEY[id]).setOrigin(0.5, 1);
+        im.setScale(size / im.width);
+        if (anim) {
+          const s0 = im.scaleX;
+          im.setScale(s0 * 0.05);
+          this.tweens.add({ targets: im, scale: s0, delay: k * 110, duration: 420, ease: 'Back.Out' });
+          this.time.delayedCall(k * 110 + 150, () => confetti(this, x, y - size * 0.6, 14));
+        }
+        im.setDepth(y < 1000 ? 6 : y < 1400 ? 8 : 10.5);
+        if (id === 'banderines') {
+          im.setOrigin(0.5, 0).setDepth(5);
+          this.tweens.add({ targets: im, angle: { from: -1.2, to: 1.2 }, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+        }
+        if (id === 'arboles') this.tweens.add({ targets: im, angle: { from: -1.5, to: 1.5 }, duration: 2200 + k * 300, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+        if (id === 'farolas' && noche) {
+          const glow = this.add.circle(x, y - size * 1.55, size * 0.5, 0xffd76a, 0.35).setDepth(im.depth);
+          this.tweens.add({ targets: glow, alpha: { from: 0.45, to: 0.2 }, duration: 900 + k * 120, yoyo: true, repeat: -1 });
+        }
+        if (id === 'fuente') {
+          this.add.particles(x, y - size * 0.78, 'fx_dot', {
+            speed: { min: 60, max: 140 }, angle: { min: 240, max: 300 }, gravityY: 300, lifespan: 700,
+            scale: { start: 0.45, end: 0.1 }, tint: [0xbfeaff, 0x8fd8ff, 0xffffff], frequency: 60, alpha: 0.9,
+          }).setDepth(im.depth + 0.1);
+        }
+      });
+    });
+    if (anim) { sfx.build(); vibe(40); }
   }
 
   drawScenery() {

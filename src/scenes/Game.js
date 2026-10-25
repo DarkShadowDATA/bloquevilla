@@ -106,6 +106,13 @@ export default class Game extends Phaser.Scene {
       save.pendingPower = null;
       persist();
     }
+    // Poderes comprados en la tienda para esta partida
+    if (!this.reto && !this.tiempo && save.proximos.length) {
+      const n0 = this.powers.length;
+      while (this.powers.length < MAX_POWERS && save.proximos.length) this.powers.push(save.proximos.shift());
+      persist();
+      if (this.powers.length > n0) this.time.delayedCall(500, () => toast(this, `Traes ${this.powers.length - n0 === 1 ? 'un poder' : 'dos poderes'} de la tienda`, 352, 2200));
+    }
     if (this.reto) {
       this.iniciarReto();
       return;
@@ -189,6 +196,7 @@ export default class Game extends Phaser.Scene {
     const tema = this.tema || (this.tema = temaBloques(isBuilt('pozo')));
     if (tema === 'agua') return 'water_' + ((COLORS.indexOf(color) % 3) + 1);
     if (tema === 'muertos') return 'muertos_' + ((COLORS.indexOf(color) % 4) + 1);
+    if (tema === 'neon' || tema === 'caramelo') return tema + '_' + color;
     return 'block_' + color;
   }
 
@@ -239,7 +247,7 @@ export default class Game extends Phaser.Scene {
       if (!save.oroVisto && !window.__capture) {
         save.oroVisto = true;
         persist();
-        this.time.delayedCall(500, () => toast(this, '¡Bloque DORADO! Limpia su línea para ganar ladrillos extra', this.tiempo ? 1655 : 352, 2800));
+        this.time.delayedCall(2800, () => toast(this, '¡Bloque DORADO! Limpia su línea para ganar ladrillos extra', this.tiempo ? 1655 : 352, 2800));
       }
     }
     this.pieces = defs.map((d, i) => this.makePiece(d, i, animate));

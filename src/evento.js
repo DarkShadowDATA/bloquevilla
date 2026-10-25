@@ -37,6 +37,7 @@ export function sumarFlores(n) {
 
 // Tema de bloques que se ve: durante el evento el clásico se viste de Día de Muertos
 export function temaBloques(pozoConstruido) {
+  if ((save.theme === 'neon' || save.theme === 'caramelo') && save.tienda.temas.includes(save.theme)) return save.theme;
   if (save.theme === 'agua' && pozoConstruido) return 'agua';
   if (save.theme === 'muertos' && save.muertos.tema) return 'muertos';
   if (save.theme === 'clasico' && eventoActivo()) return 'muertos';

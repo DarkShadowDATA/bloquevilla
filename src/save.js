@@ -14,6 +14,8 @@ const DEFAULT = {
   muertos: { flores: 0, tema: false },
   tiempo: { record: 0, partidas: 0 },
   oroVisto: false,
+  tienda: { temas: [], deco: [], visto: false },
+  proximos: [],
 };
 
 function load() {
@@ -21,7 +23,7 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const d = JSON.parse(raw);
-      return { ...JSON.parse(JSON.stringify(DEFAULT)), ...d, reto: { ...DEFAULT.reto, ...(d.reto || {}) }, muertos: { ...DEFAULT.muertos, ...(d.muertos || {}) }, tiempo: { ...DEFAULT.tiempo, ...(d.tiempo || {}) } };
+      return { ...JSON.parse(JSON.stringify(DEFAULT)), ...d, reto: { ...DEFAULT.reto, ...(d.reto || {}) }, muertos: { ...DEFAULT.muertos, ...(d.muertos || {}) }, tiempo: { ...DEFAULT.tiempo, ...(d.tiempo || {}) }, tienda: { ...DEFAULT.tienda, ...(d.tienda || {}) } };
     }
   } catch (e) { /* navegador sin almacenamiento */ }
   return JSON.parse(JSON.stringify(DEFAULT));
