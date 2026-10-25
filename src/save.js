@@ -16,6 +16,7 @@ const DEFAULT = {
   oroVisto: false,
   tienda: { temas: [], deco: [], visto: false },
   proximos: [],
+  jugador: null,
 };
 
 function load() {

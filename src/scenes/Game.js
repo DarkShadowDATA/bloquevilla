@@ -10,6 +10,7 @@ import { EVENTO, eventoActivo, sumarFlores, temaBloques } from '../evento.js';
 import { sfx, vibe } from '../sfx.js';
 import { POWERS, RARITY, rollOffer } from '../powers.js';
 import { txt, background, icon, button, toast, floatText, chip, confetti } from '../ui.js';
+import { track } from '../stats.js';
 
 export default class Game extends Phaser.Scene {
   constructor() { super('Game'); }
@@ -22,6 +23,7 @@ export default class Game extends Phaser.Scene {
     this.tiempoTick = null;
     this.atorado = false;
     this.summaryShown = false;
+    this.t0 = this.time.now;
     this.hintTiempo = null;
     this.timerBar = null;
     this.timerText = null;
@@ -910,6 +912,7 @@ export default class Game extends Phaser.Scene {
       persist();
       this.addBricks(premio, W / 2, 900, true);
     }
+    track('reto', { numero: R.numero, ok, lineas: this.linesTotal, premio: premio > 0 });
     if (ok) { sfx.build(); confetti(this, W / 2, 600, 90); } else sfx.over();
     this.time.delayedCall(ok ? 900 : 600, () => this.resumenReto(ok, premio));
   }
@@ -959,6 +962,7 @@ export default class Game extends Phaser.Scene {
     if (endBricks > 0) this.addBricks(endBricks, W / 2, 900);
     const recordPrev = this.tiempo ? save.tiempo.record : save.record;
     const newRecord = this.score > recordPrev;
+    track('partida', { modo: this.tiempo ? 'tiempo' : 'normal', puntos: this.score, lineas: this.linesTotal, ladrillos: this.runBricks, record: newRecord, segundos: Math.round((this.time.now - this.t0) / 1000), tema: this.tema || '' });
     if (this.tiempo) {
       if (newRecord) save.tiempo.record = this.score;
       save.tiempo.partidas += 1;

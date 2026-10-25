@@ -4,6 +4,7 @@ import { save, persist, isBuilt } from '../save.js';
 import { eventoActivo } from '../evento.js';
 import { sfx, vibe } from '../sfx.js';
 import { txt, background, icon, button, toast, chip, confetti } from '../ui.js';
+import { track } from '../stats.js';
 
 // Posiciones alineadas con los 6 terrenos del fondo bg_village (suelo = parte baja del edificio)
 const PLOTS = [[245, 750], [840, 770], [245, 1140], [840, 1160], [245, 1550], [845, 1570]];
@@ -203,6 +204,7 @@ export default class Village extends Phaser.Scene {
     save.bricks -= b.cost;
     save.built.push(b.id);
     persist();
+    track('construir', { id: b.id, n: save.built.length });
     this.brickChip.setValue(save.bricks);
     const c = this.plots[i];
     const [x, gy] = PLOTS[i];

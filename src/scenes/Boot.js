@@ -4,6 +4,7 @@ import { makeTextures } from '../textures.js';
 import { W, H } from '../config.js';
 import { txt } from '../ui.js';
 import { save } from '../save.js';
+import { trackAbrir } from '../stats.js';
 
 export default class Boot extends Phaser.Scene {
   constructor() { super('Boot'); }
@@ -18,6 +19,7 @@ export default class Boot extends Phaser.Scene {
 
   create() {
     makeTextures(this);
+    trackAbrir();
     // Quien entra por primera vez juega de inmediato; el menú aparece después
     const nuevo = save.games === 0 && save.built.length === 0 && !location.search.includes('capture');
     this.scene.start(nuevo ? 'Game' : 'Menu');

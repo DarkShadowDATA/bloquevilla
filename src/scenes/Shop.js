@@ -4,6 +4,7 @@ import { save, persist } from '../save.js';
 import { POWERS, RARITY } from '../powers.js';
 import { sfx, vibe } from '../sfx.js';
 import { txt, background, icon, button, toast, chip, confetti } from '../ui.js';
+import { track } from '../stats.js';
 
 const TABS = [['poderes', 'Poderes'], ['temas', 'Temas'], ['deco', 'Pueblo']];
 const COLS = [290, 790];
@@ -72,6 +73,7 @@ export default class Shop extends Phaser.Scene {
       sfx.build();
       vibe(40);
       confetti(this, c.x, c.y - 60, 40);
+      track('compra', { tipo: this.tab, id: c.itemId || '', precio });
       onBuy();
     }, { size: 40, iconKey: label ? undefined : 'ui_ladrillo' });
     c.add(b);
@@ -87,6 +89,7 @@ export default class Shop extends Phaser.Scene {
       const p = POWERS[it.id];
       const rar = RARITY[p.rarity];
       const c = this.card(i, p.name, p.desc, rar.color);
+      c.itemId = it.id;
       const pill = this.add.graphics();
       pill.fillStyle(rar.color, 1); pill.fillRoundedRect(-70, -CH / 2 + 18, 140, 38, 19);
       c.add(pill);
@@ -122,6 +125,7 @@ export default class Shop extends Phaser.Scene {
   showTemas() {
     TIENDA.temas.forEach((it, i) => {
       const c = this.card(i, it.name, it.desc, 0xa046dc);
+      c.itemId = it.id;
       [0, 1, 2, 3].forEach((k) => {
         const im = this.add.image(-105 + k * 70, -80 + (k % 2) * 34, `${it.id}_${COLORS[(k * 2 + i) % COLORS.length]}`);
         im.setDisplaySize(96, 96);
@@ -149,6 +153,7 @@ export default class Shop extends Phaser.Scene {
   showDeco() {
     TIENDA.deco.forEach((it, i) => {
       const c = this.card(i, it.name, it.desc, 0x2a8a4a);
+      c.itemId = it.id;
       const key = { arboles: 'deco_arbol', farolas: 'deco_farola', flores: 'deco_flores', banderines: 'deco_banderines', fuente: 'deco_fuente' }[it.id];
       const im = this.add.image(0, -80, key);
       const s = Math.min(200 / im.width, 170 / im.height);

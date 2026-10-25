@@ -80,3 +80,5 @@ export const DECO_POS = {
   banderines: [[540, 520, 560]],
   fuente: [[548, 1335, 210]],
 };
+
+export const VERSION = '0.6';
