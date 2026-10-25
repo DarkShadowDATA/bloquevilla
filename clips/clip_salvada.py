@@ -22,7 +22,7 @@ rec.ev("() => { const g = window.__game.scene.getScene('Game'); g.powers = ['ray
 rec.step(2)
 rec.begin()
 f = Finger(980, 1820)
-f.wait(rec, 0.5, visible=False)
+f.wait(rec, 0.1, visible=False)
 
 # 1) intenta meter el cuadrado 3x3: no cabe en ningún lado y regresa
 sx, sy = SLOTS[2], TRAY_Y + 10
@@ -30,15 +30,14 @@ f.move(rec, sx, sy, 0.35)
 rec.ev(f"() => {{ const g = window.__game.scene.getScene('Game'); g.startDrag(g.pieces[2], {{x: {sx}, y: {sy}}}); return 1; }}")
 f.wait(rec, 0.07, pressed=True)
 mv = "(p) => { window.__game.scene.getScene('Game').onMove(p); return 1; }"
-f.move(rec, 560, 1150, 0.45, pressed=True, js_each=mv)
-f.move(rec, 300, 1000, 0.35, pressed=True, js_each=mv)
-f.move(rec, 760, 1060, 0.4, pressed=True, js_each=mv)
+f.move(rec, 560, 1150, 0.4, pressed=True, js_each=mv)
+f.move(rec, 760, 1020, 0.35, pressed=True, js_each=mv)
 rec.ev("() => { window.__game.scene.getScene('Game').onUp(); return 1; }")
 f.wait(rec, 0.3)
 f.move(rec, 860, 1700, 0.3)
 stuck_start = len(rec.frames)
 rec.ev("() => { window.__game.scene.getScene('Game').checkStuck(); return 1; }")
-f.wait(rec, 1.3)
+f.wait(rec, 1.0)
 stuck_end = len(rec.frames)
 
 # 2) toca el poder Rayo y luego la casilla
@@ -54,10 +53,12 @@ f.wait(rec, 0.12, pressed=True)
 f.wait(rec, 0.9)
 
 # 3) ahora sí caben: dos limpiezas seguidas
-drag(rec, f, 0, 4, 3, approach=0.35, after=0.7)
-drag(rec, f, 1, 0, 3, approach=0.35, after=1.4)
+combo = len(rec.frames)
+drag(rec, f, 0, 4, 3, approach=0.35, after=0.6)
+drag(rec, f, 1, 0, 3, approach=0.35, after=1.1)
 f.move(rec, 990, 1850, 0.3)
-rec.hold(0.6, None)
+rec.hold(0.3, None)
+fin = len(rec.frames)
 print('frames', len(rec.frames), 'errores', rec.errors)
 
 
@@ -68,7 +69,15 @@ def overlay(img, i):
         big_center_text(img, '¡RAYO!', 140, (255, 230, 90), (i - boom_at) / FPS, y=to_video(540, 860)[1])
 
 
+segs = [(boom_at + 1, boom_at + 34), (0, fin)]
+subs = [
+    (boom_at + 1, boom_at + 34, '¡Esto me salvó la partida!', 0),
+    (0, stuck_start, 'Ninguna pieza cabía…', 1),
+    (stuck_start, boom_at, 'Me quedaba un poder: el RAYO', 1),
+    (boom_at, combo + 36, 'Borra una fila y una columna completas', 1),
+    (combo + 36, fin, '¡Y encima me dio COMBO!', 1),
+]
 render(rec, OUT, [[('Estaba ', (255, 255, 255)), ('PERDIDO…', (255, 110, 110))],
-                  [('hasta que usé ', (255, 255, 255)), ('ESTO', (255, 217, 61))]], overlay)
+                  [('hasta que usé ', (255, 255, 255)), ('ESTO', (255, 217, 61))]], overlay, segs=segs, subs=subs)
 rec.close()
 print('listo', OUT)

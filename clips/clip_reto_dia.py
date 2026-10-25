@@ -14,16 +14,20 @@ rec.step(3)
 R = rec.ev("() => { const g = window.__game.scene.getScene('Game'); return { numero: g.reto.numero, meta: g.reto.meta, sol: g.reto.solucion }; }")
 rec.begin()
 f = Finger(980, 1820)
-f.wait(rec, 1.0, visible=False)
+f.wait(rec, 0.1, visible=False)
 f.move(rec, 540, TRAY_Y + 120, 0.4)
 cd_start = len(rec.frames)
 f.wait(rec, 3.0)
 cd_end = len(rec.frames)
+ultimo = None
 for i, s in enumerate(R['sol']):
+    if i == 2:
+        ultimo = len(rec.frames)
     drag(rec, f, s['slot'], s['r'], s['c'], approach=0.3, travel=0.6, after=0.5 if i < 2 else 0.3)
 f.move(rec, 990, 1850, 0.3)
 outro = len(rec.frames)
-rec.hold(2.2, None)
+rec.hold(1.5, None)
+fin = len(rec.frames)
 print('reto', R['numero'], 'meta', R['meta'], 'frames', len(rec.frames), 'errores', rec.errors)
 
 
@@ -37,15 +41,17 @@ def overlay(img, i):
         px, py = to_video(540, TRAY_Y)
         w = 470 + 20 * abs(((k % 20) / 10) - 1)
         d.rounded_rectangle([px - w, py - 120, px + w, py + 120], radius=40, outline=(255, 217, 61), width=10)
-    if i >= outro:
-        pr = (i - outro) / FPS
-        big_center_text(img, '¿Lo resolviste igual?', 84, (255, 217, 61), pr, y=1560)
-        if pr > 0.3:
-            d.text((540, 1675), 'Juega el reto de hoy GRATIS', font=F(50), fill=(255, 255, 255), anchor='mm',
-                   stroke_width=8, stroke_fill=(30, 10, 60))
 
 
+segs = [(ultimo + 26, ultimo + 66), (0, fin)]
+subs = [
+    (ultimo + 26, ultimo + 66, 'Así se resuelve el reto de hoy', 0),
+    (0, cd_start, f"Limpia {R['meta']} líneas con solo 3 piezas", 1),
+    (cd_start, cd_end, '¿Lo ves? Tienes 3 segundos…', 1),
+    (cd_end, outro, 'La solución:', 1),
+    (outro, fin, '¿Lo resolviste igual? Comenta', 1),
+]
 render(rec, OUT, [[('RETO DEL DÍA ', (255, 217, 61)), (f"#{R['numero']}", (255, 255, 255))],
-                  [(f"{R['meta']} líneas con 3 piezas", (255, 255, 255))]], overlay)
+                  [(f"{R['meta']} líneas con 3 piezas", (255, 255, 255))]], overlay, segs=segs, subs=subs, sub_y=1780)
 rec.close()
 print('listo', OUT)

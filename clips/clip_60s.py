@@ -44,22 +44,25 @@ if MODO == 'reto':
     rec.ev(f"() => {{ {G}.drawTimer(); return 1; }}")
     rec.begin()
     f = Finger(980, 1820)
-    f.wait(rec, 0.9, visible=False)
-    for i, (slot, r, c) in enumerate(MOVES[:4]):
-        drag(rec, f, slot, r, c, approach=0.28 if i else 0.35, travel=0.45, after=0.3 if i < 3 else 0.5)
+    f.wait(rec, 0.1, visible=False)
+    for i, (slot, r, c) in enumerate(MOVES[:3]):
+        if i == 1:
+            marks['linea'] = len(rec.frames)
+        drag(rec, f, slot, r, c, approach=0.28 if i else 0.3, travel=0.45, after=0.3 if i < 2 else 0.45)
     # salto en el tiempo
     marks['salto'] = len(rec.frames)
-    rec.ev(f"() => {{ const g = {G}; g.tiempoRest = 2600; g.drawTimer(); return 1; }}")
+    rec.ev(f"() => {{ const g = {G}; g.tiempoRest = 2100; g.drawTimer(); return 1; }}")
     setup_board(rec, tablero(9), [TRAYS[0]], score=5160)
-    rec.hold(0.8, None)
+    rec.hold(0.6, None)
     marks['salto_fin'] = len(rec.frames)
     f = Finger(980, 1820)
     for i, (slot, r, c) in enumerate(MOVES[:3]):
+        marks[f'd{i}'] = len(rec.frames)
         drag(rec, f, slot, r, c, approach=0.25, travel=0.4, after=0.25)
     f.move(rec, 990, 1850, 0.3)
     hasta_fin()
     marks['fin'] = len(rec.frames)
-    rec.hold(3.0, None)
+    rec.hold(1.4, None)
     hook = [[('¿Cuántos puntos haces', (255, 255, 255))], [('en ', (255, 255, 255)), ('60 SEGUNDOS', (255, 217, 61)), ('?', (255, 255, 255))]]
 else:
     rnd = random.Random(21)
@@ -83,7 +86,7 @@ else:
     f.move(rec, 990, 1850, 0.3)
     hasta_fin(8)
     marks['fin'] = len(rec.frames)
-    rec.hold(2.6, None)
+    rec.hold(1.5, None)
     hook = [[('Me quedaba ', (255, 255, 255)), ('1 SEGUNDO', (255, 110, 110)), ('…', (255, 255, 255))]]
 
 print('frames', len(rec.frames), 'marcas', marks, 'errores', rec.errors)
@@ -98,6 +101,26 @@ def overlay(img, i):
         big_center_text(img, '¡1 SEGUNDO!', 120, (255, 110, 110), (i - marks['uno']) / FPS, y=to_video(540, 330)[1] + 140)
 
 
-render(rec, OUT, hook, overlay)
+fin = len(rec.frames)
+if MODO == 'reto':
+    c = marks['d2'] + 23
+    segs = [(c, c + 45), (0, fin)]
+    subs = [
+        (c, c + 45, '¡Combo x6 con el reloj en rojo!', 0),
+        (0, marks['linea'], 'Modo Contrarreloj: tienes 60 segundos', 1),
+        (marks['linea'], marks['salto'], 'Cada línea te suma +1 segundo', 1),
+        (marks['salto_fin'], marks['fin'], 'Últimos segundos: ¡a combear!', 1),
+        (marks['fin'], fin, '¡Nuevo récord! ¿Cuánto haces tú?', 1),
+    ]
+else:
+    c = marks['uno_fin'] - 3
+    segs = [(c, c + 40), (0, fin)]
+    subs = [
+        (c, c + 40, '¡4 líneas con 1 segundo en el reloj!', 0),
+        (0, marks['uno_fin'], 'Me quedaba 1 segundo…', 1),
+        (marks['uno_fin'], marks['fin'], '+4 segundos y combo x3', 1),
+        (marks['fin'], fin, '¡Y nuevo récord!', 1),
+    ]
+render(rec, OUT, hook, overlay, segs=segs, subs=subs)
 rec.close()
 print('listo', OUT)

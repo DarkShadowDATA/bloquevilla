@@ -7,3 +7,12 @@
 
 ## Contenido para redes
 - Todo contenido nuevo del juego va acompañado de videos para redes (los scripts están en `clips/`).
+
+### Reglas de los videos (la gente se iba en el segundo 1)
+- El **primer cuadro ya es el mejor momento** de la partida (un combo, el tablero limpiándose, el premio). Nada de pantallas de título, menús quietos ni fundidos al principio.
+- **Texto gancho grande** visible desde el cuadro 0.
+- **Golpe de música** en el segundo 0.
+- Todo el juego va **con subtítulos** (la mayoría lo ve sin sonido).
+- **Cierre de 2 s** con la tarjeta "Juega GRATIS".
+- **Unos 13 s en total.**
+- En `clips/edit.py`, `render()` arma esto: `segs` pone primero el momento fuerte (cold open) y luego el resto; `subs` agrega los subtítulos.

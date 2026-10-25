@@ -21,9 +21,9 @@ G = "window.__game.scene.getScene('Game')"
 rec.ev("() => { window.__forceOffer = ['martillo', 'bomba', 'rayo']; return 1; }")
 rec.begin()
 f = Finger(980, 1820)
-f.wait(rec, 0.8, visible=False)
+f.wait(rec, 0.1, visible=False)
 rec.ev(f"() => {{ {G}.showOffer(); return 1; }}")
-rec.hold(1.0, None)
+rec.hold(0.9, None)
 pausa0 = len(rec.frames)
 rec.hold(3.0, None)
 pausa1 = len(rec.frames)
@@ -31,8 +31,9 @@ f = Finger(900, 1500)
 f.move(rec, 540, 990, 0.45)
 rec.ev(f"() => {{ {G}._offerCards[1].emit('pointerdown'); return 1; }}")
 f.wait(rec, 0.12, pressed=True)
-f.wait(rec, 0.9)
-f.move(rec, 430, 1785, 0.45)
+f.wait(rec, 0.75)
+elegido = len(rec.frames)
+f.move(rec, 430, 1785, 0.4)
 rec.ev(f"() => {{ {G}.activatePower(0); return 1; }}")
 f.wait(rec, 0.12, pressed=True)
 f.wait(rec, 0.3)
@@ -40,11 +41,11 @@ tx, ty = BX + 3 * CELL + CELL / 2, BY + 3 * CELL + CELL / 2
 f.move(rec, tx, ty, 0.5)
 rec.ev(f"() => {{ {G}.onBoardTap({{x: {tx}, y: {ty}}}); return 1; }}")
 f.wait(rec, 0.12, pressed=True)
-f.wait(rec, 0.8)
-drag(rec, f, 0, 2, 2, approach=0.35, travel=0.6, after=2.2)
-fin = len(rec.frames)
+f.wait(rec, 0.7)
+ultimo = len(rec.frames)
+drag(rec, f, 0, 2, 2, approach=0.35, travel=0.6, after=1.6)
 f.move(rec, 990, 1850, 0.3)
-rec.hold(0.4, None)
+fin = len(rec.frames)
 print('frames', len(rec.frames), 'errores', rec.errors)
 
 
@@ -57,11 +58,18 @@ def overlay(img, i):
             d.text((x, y + 2), str(k + 1), font=F(70), fill=(70, 20, 90), anchor='mm')
         n = 3 - (i - pausa0) // FPS
         big_center_text(img, f'¿Cuál eliges?  {n}', 92, (255, 255, 255), ((i - pausa0) % FPS) / FPS, y=to_video(540, 1350)[1])
-    if i >= fin - int(0.9 * FPS):
-        big_center_text(img, '¿Tú cuál elegiste?', 84, (255, 217, 61), (i - fin + 0.9 * FPS) / FPS, y=to_video(540, 330)[1] + 150)
 
 
+segs = [(ultimo + 33, ultimo + 75), (0, fin)]
+subs = [
+    (ultimo + 33, ultimo + 75, '¡6 líneas de un jalón!', 0),
+    (0, pausa0, 'Tablero lleno y me salen 3 poderes', 1),
+    (pausa0, pausa1, 'Comenta tu número antes de ver el final', 1),
+    (pausa1, elegido, 'Yo elegí la BOMBA…', 1),
+    (elegido, ultimo + 33, 'Explota un área de 3x3', 1),
+    (ultimo + 33, fin, '¿Tú cuál hubieras elegido?', 1),
+]
 render(rec, OUT, [[('¿Cuál poder ', (255, 255, 255)), ('ELEGIRÍAS', (255, 217, 61)), ('?', (255, 255, 255))],
-                  [('Comenta: 1, 2 o 3', (255, 255, 255))]], overlay)
+                  [('Comenta: 1, 2 o 3', (255, 255, 255))]], overlay, segs=segs, subs=subs)
 rec.close()
 print('listo', OUT)

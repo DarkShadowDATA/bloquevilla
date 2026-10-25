@@ -108,13 +108,43 @@ def music(dur):
     return buf[:int(dur * SR)]
 
 
-def build_audio(sfx_log, dur, path, end_at=None):
+def golpe(buf, t=0.0):
+    """Golpe de música para el segundo 0: bombo grave, platillo de ruido y acorde brillante."""
+    _tone(buf, t, 95, 0.45, 'sine', 0.55, slide=0.35)
+    _tone(buf, t, 190, 0.18, 'triangle', 0.2, slide=0.5)
+    n = int(0.5 * SR)
+    st = int(t * SR)
+    n = min(n, len(buf) - st)
+    if n > 0:
+        rng = np.random.default_rng(7)
+        noise = rng.standard_normal(n) * np.exp(-np.arange(n) / (0.09 * SR)) * 0.22
+        buf[st:st + n] += noise
+    for m in (72, 76, 79, 84):
+        _tone(buf, t + 0.01, 440 * 2 ** ((m - 69) / 12), 0.42, 'square', 0.045)
+
+
+def barrido(buf, t):
+    """Barrido corto para el salto del momento fuerte al inicio de la jugada."""
+    n = int(0.28 * SR)
+    st = int(t * SR) - n // 2
+    if st < 0 or st + n > len(buf):
+        return
+    rng = np.random.default_rng(3)
+    env = np.sin(np.linspace(0, np.pi, n)) * 0.12
+    buf[st:st + n] += rng.standard_normal(n) * env
+    _tone(buf, t - 0.12, 300, 0.25, 'sine', 0.06, slide=3.0)
+
+
+def build_audio(sfx_log, dur, path, end_at=None, cortes=()):
     buf = np.zeros(int(dur * SR))
     for name, args, t in sfx_log:
         if 0 <= t < dur:
             play_sfx(buf, name, args, t)
     if end_at is not None:
         play_sfx(buf, 'power', [], end_at)
+    golpe(buf, 0.0)
+    for t in cortes:
+        barrido(buf, t)
     mix = buf * 1.6 + music(dur) * 0.8
     peak = np.max(np.abs(mix)) or 1
     mix = mix / peak * 0.9
@@ -136,14 +166,15 @@ def draw_hook(img, lines, alpha=1.0):
     """lines: lista de listas de (texto, color)."""
     lay = Image.new('RGBA', (W, BAND), (0, 0, 0, 0))
     d = ImageDraw.Draw(lay)
-    f = F(76)
-    lh = 92
+    base = 86 if len(lines) > 1 else 104
+    f = F(base)
+    lh = 100
     y0 = BAND / 2 - (len(lines) - 1) * lh / 2
     for i, parts in enumerate(lines):
         fl = f
         total = sum(fl.getlength(t) for t, _ in parts)
         if total > W - 80:  # la línea no cabe: se achica hasta que quepa
-            fl = F(int(76 * (W - 80) / total))
+            fl = F(int(base * (W - 80) / total))
             total = sum(fl.getlength(t) for t, _ in parts)
         x = W / 2 - total / 2
         for t, col in parts:
@@ -176,6 +207,29 @@ def big_center_text(img, text, size, color, prog=1.0, y=None, stroke=(30, 10, 60
     d.text((W / 2, y or H / 2), text, font=f, fill=color, anchor='mm', stroke_width=int(12 * sc), stroke_fill=stroke)
 
 
+def draw_sub(img, text, y=1690):
+    """Subtítulo abajo, en caja oscura; se parte en dos líneas si no cabe."""
+    d = ImageDraw.Draw(img)
+    f = F(52)
+    words, lines, cur = text.split(), [], ''
+    for w in words:
+        t = (cur + ' ' + w).strip()
+        if f.getlength(t) > W - 140 and cur:
+            lines.append(cur); cur = w
+        else:
+            cur = t
+    lines.append(cur)
+    lh = 66
+    wmax = max(f.getlength(l) for l in lines)
+    h = lh * len(lines) + 30
+    top = y - h / 2
+    lay = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    ImageDraw.Draw(lay).rounded_rectangle([W / 2 - wmax / 2 - 34, top, W / 2 + wmax / 2 + 34, top + h], radius=34, fill=(12, 8, 32, 200))
+    img.paste(lay, (0, 0), lay)
+    for k, l in enumerate(lines):
+        d.text((W / 2, top + 15 + lh * k + lh / 2), l, font=f, fill=(255, 255, 255), anchor='mm')
+
+
 LOGO = None
 
 
@@ -203,20 +257,38 @@ def end_card(last_game, k, n):
     return img
 
 
-def render(rec, out, hook, overlay=None, end_seconds=2.6):
-    """rec: Recorder ya grabado. hook: líneas del gancho. overlay(img, i): dibujos extra por cuadro."""
+def render(rec, out, hook, overlay=None, end_seconds=2.0, segs=None, subs=None, sub_y=1690):
+    """Arma el video final.
+    rec: Recorder ya grabado. hook: líneas del gancho (visibles desde el cuadro 0).
+    segs: partes de la grabación en orden, en cuadros [(a, b), ...]; la primera debe ser el momento fuerte
+          (cold open) y la siguiente arranca la jugada. Sin segs se usa todo tal cual.
+    subs: subtítulos [(a, b, texto, parte)] en cuadros de la grabación; parte = índice en segs o None (cualquiera).
+    overlay(img, i): dibujos extra; i es el cuadro de la grabación."""
     n = len(rec.frames)
+    segs = segs or [(0, n)]
+    segs = [(max(0, a), min(n, b)) for a, b in segs if b > a]
+    orden = [(i, k) for k, (a, b) in enumerate(segs) for i in range(a, b)]
     end_n = int(end_seconds * FPS)
-    dur = (n + end_n) / FPS
+    dur = (len(orden) + end_n) / FPS
+    # sonidos de cada parte, movidos a su lugar en el video
+    log = rec.sfx_log()
+    eventos, off, cortes = [], 0, []
+    for k, (a, b) in enumerate(segs):
+        if k:
+            cortes.append(off / FPS)
+        for name, args, t in log:
+            if a / FPS <= t < b / FPS:
+                eventos.append((name, args, (off - a) / FPS + t))
+        off += b - a
     wav = out.replace('.mp4', '.wav')
-    build_audio(rec.sfx_log(), dur, wav, end_at=n / FPS)
+    build_audio(eventos, dur, wav, end_at=len(orden) / FPS, cortes=cortes)
     cmd = ['ffmpeg', '-y', '-loglevel', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}', '-r', str(FPS),
            '-i', '-', '-i', wav, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '19', '-pix_fmt', 'yuv420p',
            '-c:a', 'aac', '-b:a', '160k', '-movflags', '+faststart', '-shortest', out]
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     last = None
-    for i, jpg in enumerate(rec.frames):
-        game = frame_image(jpg)
+    for i, k in orden:
+        game = frame_image(rec.frames[i])
         last = game
         img = background(game)
         img.paste(game.resize((GW, GH), Image.LANCZOS), (GX, BAND))
@@ -224,10 +296,15 @@ def render(rec, out, hook, overlay=None, end_seconds=2.6):
         if overlay:
             overlay(img, i)
         draw_finger(img, rec.pointers[i])
+        for sa, sb, texto, parte in (subs or []):
+            if sa <= i < sb and (parte is None or parte == k):
+                draw_sub(img, texto, sub_y)
+                break
         p.stdin.write(img.tobytes())
     for k in range(end_n):
         p.stdin.write(end_card(last, k, end_n).tobytes())
     p.stdin.close()
     p.wait()
     os.remove(wav)
+    print(f'video: {len(orden) / FPS:.1f} s de juego + {end_seconds:.1f} s de cierre = {dur:.1f} s')
     return out
