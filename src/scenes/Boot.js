@@ -22,6 +22,7 @@ export default class Boot extends Phaser.Scene {
     trackAbrir();
     // Quien entra por primera vez juega de inmediato; el menú aparece después
     const nuevo = save.games === 0 && save.built.length === 0 && !location.search.includes('capture');
-    this.scene.start(nuevo ? 'Game' : 'Menu');
+    const enCurso = !!save.partida && !location.search.includes('capture');
+    this.scene.start(nuevo || enCurso ? 'Game' : 'Menu', { reto: false, modo: null });
   }
 }

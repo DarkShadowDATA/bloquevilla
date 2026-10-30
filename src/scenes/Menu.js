@@ -43,7 +43,19 @@ export default class Menu extends Phaser.Scene {
       ['ui_estrella', `${built}/${BUILDINGS.length}`],
     ]);
 
-    button(this, W / 2, 1040, 640, 150, 'Jugar', 0x5ac85a, () => this.scene.start('Game', { reto: false, modo: null }), { size: 72 });
+    if (save.partida) {
+      const pts = (save.partida.score || 0).toLocaleString('es-MX');
+      const cb = button(this, W / 2 - 110, 1040, 420, 150, 'Continuar', 0x5ac85a, () => this.scene.start('Game', { reto: false, modo: null }), { size: 60 });
+      txt(this, W / 2 - 110, 1100, `Tu partida: ${pts} pts`, 24, '#ffffff', { weight: '700' });
+      this.tweens.add({ targets: cb, scale: 1.04, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+      button(this, W / 2 + 215, 1040, 200, 150, 'Nueva', 0x3c8a4a, () => {
+        save.partida = null;
+        persist();
+        this.scene.start('Game', { reto: false, modo: null, nueva: true });
+      }, { size: 40 });
+    } else {
+      button(this, W / 2, 1040, 640, 150, 'Jugar', 0x5ac85a, () => this.scene.start('Game', { reto: false, modo: null }), { size: 72 });
+    }
     const hecho = save.reto.last === today();
     const rb = button(this, W / 2, 1182, 640, 104, hecho ? `Reto #${retoNumero(today())} · ¡Superado!` : `Reto del día #${retoNumero(today())}`,
       hecho ? 0x5a4a8a : 0x7a4ad8, () => this.scene.start('Game', { reto: true }), { size: 42 });
@@ -87,7 +99,7 @@ export default class Menu extends Phaser.Scene {
         tb.label.setText(label());
       }, { size: 34 });
     }
-    txt(this, W / 2, H - 60, 'v0.6 · Tienda', 24, '#ffffffaa', { weight: '500' });
+    txt(this, W / 2, H - 60, 'v0.7 · Partida guardada', 24, '#ffffffaa', { weight: '500' });
   }
 
   bannerEvento() {

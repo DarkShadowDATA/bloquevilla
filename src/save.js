@@ -17,6 +17,7 @@ const DEFAULT = {
   tienda: { temas: [], deco: [], visto: false },
   proximos: [],
   jugador: null,
+  partida: null, // partida normal en curso, para retomarla si el navegador se cierra
 };
 
 function load() {

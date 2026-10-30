@@ -103,6 +103,25 @@ export default class Game extends Phaser.Scene {
     this.input.on('pointermove', this.onMove, this);
     this.input.on('pointerup', this.onUp, this);
 
+    // Guarda la partida al salir (celular suspendido, cambio de app, pestaña cerrada o ir al menú)
+    const guardar = () => this.guardarPartida();
+    const alOcultar = () => { if (document.visibilityState === 'hidden') guardar(); };
+    document.addEventListener('visibilitychange', alOcultar);
+    window.addEventListener('pagehide', guardar);
+    this.events.once('shutdown', () => {
+      guardar();
+      document.removeEventListener('visibilitychange', alOcultar);
+      window.removeEventListener('pagehide', guardar);
+    });
+
+    // ¿Hay una partida a medias? Se retoma tal cual
+    const p = save.partida;
+    if (!this.reto && !this.tiempo && !window.__capture && p && p.v === 1 && !(data && data.nueva)) {
+      this.reanudar(p);
+      return;
+    }
+    if (!this.reto && !this.tiempo && save.partida) { save.partida = null; persist(); }
+
     if (save.pendingPower && !this.reto && !this.tiempo) {
       this.powers.push(save.pendingPower);
       save.pendingPower = null;
@@ -122,6 +141,7 @@ export default class Game extends Phaser.Scene {
     this.renderPowers();
     this.newTray(true);
     if (this.tiempo) { this.iniciarTiempo(); return; }
+    this.guardarPartida();
 
     if (save.games === 0) {
       this.time.delayedCall(500, () => toast(this, 'Arrastra una pieza al tablero', 352, 2600));
@@ -553,6 +573,7 @@ export default class Game extends Phaser.Scene {
 
   afterMove() {
     this.busy = false;
+    this.guardarPartida();
     if (this.offerPending) {
       this.offerPending = false;
       if (this.powers.length < MAX_POWERS) {
@@ -607,6 +628,8 @@ export default class Game extends Phaser.Scene {
   // ---------- Poderes ----------
   showOffer() {
     this.busy = true;
+    this.offerOpen = true;
+    this.guardarPartida();
     // window.__forceOffer solo se usa al grabar videos
     const ids = (window.__capture && window.__forceOffer) || rollOffer();
     const layer = this.add.container(0, 0).setDepth(300);
@@ -636,6 +659,7 @@ export default class Game extends Phaser.Scene {
         this.time.delayedCall(650, () => {
           layer.destroy();
           this.powers.push(id);
+          this.offerOpen = false;
           this.renderPowers();
           this.busy = false;
           this.checkStuck();
@@ -698,6 +722,7 @@ export default class Game extends Phaser.Scene {
   }
 
   consume(i) {
+    this.time.delayedCall(350, () => this.guardarPartida());
     this.powers.splice(i, 1);
     if (this.mode) this.cancelMode();
     this.renderPowers();
@@ -808,6 +833,52 @@ export default class Game extends Phaser.Scene {
     this.linesTotal = s.linesTotal;
     this.nextOffer = s.nextOffer;
     this.updateComboText();
+  }
+
+  // ---------- Partida guardada ----------
+  guardarPartida() {
+    if (this.reto || this.tiempo || this.over || window.__capture || !this.pieces.length) return;
+    save.partida = {
+      v: 1,
+      at: Date.now(),
+      board: this.board.map((r) => [...r]),
+      pieces: this.pieces.map((p) => (p.used ? { used: true } : { cells: p.cells, color: p.color, gold: p.gold, used: false })),
+      score: this.score,
+      runBricks: this.runBricks,
+      combo: this.combo,
+      miss: this.miss,
+      linesTotal: this.linesTotal,
+      nextOffer: this.nextOffer,
+      powers: this.powers.slice(),
+      doubleBricks: this.doubleBricks,
+      offerPending: this.offerPending || !!this.offerOpen,
+    };
+    persist();
+  }
+
+  reanudar(p) {
+    p.board.forEach((row, r) => row.forEach((col, c) => {
+      if (col) { this.board[r][c] = col; this.addBlock(r, c, col, false); }
+    }));
+    this.score = p.score || 0;
+    this.addScore(0);
+    this.runBricks = p.runBricks || 0;
+    this.combo = p.combo || 0;
+    this.miss = p.miss || 0;
+    this.linesTotal = p.linesTotal || 0;
+    this.nextOffer = p.nextOffer || LINES_PER_OFFER;
+    this.powers = (p.powers || []).slice(0, MAX_POWERS);
+    if (p.doubleBricks) {
+      this.doubleBricks = true;
+      this.brickChip.list[0].clear().fillStyle(0xb47814, 0.9).fillRoundedRect(-115, -40, 230, 80, 40);
+    }
+    this.renderPowers();
+    this.updateComboText();
+    if (!p.pieces || p.pieces.every((d) => d.used)) this.newTray(true);
+    else this.pieces = p.pieces.map((d, i) => (d.used ? { used: true, c: null } : this.makePiece({ cells: d.cells, color: d.color, gold: d.gold }, i, true)));
+    this.offerPending = !!p.offerPending;
+    this.time.delayedCall(350, () => toast(this, '¡Partida recuperada! Sigue donde te quedaste', 352, 2200));
+    this.time.delayedCall(700, () => this.afterMove());
   }
 
   // ---------- Contrarreloj ----------
@@ -968,6 +1039,7 @@ export default class Game extends Phaser.Scene {
       save.tiempo.partidas += 1;
     } else if (newRecord) save.record = this.score;
     save.games += 1;
+    save.partida = null;
     persist();
     sfx.over();
     for (let r = 0; r < N; r++) {
