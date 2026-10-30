@@ -12,7 +12,8 @@ import { POWERS, RARITY, rollOffer } from '../powers.js';
 import { txt, background, icon, button, toast, floatText, chip, confetti } from '../ui.js';
 import { track } from '../stats.js';
 import { rngDe, barajar } from '../rng.js';
-import { compartirReto } from '../share.js';
+import { compartirReto, pedirApodo } from '../share.js';
+import { enviarPuntaje } from '../ranking.js';
 
 export default class Game extends Phaser.Scene {
   constructor() { super('Game'); }
@@ -1222,6 +1223,24 @@ export default class Game extends Phaser.Scene {
       });
     }
     this.time.delayedCall(900, () => this.showSummary(newRecord, titulo || '¡Sin espacio!'));
+    if (this.tiempo && !this.vs) this.subirRanking();
+  }
+
+  async subirRanking() {
+    if (window.__capture || this.score <= 0) return;
+    if (!save.apodo) {
+      await new Promise((r) => this.time.delayedCall(1300, r));
+      const a = await pedirApodo('¡Entra al ranking!', 'Elige tu apodo para el top semanal');
+      if (!a) return;
+    }
+    try {
+      const res = await enviarPuntaje(this.score);
+      if (res && this.rankTxt) this.rankTxt.setText(`Ranking semanal: lugar #${res.lugar}`).setColor(res.lugar <= 3 ? '#e0901a' : '#6a3ab8');
+    } catch (e) {
+      if (!this.rankTxt) return;
+      if (/espera/.test(e.message)) this.rankTxt.setText('Ranking: se guardará tu mejor puntaje');
+      else this.rankTxt.setText('Ranking: sin conexión');
+    }
   }
 
   showSummary(newRecord, titulo) {
@@ -1253,11 +1272,13 @@ export default class Game extends Phaser.Scene {
     panel.add(bt);
     panel.add(icon(this, 45 - bt.width / 2 - 55, 10, 'ui_ladrillo', 80));
     const next = BUILDINGS.find((b) => !isBuilt(b.id));
-    if (next && !vs) {
+    if (next && !vs && !this.tiempo) {
       const ok = save.bricks >= next.cost;
       panel.add(txt(this, 0, 95, ok ? `¡Ya te alcanza para la ${next.name}!` : `Te faltan ${next.cost - save.bricks} para la ${next.name}`, 32, ok ? '#2a9a4a' : '#8c7aa0', { weight: '700' }));
     }
     if (vs) panel.add(txt(this, 0, 95, 'Mismas piezas para los dos', 30, '#8c7aa0', { weight: '700' }));
+    this.rankTxt = null;
+    if (this.tiempo && !vs) { this.rankTxt = txt(this, 0, 95, 'Enviando al ranking…', 32, '#6a3ab8', { weight: '700' }); panel.add(this.rankTxt); }
     // Retar: el amigo juega con las mismas piezas que salieron en esta partida
     const retar = button(this, 0, 205, 600, 120, vs ? (gano ? 'Regresarle el reto' : 'Retar a otro amigo') : 'Retar a un amigo', 0x7a4ad8,
       () => compartirReto(this, this.semilla, this.score, this.tiempo, gano), { size: 44 });

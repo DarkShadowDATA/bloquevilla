@@ -5,6 +5,7 @@ import { EVENTO, eventoActivo, diasRestantes } from '../evento.js';
 import { retoNumero } from '../reto.js';
 import { sfx } from '../sfx.js';
 import { txt, background, icon, button, toast, confetti } from '../ui.js';
+import { premioPendiente, cobrarPremio } from '../ranking.js';
 
 export default class Menu extends Phaser.Scene {
   constructor() { super('Menu'); }
@@ -60,14 +61,15 @@ export default class Menu extends Phaser.Scene {
     const rb = button(this, W / 2, 1182, 640, 104, hecho ? `Reto #${retoNumero(today())} · ¡Superado!` : `Reto del día #${retoNumero(today())}`,
       hecho ? 0x5a4a8a : 0x7a4ad8, () => this.scene.start('Game', { reto: true }), { size: 42 });
     if (!hecho) this.tweens.add({ targets: rb, scale: 1.04, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-    const tb60 = button(this, W / 2, 1300, 640, 104, 'Contrarreloj 60 s', 0x1f9aa8, () => this.scene.start('Game', { reto: false, modo: 'tiempo' }), { size: 42 });
+    const tb60 = button(this, W / 2 - 75, 1300, 490, 104, 'Contrarreloj 60 s', 0x1f9aa8, () => this.scene.start('Game', { reto: false, modo: 'tiempo' }), { size: 42 });
     if (!save.tiempo.partidas) {
-      const nuevo = txt(this, W / 2 + 300, 1258, '¡NUEVO!', 28, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12).setDepth(5);
+      const nuevo = txt(this, W / 2 + 140, 1258, '¡NUEVO!', 28, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12).setDepth(5);
       this.tweens.add({ targets: nuevo, scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
     } else if (save.tiempo.record) {
-      tb60.label.setText(`Contrarreloj · récord ${save.tiempo.record.toLocaleString('es-MX')}`).setFontSize(36);
+      tb60.label.setText(`60 s · récord ${save.tiempo.record.toLocaleString('es-MX')}`).setFontSize(36);
     }
     button(this, W / 2 - 165, 1418, 310, 104, 'Mi pueblo', 0xff8c2b, () => this.scene.start('Village'), { size: 40 });
+    button(this, W / 2 + 245, 1300, 150, 104, '🏆', 0xd8a020, () => this.scene.start('Ranking'), { size: 52 });
     button(this, W / 2 + 165, 1418, 310, 104, '  Tienda', 0xd8a020, () => this.scene.start('Shop'), { size: 40, iconKey: 'ui_tienda' });
     if (!save.tienda.visto) {
       const nv = txt(this, W / 2 + 290, 1372, '¡NUEVO!', 26, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12).setDepth(5);
@@ -99,7 +101,14 @@ export default class Menu extends Phaser.Scene {
         tb.label.setText(label());
       }, { size: 34 });
     }
-    txt(this, W / 2, H - 60, 'v0.9 · Reta a un amigo', 24, '#ffffffaa', { weight: '500' });
+    premioPendiente().then((p) => {
+      if (!p || !this.sys.isActive()) return;
+      cobrarPremio(p);
+      sfx.build();
+      confetti(this, W / 2, 700, 90);
+      toast(this, `¡Quedaste #${p.lugar} en el ranking de la semana pasada! +${p.premio} ladrillos`, 700, 3500);
+    }).catch(() => {});
+    txt(this, W / 2, H - 60, 'v1.0 · Ranking semanal', 24, '#ffffffaa', { weight: '500' });
   }
 
   bannerEvento() {

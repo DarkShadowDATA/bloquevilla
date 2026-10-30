@@ -32,11 +32,13 @@ export function pedirApodo(titulo = '¿Cómo te llamas?', sub = 'Así te verán 
     const [t1, t2] = fondo.querySelectorAll('form > div');
     t1.textContent = titulo;
     t2.textContent = sub;
+    // que ningún toque atraviese la ventana hacia el juego
+    ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click'].forEach((ev) => fondo.addEventListener(ev, (e) => e.stopPropagation()));
     document.body.appendChild(fondo);
     const input = fondo.querySelector('#bv-apodo');
     const err = fondo.querySelector('#bv-err');
     setTimeout(() => input.focus(), 50);
-    const cerrar = (v) => { fondo.remove(); resolve(v); };
+    const cerrar = (v) => { setTimeout(() => fondo.remove(), 60); resolve(v); };
     fondo.querySelector('#bv-cancel').onclick = () => cerrar(null);
     fondo.querySelector('form').onsubmit = (e) => {
       e.preventDefault();

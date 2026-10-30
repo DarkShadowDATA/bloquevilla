@@ -5,6 +5,7 @@ import Menu from './scenes/Menu.js';
 import Game from './scenes/Game.js';
 import Village from './scenes/Village.js';
 import Shop from './scenes/Shop.js';
+import Ranking from './scenes/Ranking.js';
 import { sfx } from './sfx.js';
 
 // Modo captura (?capture): el juego avanza cuadro por cuadro para grabar videos.
@@ -49,7 +50,7 @@ async function start() {
     backgroundColor: '#161c4e',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     input: { activePointers: 1 },
-    scene: [Boot, Menu, Game, Village, Shop],
+    scene: [Boot, Menu, Game, Village, Shop, Ranking],
     render: { preserveDrawingBuffer: CAPTURE },
   });
   if (CAPTURE) setupCapture(game);

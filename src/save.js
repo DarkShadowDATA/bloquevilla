@@ -19,6 +19,7 @@ const DEFAULT = {
   jugador: null,
   peligros: { bomba: false, hielo: false },
   apodo: null,
+  rankingCobrado: null,
   partida: null, // partida normal en curso, para retomarla si el navegador se cierra
 };
 
