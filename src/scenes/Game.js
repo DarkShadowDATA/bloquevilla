@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
   W, H, N, CELL, BX, BY, TRAY_Y, SLOTS, TRAY_CELL, COLORS, HEX, SCORE, BRICKS,
-  COMBO_GRACE, LINES_PER_OFFER, MAX_POWERS, BUILDINGS, TIEMPO, ORO,
+  COMBO_GRACE, LINES_PER_OFFER, MAX_POWERS, BUILDINGS, TIEMPO, ORO, PELIGRO,
 } from '../config.js';
 import { size, canPlace, anyFit, makeTray, findLines, rotate } from '../pieces.js';
 import { save, persist, isBuilt, today, ayer } from '../save.js';
@@ -23,6 +23,12 @@ export default class Game extends Phaser.Scene {
     this.tiempoTick = null;
     this.atorado = false;
     this.summaryShown = false;
+    this.bombas = {};          // casilla (r*N+c) -> jugadas que le quedan
+    this.bombaTxt = {};
+    this.bombasNuevas = new Set();
+    this.tickPendiente = false;
+    this.bombasDesactivadas = 0;
+    this.causa = '';
     this.t0 = this.time.now;
     this.hintTiempo = null;
     this.timerBar = null;
@@ -215,6 +221,7 @@ export default class Game extends Phaser.Scene {
 
   blockTex(color) {
     if (color === 'gold') return 'block_gold';
+    if (color === 'hielo' || color === 'hielo2' || color === 'bomba') return 'blk_' + color;
     const tema = this.tema || (this.tema = temaBloques(isBuilt('pozo')));
     if (tema === 'agua') return 'water_' + ((COLORS.indexOf(color) % 3) + 1);
     if (tema === 'muertos') return 'muertos_' + ((COLORS.indexOf(color) % 4) + 1);
@@ -235,6 +242,7 @@ export default class Game extends Phaser.Scene {
       this.tweens.add({ targets: im, scaleX: s, scaleY: s, duration: 220, ease: 'Back.Out' });
     }
     this.sprites[r][c] = im;
+    if (color === 'bomba') this.dibujarBomba(r, c);
   }
 
   // ---------- Piezas ----------
@@ -262,6 +270,7 @@ export default class Game extends Phaser.Scene {
       return;
     }
     this.pieces.forEach((p) => p.c && p.c.destroy());
+    this.spawnPeligros();
     const defs = makeTray(this.board);
     if (Math.random() < ORO.chance) {
       const d = defs[Math.floor(Math.random() * defs.length)];
@@ -369,12 +378,13 @@ export default class Game extends Phaser.Scene {
       board: this.board.map((r) => [...r]),
       pieces: this.pieces.map((p) => ({ cells: (p.cells || []).map((x) => [...x]), color: p.color, gold: p.gold, used: p.used })),
       score: this.score, runBricks: this.runBricks, combo: this.combo, miss: this.miss,
-      linesTotal: this.linesTotal, nextOffer: this.nextOffer,
+      linesTotal: this.linesTotal, nextOffer: this.nextOffer, bombas: { ...this.bombas },
     };
   }
 
   place(pc, r, c) {
     this.snapshot();
+    this.tickPendiente = true;
     pc.used = true;
     this.atorado = false;
     pc.c.destroy();
@@ -427,7 +437,7 @@ export default class Game extends Phaser.Scene {
     const { x, y } = this.cellXY(cy, cx);
 
     const oros = cells.filter(([r, c]) => this.board[r][c] === 'gold');
-    this.clearCells(cells);
+    this.clearCells(cells, 14, true);
     this.addScore(pts);
     if (oros.length) this.premioOro(oros);
     this.addBricks(bricks, x, y);
@@ -472,10 +482,29 @@ export default class Game extends Phaser.Scene {
     return 430;
   }
 
-  clearCells(cells, stagger = 14) {
+  clearCells(cells, stagger = 14, porLinea = false) {
+    const desactivadas = [];
     cells.forEach(([r, c], i) => {
       const color = this.board[r][c];
       const im = this.sprites[r][c];
+      // El hielo entero solo se agrieta con una línea; los poderes lo rompen de una vez
+      if (porLinea && color === 'hielo') {
+        this.board[r][c] = 'hielo2';
+        if (im) {
+          this.time.delayedCall(80 + i * stagger, () => {
+            im.setTexture(this.blockTex('hielo2')).setDisplaySize(CELL, CELL);
+            this.fx.blue.explode(10, im.x, im.y);
+            sfx.crack();
+          });
+        }
+        return;
+      }
+      if (color === 'bomba') {
+        const k = r * N + c;
+        delete this.bombas[k];
+        if (this.bombaTxt[k]) { this.bombaTxt[k].destroy(); delete this.bombaTxt[k]; }
+        desactivadas.push([r, c]);
+      }
       this.board[r][c] = null;
       this.sprites[r][c] = null;
       if (!im) return;
@@ -483,10 +512,11 @@ export default class Game extends Phaser.Scene {
       im.setDepth(12);
       this.tweens.add({
         targets: im, scaleX: 0, scaleY: 0, angle: 25, delay: 80 + i * stagger, duration: 220, ease: 'Back.In',
-        onStart: () => { const fc = color === 'gold' ? 'yellow' : color; if (fc && this.fx[fc]) this.fx[fc].explode(9, im.x, im.y); },
+        onStart: () => { const fc = { gold: 'yellow', hielo: 'blue', hielo2: 'blue', bomba: 'red' }[color] || color; if (fc && this.fx[fc]) this.fx[fc].explode(9, im.x, im.y); },
         onComplete: () => im.destroy(),
       });
     });
+    desactivadas.forEach(([r, c]) => this.desactivarBomba(r, c));
   }
 
   comboBanner(n) {
@@ -573,6 +603,10 @@ export default class Game extends Phaser.Scene {
 
   afterMove() {
     this.busy = false;
+    if (this.tickPendiente) {
+      this.tickPendiente = false;
+      if (this.tickBombas()) return;
+    }
     this.guardarPartida();
     if (this.offerPending) {
       this.offerPending = false;
@@ -817,6 +851,9 @@ export default class Game extends Phaser.Scene {
       if (this.sprites[r][c]) this.sprites[r][c].destroy();
       this.sprites[r][c] = null;
     }
+    Object.values(this.bombaTxt).forEach((t) => t.destroy());
+    this.bombaTxt = {};
+    this.bombas = { ...(s.bombas || {}) };
     this.board = s.board.map((r) => [...r]);
     for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (this.board[r][c]) this.addBlock(r, c, this.board[r][c], false);
     this.pieces.forEach((p) => p.c && p.c.destroy());
@@ -833,6 +870,118 @@ export default class Game extends Phaser.Scene {
     this.linesTotal = s.linesTotal;
     this.nextOffer = s.nextOffer;
     this.updateComboText();
+  }
+
+  // ---------- Bloques peligrosos ----------
+  dibujarBomba(r, c) {
+    const k = r * N + c;
+    if (this.bombas[k] == null) this.bombas[k] = PELIGRO.bomba.turnos;
+    if (this.bombaTxt[k]) this.bombaTxt[k].destroy();
+    const { x, y } = this.cellXY(r, c);
+    const t = txt(this, x + 22, y + 24, String(this.bombas[k]), 46, '#ffffff', { stroke: '#3a0614', strokeW: 9 }).setDepth(14);
+    this.bombaTxt[k] = t;
+    this.pintarBomba(k);
+  }
+
+  pintarBomba(k) {
+    const t = this.bombaTxt[k];
+    if (!t) return;
+    const n = this.bombas[k];
+    t.setText(String(n));
+    this.tweens.killTweensOf(t);
+    t.setScale(1);
+    if (n <= 2) {
+      t.setColor('#ff5a5a');
+      this.tweens.add({ targets: t, scale: 1.35, duration: 260, yoyo: true, repeat: -1 });
+    } else t.setColor('#ffffff');
+  }
+
+  spawnPeligros() {
+    if (this.reto || this.tiempo || this.over || this.linesTotal < PELIGRO.desdeLineas) return;
+    const libres = [];
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      if (this.board[r][c]) continue;
+      const enFila = this.board[r].filter(Boolean).length;
+      const enCol = this.board.filter((row) => row[c]).length;
+      if (enFila < N - 2 && enCol < N - 2) libres.push([r, c]);
+    }
+    Phaser.Utils.Array.Shuffle(libres);
+    let aviso = null;
+    if (!Object.keys(this.bombas).length && libres.length && Math.random() < PELIGRO.bomba.chance) {
+      const [r, c] = libres.pop();
+      const k = r * N + c;
+      this.board[r][c] = 'bomba';
+      this.bombas[k] = PELIGRO.bomba.turnos;
+      this.bombasNuevas.add(k);
+      this.addBlock(r, c, 'bomba', true);
+      this.cameras.main.shake(120, 0.003);
+      sfx.alarma();
+      if (!save.peligros.bomba) aviso = ['bomba', '¡BOMBA! Limpia su línea antes del 0'];
+    }
+    const hielos = this.board.flat().filter((v) => v === 'hielo' || v === 'hielo2').length;
+    if (hielos < PELIGRO.hielo.max && libres.length && Math.random() < PELIGRO.hielo.chance) {
+      const n = Math.min(libres.length, Math.random() < 0.5 ? 1 : 2);
+      for (let i = 0; i < n; i++) {
+        const [r, c] = libres.pop();
+        this.board[r][c] = 'hielo';
+        this.addBlock(r, c, 'hielo', true);
+      }
+      sfx.crack();
+      if (!aviso && !save.peligros.hielo) aviso = ['hielo', 'HIELO: se rompe con 2 líneas'];
+    }
+    if (aviso && !window.__capture) {
+      save.peligros[aviso[0]] = true;
+      persist();
+      this.time.delayedCall(450, () => toast(this, aviso[1], 352, 3000));
+    }
+  }
+
+  // Cada pieza colocada acerca las bombas a 0. Devuelve true si una explotó.
+  tickBombas() {
+    let boom = null;
+    Object.keys(this.bombas).forEach((key) => {
+      const k = Number(key);
+      if (this.bombasNuevas.has(k)) return;
+      this.bombas[k] -= 1;
+      this.pintarBomba(k);
+      if (this.bombas[k] <= 2 && this.bombas[k] > 0) { sfx.alarma(); vibe(30); }
+      if (this.bombas[k] <= 0 && !boom) boom = k;
+    });
+    this.bombasNuevas.clear();
+    if (boom == null) return false;
+    this.explotar(Math.floor(boom / N), boom % N);
+    return true;
+  }
+
+  explotar(r, c) {
+    this.busy = true;
+    this.causa = 'bomba';
+    const { x, y } = this.cellXY(r, c);
+    sfx.boom();
+    vibe(200);
+    this.cameras.main.flash(260, 255, 80, 60);
+    this.cameras.main.shake(600, 0.025);
+    this.fx.red.explode(40, x, y);
+    this.fx.orange.explode(40, x, y);
+    this.sparks.explode(40, x, y);
+    const ring = this.add.circle(x, y, 40).setStrokeStyle(20, 0xff7a2b).setDepth(170);
+    this.tweens.add({ targets: ring, scale: 12, alpha: 0, duration: 650, ease: 'Cubic.Out', onComplete: () => ring.destroy() });
+    floatText(this, W / 2, 860, '¡BOOM!', 150, '#ffd23f', '#7a1206');
+    this.time.delayedCall(900, () => this.gameOver('¡Explotó la bomba!'));
+  }
+
+  desactivarBomba(r, c) {
+    const { x, y } = this.cellXY(r, c);
+    this.bombasDesactivadas += 1;
+    this.addScore(PELIGRO.bomba.puntos);
+    this.addBricks(PELIGRO.bomba.ladrillos, x, y);
+    this.time.delayedCall(200, () => {
+      this.sparks.explode(30, x, y);
+      confetti(this, x, y, 30);
+      floatText(this, W / 2, BY + 230, `¡DESACTIVADA! +${PELIGRO.bomba.ladrillos}`, 80, '#7ef0a0', '#0e3a1e');
+      sfx.coin();
+      this.time.delayedCall(120, () => sfx.build());
+    });
   }
 
   // ---------- Partida guardada ----------
@@ -852,11 +1001,13 @@ export default class Game extends Phaser.Scene {
       powers: this.powers.slice(),
       doubleBricks: this.doubleBricks,
       offerPending: this.offerPending || !!this.offerOpen,
+      bombas: { ...this.bombas },
     };
     persist();
   }
 
   reanudar(p) {
+    this.bombas = { ...(p.bombas || {}) };
     p.board.forEach((row, r) => row.forEach((col, c) => {
       if (col) { this.board[r][c] = col; this.addBlock(r, c, col, false); }
     }));
@@ -1033,7 +1184,7 @@ export default class Game extends Phaser.Scene {
     if (endBricks > 0) this.addBricks(endBricks, W / 2, 900);
     const recordPrev = this.tiempo ? save.tiempo.record : save.record;
     const newRecord = this.score > recordPrev;
-    track('partida', { modo: this.tiempo ? 'tiempo' : 'normal', puntos: this.score, lineas: this.linesTotal, ladrillos: this.runBricks, record: newRecord, segundos: Math.round((this.time.now - this.t0) / 1000), tema: this.tema || '' });
+    track('partida', { modo: this.tiempo ? 'tiempo' : 'normal', puntos: this.score, lineas: this.linesTotal, ladrillos: this.runBricks, record: newRecord, segundos: Math.round((this.time.now - this.t0) / 1000), tema: this.tema || '', causa: this.causa || 'espacio', bombas: this.bombasDesactivadas });
     if (this.tiempo) {
       if (newRecord) save.tiempo.record = this.score;
       save.tiempo.partidas += 1;

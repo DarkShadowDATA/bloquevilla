@@ -60,6 +60,8 @@ export const sfx = {
     [0, 4, 7, 12, 16].forEach((s, i) => tone(semis(523, s), 0.2, { vol: 0.09, when: 0.25 + i * 0.08 }));
   },
   over() { [7, 4, 0, -5].forEach((s, i) => tone(semis(392, s), 0.25, { type: 'triangle', vol: 0.1, when: i * 0.14 })); },
+  crack() { tone(1900, 0.07, { type: 'triangle', vol: 0.09 }); tone(1300, 0.12, { type: 'square', vol: 0.04, when: 0.03, slide: 0.6 }); },
+  alarma() { tone(880, 0.09, { type: 'square', vol: 0.06 }); tone(660, 0.12, { type: 'square', vol: 0.05, when: 0.1 }); },
   tick() { tone(1250, 0.05, { type: 'square', vol: 0.05 }); },
   error() { tone(160, 0.12, { type: 'square', vol: 0.05 }); },
 };

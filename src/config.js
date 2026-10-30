@@ -81,4 +81,13 @@ export const DECO_POS = {
   fuente: [[548, 1335, 210]],
 };
 
-export const VERSION = '0.7';
+export const VERSION = '0.8';
+
+// Bloques peligrosos (solo en partida normal, después de unas líneas)
+// Bomba: cuenta regresiva por pieza colocada; si llega a 0 explota y se acaba la partida. Limpiar su línea la desactiva.
+// Hielo: ocupa una casilla y necesita 2 líneas para romperse (la primera solo lo agrieta).
+export const PELIGRO = {
+  desdeLineas: 6,
+  bomba: { chance: 0.35, turnos: 7, ladrillos: 5, puntos: 100 },
+  hielo: { chance: 0.4, max: 4 },
+};

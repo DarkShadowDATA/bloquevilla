@@ -76,6 +76,8 @@ def play_sfx(buf, name, args, t):
     elif name == 'power':
         for i, s in enumerate([0, 4, 7, 12]): T(_semis(523, s), 0.18, 'sine', 0.1, when=i * 0.07)
     elif name == 'tick': T(1250, 0.05, 'square', 0.05)
+    elif name == 'crack': T(1900, 0.07, 'triangle', 0.09); T(1300, 0.12, 'square', 0.04, when=0.03, slide=0.6)
+    elif name == 'alarma': T(880, 0.09, 'square', 0.06); T(660, 0.12, 'square', 0.05, when=0.1)
     elif name == 'error': T(160, 0.12, 'square', 0.05)
     elif name == 'boom': T(120, 0.35, 'saw', 0.12, slide=0.3)
     elif name == 'coin': T(988, 0.08, 'sine', 0.08); T(1318, 0.14, 'sine', 0.08, when=0.07)

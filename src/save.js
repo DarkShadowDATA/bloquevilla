@@ -17,6 +17,7 @@ const DEFAULT = {
   tienda: { temas: [], deco: [], visto: false },
   proximos: [],
   jugador: null,
+  peligros: { bomba: false, hielo: false },
   partida: null, // partida normal en curso, para retomarla si el navegador se cierra
 };
 
@@ -25,7 +26,7 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const d = JSON.parse(raw);
-      return { ...JSON.parse(JSON.stringify(DEFAULT)), ...d, reto: { ...DEFAULT.reto, ...(d.reto || {}) }, muertos: { ...DEFAULT.muertos, ...(d.muertos || {}) }, tiempo: { ...DEFAULT.tiempo, ...(d.tiempo || {}) }, tienda: { ...DEFAULT.tienda, ...(d.tienda || {}) } };
+      return { ...JSON.parse(JSON.stringify(DEFAULT)), ...d, reto: { ...DEFAULT.reto, ...(d.reto || {}) }, muertos: { ...DEFAULT.muertos, ...(d.muertos || {}) }, tiempo: { ...DEFAULT.tiempo, ...(d.tiempo || {}) }, tienda: { ...DEFAULT.tienda, ...(d.tienda || {}) }, peligros: { ...DEFAULT.peligros, ...(d.peligros || {}) } };
     }
   } catch (e) { /* navegador sin almacenamiento */ }
   return JSON.parse(JSON.stringify(DEFAULT));

@@ -479,6 +479,41 @@ function tiendaIcon(g, s) {
   g.fillStyle(0x3a3448, 1); g.fillRect(s * 0.1, s * 0.16, s * 0.8, s * 0.06);
 }
 
+// ---------- Bloques peligrosos ----------
+function hielo(g, s, roto) {
+  const r = s * 0.18;
+  g.fillStyle(0x4f9fd6, 1); g.fillRoundedRect(3, 4, s - 6, s - 6, r);
+  g.fillStyle(0xbfe9ff, 1); g.fillRoundedRect(3, 3, s - 6, s - 12, r);
+  g.fillStyle(0xe8f8ff, 0.9); g.fillRoundedRect(10, 9, s - 20, s - 26, r * 0.8);
+  g.fillStyle(0xffffff, 0.9);
+  g.fillPoints([{ x: s * 0.2, y: s * 0.62 }, { x: s * 0.62, y: s * 0.2 }, { x: s * 0.72, y: s * 0.2 }, { x: s * 0.3, y: s * 0.62 }], true);
+  g.fillPoints([{ x: s * 0.42, y: s * 0.74 }, { x: s * 0.8, y: s * 0.36 }, { x: s * 0.84, y: s * 0.42 }, { x: s * 0.48, y: s * 0.78 }], true);
+  g.fillStyle(0x9fd6f5, 1);
+  [[0.25, 0.25], [0.75, 0.7], [0.3, 0.8], [0.7, 0.3]].forEach(([x, y]) => g.fillCircle(s * x, s * y, s * 0.03));
+  if (roto) {
+    g.lineStyle(5, 0x2f6f9f, 1);
+    g.strokePoints([{ x: s * 0.12, y: s * 0.3 }, { x: s * 0.38, y: s * 0.45 }, { x: s * 0.5, y: s * 0.38 }, { x: s * 0.7, y: s * 0.62 }, { x: s * 0.9, y: s * 0.68 }]);
+    g.strokePoints([{ x: s * 0.5, y: s * 0.38 }, { x: s * 0.55, y: s * 0.12 }]);
+    g.strokePoints([{ x: s * 0.38, y: s * 0.45 }, { x: s * 0.3, y: s * 0.86 }]);
+    g.lineStyle(2, 0xffffff, 0.9);
+    g.strokePoints([{ x: s * 0.12, y: s * 0.28 }, { x: s * 0.38, y: s * 0.43 }, { x: s * 0.5, y: s * 0.36 }, { x: s * 0.7, y: s * 0.6 }]);
+  }
+}
+
+function bombaTile(g, s) {
+  const r = s * 0.18;
+  g.fillStyle(0x4a1424, 1); g.fillRoundedRect(3, 4, s - 6, s - 6, r);
+  g.fillStyle(0x7a2236, 1); g.fillRoundedRect(3, 3, s - 6, s - 12, r);
+  g.fillStyle(0x1c1626, 1); g.fillCircle(s * 0.47, s * 0.56, s * 0.3);
+  g.fillStyle(0x3a3448, 1); g.fillCircle(s * 0.42, s * 0.5, s * 0.22);
+  g.fillStyle(0xffffff, 0.75); g.fillEllipse(s * 0.36, s * 0.44, s * 0.12, s * 0.07);
+  g.fillStyle(0x6b6478, 1); g.fillRoundedRect(s * 0.56, s * 0.22, s * 0.14, s * 0.12, 3);
+  g.lineStyle(5, 0xc89a5a, 1);
+  g.strokePoints([{ x: s * 0.64, y: s * 0.24 }, { x: s * 0.72, y: s * 0.13 }, { x: s * 0.8, y: s * 0.16 }]);
+  g.fillStyle(0xffd23f, 1); g.fillPoints(starPts(s * 0.82, s * 0.14, s * 0.1, 0.4, 5), true);
+  g.fillStyle(0xff7a1f, 1); g.fillCircle(s * 0.82, s * 0.14, s * 0.035);
+}
+
 // Bloque dorado: se arma sobre el bloque amarillo (imagen o dibujo) con brillo de oro y una estrella
 function makeOro(scene) {
   const T = scene.textures;
@@ -559,6 +594,13 @@ export function makeTextures(scene) {
   gen('fx_star', 48, 48, (gg) => { gg.fillStyle(0xffffff, 1); gg.fillPoints(starPts(24, 24, 24, 0.3, 4), true); });
   g.destroy();
   makeOro(scene);
+  const T2 = scene.textures;
+  const g2 = scene.make.graphics({ x: 0, y: 0 }, false);
+  const gen2 = (key, draw) => { if (T2.exists(key)) return; g2.clear(); draw(g2, CELL); g2.generateTexture(key, CELL, CELL); };
+  gen2('blk_hielo', (gg, s) => hielo(gg, s, false));
+  gen2('blk_hielo2', (gg, s) => hielo(gg, s, true));
+  gen2('blk_bomba', (gg, s) => bombaTile(gg, s));
+  g2.destroy();
   gradient(scene, 'grad_game', '#161c4e', '#3e2680');
   gradient(scene, 'grad_menu', '#22184e', '#e0785a');
   gradient(scene, 'grad_sky', '#6eb9fa', '#ffe1be');
