@@ -81,7 +81,7 @@ export const DECO_POS = {
   fuente: [[548, 1335, 210]],
 };
 
-export const VERSION = '0.8';
+export const VERSION = '0.9';
 
 // Bloques peligrosos (solo en partida normal, después de unas líneas)
 // Bomba: cuenta regresiva por pieza colocada; si llega a 0 explota y se acaba la partida. Limpiar su línea la desactiva.

@@ -5,6 +5,7 @@ import { W, H } from '../config.js';
 import { txt } from '../ui.js';
 import { save } from '../save.js';
 import { trackAbrir } from '../stats.js';
+import { leerReto, limpiarLink } from '../share.js';
 
 export default class Boot extends Phaser.Scene {
   constructor() { super('Boot'); }
@@ -22,6 +23,12 @@ export default class Boot extends Phaser.Scene {
     trackAbrir();
     // Quien entra por primera vez juega de inmediato; el menú aparece después
     const nuevo = save.games === 0 && save.built.length === 0 && !location.search.includes('capture');
+    const vs = location.search.includes('capture') ? null : leerReto();
+    if (vs) {
+      limpiarLink();
+      this.scene.start('Game', { reto: false, vs });
+      return;
+    }
     const enCurso = !!save.partida && !location.search.includes('capture');
     this.scene.start(nuevo || enCurso ? 'Game' : 'Menu', { reto: false, modo: null });
   }

@@ -50,11 +50,11 @@ export function size(cells) {
   };
 }
 
-export function randomPiece() {
-  let x = Math.random() * TOTAL;
+export function randomPiece(rnd = Math.random) {
+  let x = rnd() * TOTAL;
   for (const s of SHAPES) {
     x -= s.w;
-    if (x <= 0) return { cells: s.c.map((p) => [...p]), color: COLORS[Math.floor(Math.random() * COLORS.length)] };
+    if (x <= 0) return { cells: s.c.map((p) => [...p]), color: COLORS[Math.floor(rnd() * COLORS.length)] };
   }
   return { cells: [[0, 0]], color: COLORS[0] };
 }
@@ -73,10 +73,10 @@ export function anyFit(board, cells) {
 }
 
 // Generador justo: al menos una pieza de la bandeja cabe (si existe alguna forma posible)
-export function makeTray(board) {
+export function makeTray(board, rnd = Math.random) {
   let best = null;
   for (let i = 0; i < 40; i++) {
-    const tray = [randomPiece(), randomPiece(), randomPiece()];
+    const tray = [randomPiece(rnd), randomPiece(rnd), randomPiece(rnd)];
     if (tray.some((p) => anyFit(board, p.cells))) return tray;
     best = tray;
   }

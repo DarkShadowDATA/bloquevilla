@@ -99,7 +99,7 @@ export default class Menu extends Phaser.Scene {
         tb.label.setText(label());
       }, { size: 34 });
     }
-    txt(this, W / 2, H - 60, 'v0.8 · Bombas y hielo', 24, '#ffffffaa', { weight: '500' });
+    txt(this, W / 2, H - 60, 'v0.9 · Reta a un amigo', 24, '#ffffffaa', { weight: '500' });
   }
 
   bannerEvento() {

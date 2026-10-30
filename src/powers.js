@@ -23,22 +23,22 @@ export function unlockedPowers() {
   return Object.keys(POWERS).filter((id) => !POWERS[id].needs || isBuilt(POWERS[id].needs));
 }
 
-function rollRarity() {
-  const x = Math.random();
+function rollRarity(rnd) {
+  const x = rnd();
   if (x < RARITY.epico.p) return 'epico';
   if (x < RARITY.epico.p + RARITY.raro.p) return 'raro';
   return 'comun';
 }
 
 // 3 cartas distintas, cada una con su tirada de rareza
-export function rollOffer() {
+export function rollOffer(rnd = Math.random) {
   const pool = unlockedPowers();
   const out = [];
   while (out.length < 3 && out.length < pool.length) {
-    const rar = rollRarity();
+    const rar = rollRarity(rnd);
     let opts = pool.filter((id) => POWERS[id].rarity === rar && !out.includes(id));
     if (!opts.length) opts = pool.filter((id) => !out.includes(id));
-    out.push(opts[Math.floor(Math.random() * opts.length)]);
+    out.push(opts[Math.floor(rnd() * opts.length)]);
   }
   return out;
 }

@@ -18,6 +18,7 @@ const DEFAULT = {
   proximos: [],
   jugador: null,
   peligros: { bomba: false, hielo: false },
+  apodo: null,
   partida: null, // partida normal en curso, para retomarla si el navegador se cierra
 };
 

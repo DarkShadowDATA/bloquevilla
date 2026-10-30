@@ -11,13 +11,20 @@ import { sfx, vibe } from '../sfx.js';
 import { POWERS, RARITY, rollOffer } from '../powers.js';
 import { txt, background, icon, button, toast, floatText, chip, confetti } from '../ui.js';
 import { track } from '../stats.js';
+import { rngDe, barajar } from '../rng.js';
+import { compartirReto } from '../share.js';
 
 export default class Game extends Phaser.Scene {
   constructor() { super('Game'); }
 
   create(data) {
     this.reto = data && data.reto === true ? generarReto(today()) : null;
-    this.tiempo = !this.reto && !!data && data.modo === 'tiempo';
+    this.vs = !this.reto && data && data.vs ? data.vs : null;   // reto de un amigo: {s, p, n, m}
+    this.tiempo = !this.reto && !!data && (data.modo === 'tiempo' || (this.vs && this.vs.m === 't'));
+    this.semilla = this.vs ? this.vs.s : Math.floor(Math.random() * 1e9);
+    this.trayN = 0;
+    this.ofertaN = 0;
+    this.superado = false;
     this.tiempoRest = TIEMPO.dur;
     this.tiempoOn = false;
     this.tiempoTick = null;
@@ -122,19 +129,19 @@ export default class Game extends Phaser.Scene {
 
     // ¿Hay una partida a medias? Se retoma tal cual
     const p = save.partida;
-    if (!this.reto && !this.tiempo && !window.__capture && p && p.v === 1 && !(data && data.nueva)) {
+    if (!this.reto && !this.tiempo && !this.vs && !window.__capture && p && p.v === 1 && !(data && data.nueva)) {
       this.reanudar(p);
       return;
     }
-    if (!this.reto && !this.tiempo && save.partida) { save.partida = null; persist(); }
+    if (!this.reto && !this.tiempo && !this.vs && save.partida) { save.partida = null; persist(); }
 
-    if (save.pendingPower && !this.reto && !this.tiempo) {
+    if (save.pendingPower && !this.reto && !this.tiempo && !this.vs) {
       this.powers.push(save.pendingPower);
       save.pendingPower = null;
       persist();
     }
     // Poderes comprados en la tienda para esta partida
-    if (!this.reto && !this.tiempo && save.proximos.length) {
+    if (!this.reto && !this.tiempo && !this.vs && save.proximos.length) {
       const n0 = this.powers.length;
       while (this.powers.length < MAX_POWERS && save.proximos.length) this.powers.push(save.proximos.shift());
       persist();
@@ -159,6 +166,7 @@ export default class Game extends Phaser.Scene {
     button(this, 120, 215, 170, 84, 'Menú', 0x2c3070, () => this.scene.start('Menu'), { size: 32 });
     this.scoreText = txt(this, W / 2, 205, '0', 88, '#ffffff', { stroke: '#141432', strokeW: 10 });
     this.recordText = txt(this, W / 2, 285, this.tiempo ? `Récord 60 s: ${save.tiempo.record.toLocaleString('es-MX')}` : `Récord ${save.record.toLocaleString('es-MX')}`, 28, '#b8b8e0', { weight: '700' });
+    if (this.vs) this.recordText.setText(`Reto de ${this.vs.n}: ${this.vs.p.toLocaleString('es-MX')}`).setColor('#ffd93d');
     this.brickChip = chip(this, 905, 215, 230, 'ui_ladrillo', save.bricks);
     if (this.evento) {
       this.florChip = chip(this, 905, 305, 230, 'ui_flor', save.muertos.tema ? save.muertos.flores : `${save.muertos.flores}/${EVENTO.meta}`);
@@ -270,11 +278,13 @@ export default class Game extends Phaser.Scene {
       return;
     }
     this.pieces.forEach((p) => p.c && p.c.destroy());
-    this.spawnPeligros();
-    const defs = makeTray(this.board);
-    if (Math.random() < ORO.chance) {
-      const d = defs[Math.floor(Math.random() * defs.length)];
-      d.gold = Math.floor(Math.random() * d.cells.length);
+    // Cada tanda sale de la semilla de la partida: un amigo con el mismo link recibe las mismas piezas
+    const rnd = rngDe(`${this.semilla}:t${this.trayN++}`);
+    this.spawnPeligros(rnd);
+    const defs = makeTray(this.board, rnd);
+    if (rnd() < ORO.chance) {
+      const d = defs[Math.floor(rnd() * defs.length)];
+      d.gold = Math.floor(rnd() * d.cells.length);
       if (!save.oroVisto && !window.__capture) {
         save.oroVisto = true;
         persist();
@@ -581,6 +591,15 @@ export default class Game extends Phaser.Scene {
   addScore(n) {
     this.score += n;
     this.scoreText.setText(this.score.toLocaleString('es-MX'));
+    if (this.vs && !this.superado && this.score > this.vs.p) {
+      this.superado = true;
+      this.recordText.setText(`¡Superaste a ${this.vs.n}!`).setColor('#7ef0a0');
+      this.time.delayedCall(250, () => {
+        floatText(this, W / 2, BY - 40, `¡YA SUPERASTE A ${this.vs.n.toUpperCase()}!`, 64, '#7ef0a0', '#0e3a1e');
+        confetti(this, W / 2, 500, 60);
+        sfx.build();
+      });
+    }
     if (n > 20) this.tweens.add({ targets: this.scoreText, scale: 1.12, duration: 100, yoyo: true });
   }
 
@@ -665,7 +684,7 @@ export default class Game extends Phaser.Scene {
     this.offerOpen = true;
     this.guardarPartida();
     // window.__forceOffer solo se usa al grabar videos
-    const ids = (window.__capture && window.__forceOffer) || rollOffer();
+    const ids = (window.__capture && window.__forceOffer) || rollOffer(rngDe(`${this.semilla}:o${this.ofertaN++}`));
     const layer = this.add.container(0, 0).setDepth(300);
     const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7).setInteractive();
     layer.add(dim);
@@ -896,7 +915,7 @@ export default class Game extends Phaser.Scene {
     } else t.setColor('#ffffff');
   }
 
-  spawnPeligros() {
+  spawnPeligros(rnd = Math.random) {
     if (this.reto || this.tiempo || this.over || this.linesTotal < PELIGRO.desdeLineas) return;
     const libres = [];
     for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
@@ -905,9 +924,9 @@ export default class Game extends Phaser.Scene {
       const enCol = this.board.filter((row) => row[c]).length;
       if (enFila < N - 2 && enCol < N - 2) libres.push([r, c]);
     }
-    Phaser.Utils.Array.Shuffle(libres);
+    barajar(libres, rnd);
     let aviso = null;
-    if (!Object.keys(this.bombas).length && libres.length && Math.random() < PELIGRO.bomba.chance) {
+    if (!Object.keys(this.bombas).length && libres.length && rnd() < PELIGRO.bomba.chance) {
       const [r, c] = libres.pop();
       const k = r * N + c;
       this.board[r][c] = 'bomba';
@@ -919,8 +938,8 @@ export default class Game extends Phaser.Scene {
       if (!save.peligros.bomba) aviso = ['bomba', '¡BOMBA! Limpia su línea antes del 0'];
     }
     const hielos = this.board.flat().filter((v) => v === 'hielo' || v === 'hielo2').length;
-    if (hielos < PELIGRO.hielo.max && libres.length && Math.random() < PELIGRO.hielo.chance) {
-      const n = Math.min(libres.length, Math.random() < 0.5 ? 1 : 2);
+    if (hielos < PELIGRO.hielo.max && libres.length && rnd() < PELIGRO.hielo.chance) {
+      const n = Math.min(libres.length, rnd() < 0.5 ? 1 : 2);
       for (let i = 0; i < n; i++) {
         const [r, c] = libres.pop();
         this.board[r][c] = 'hielo';
@@ -986,9 +1005,12 @@ export default class Game extends Phaser.Scene {
 
   // ---------- Partida guardada ----------
   guardarPartida() {
-    if (this.reto || this.tiempo || this.over || window.__capture || !this.pieces.length) return;
+    if (this.reto || this.tiempo || this.vs || this.over || window.__capture || !this.pieces.length) return;
     save.partida = {
       v: 1,
+      semilla: this.semilla,
+      trayN: this.trayN,
+      ofertaN: this.ofertaN,
       at: Date.now(),
       board: this.board.map((r) => [...r]),
       pieces: this.pieces.map((p) => (p.used ? { used: true } : { cells: p.cells, color: p.color, gold: p.gold, used: false })),
@@ -1007,6 +1029,7 @@ export default class Game extends Phaser.Scene {
   }
 
   reanudar(p) {
+    if (p.semilla != null) { this.semilla = p.semilla; this.trayN = p.trayN || 0; this.ofertaN = p.ofertaN || 0; }
     this.bombas = { ...(p.bombas || {}) };
     p.board.forEach((row, r) => row.forEach((col, c) => {
       if (col) { this.board[r][c] = col; this.addBlock(r, c, col, false); }
@@ -1184,7 +1207,7 @@ export default class Game extends Phaser.Scene {
     if (endBricks > 0) this.addBricks(endBricks, W / 2, 900);
     const recordPrev = this.tiempo ? save.tiempo.record : save.record;
     const newRecord = this.score > recordPrev;
-    track('partida', { modo: this.tiempo ? 'tiempo' : 'normal', puntos: this.score, lineas: this.linesTotal, ladrillos: this.runBricks, record: newRecord, segundos: Math.round((this.time.now - this.t0) / 1000), tema: this.tema || '', causa: this.causa || 'espacio', bombas: this.bombasDesactivadas });
+    track('partida', { modo: this.vs ? (this.tiempo ? 'vs-tiempo' : 'vs') : this.tiempo ? 'tiempo' : 'normal', puntos: this.score, lineas: this.linesTotal, ladrillos: this.runBricks, record: newRecord, segundos: Math.round((this.time.now - this.t0) / 1000), tema: this.tema || '', causa: this.causa || 'espacio', bombas: this.bombasDesactivadas });
     if (this.tiempo) {
       if (newRecord) save.tiempo.record = this.score;
       save.tiempo.partidas += 1;
@@ -1204,16 +1227,22 @@ export default class Game extends Phaser.Scene {
   showSummary(newRecord, titulo) {
     const layer = this.add.container(0, 0).setDepth(300);
     layer.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6).setInteractive());
-    const panel = this.add.container(W / 2, 930).setScale(0.3);
+    const panel = this.add.container(W / 2, 900).setScale(0.3);
     layer.add(panel);
     const g = this.add.graphics();
-    g.fillStyle(0xaa5a1e, 1); g.fillRoundedRect(-420, -430, 840, 880, 50);
-    g.fillStyle(0xfff7e8, 1); g.fillRoundedRect(-420, -440, 840, 870, 50);
+    g.fillStyle(0xaa5a1e, 1); g.fillRoundedRect(-420, -430, 840, 1010, 50);
+    g.fillStyle(0xfff7e8, 1); g.fillRoundedRect(-420, -440, 840, 1000, 50);
     panel.add(g);
-    panel.add(txt(this, 0, -360, titulo, 70, '#46286e'));
+    const vs = this.vs;
+    const gano = vs && this.score > vs.p;
+    if (vs) titulo = gano ? `¡Le ganaste a ${vs.n}!` : `¡Casi! ${vs.n} ganó`;
+    panel.add(txt(this, 0, -360, titulo, titulo.length > 16 ? 58 : 70, '#46286e'));
     panel.add(txt(this, 0, -270, 'Puntos', 34, '#8c7aa0', { weight: '700' }));
     panel.add(txt(this, 0, -190, this.score.toLocaleString('es-MX'), 110, '#46286e'));
-    if (newRecord) {
+    if (vs) {
+      const dif = Math.abs(this.score - vs.p).toLocaleString('es-MX');
+      panel.add(txt(this, 0, -90, gano ? `${vs.n} hizo ${vs.p.toLocaleString('es-MX')} · le ganaste por ${dif}` : `${vs.n} hizo ${vs.p.toLocaleString('es-MX')} · te faltaron ${dif}`, 32, gano ? '#2a9a4a' : '#c84a4a', { weight: '700' }));
+    } else if (newRecord) {
       const rec = txt(this, 0, -90, '¡NUEVO RÉCORD!', 46, '#e0901a', { stroke: '#ffffff', strokeW: 6 });
       panel.add(rec);
       this.tweens.add({ targets: rec, scale: 1.1, duration: 400, yoyo: true, repeat: -1 });
@@ -1224,13 +1253,25 @@ export default class Game extends Phaser.Scene {
     panel.add(bt);
     panel.add(icon(this, 45 - bt.width / 2 - 55, 10, 'ui_ladrillo', 80));
     const next = BUILDINGS.find((b) => !isBuilt(b.id));
-    if (next) {
+    if (next && !vs) {
       const ok = save.bricks >= next.cost;
       panel.add(txt(this, 0, 95, ok ? `¡Ya te alcanza para la ${next.name}!` : `Te faltan ${next.cost - save.bricks} para la ${next.name}`, 32, ok ? '#2a9a4a' : '#8c7aa0', { weight: '700' }));
     }
-    panel.add(button(this, 0, 220, 600, 120, this.tiempo ? 'Otra vez (60 s)' : 'Otra partida', 0x5ac85a, () => this.scene.restart({ reto: false, modo: this.tiempo ? 'tiempo' : null })));
-    panel.add(button(this, 0, 360, 600, 110, 'Ir al pueblo', 0xff8c2b, () => this.scene.start('Village'), { size: 42 }));
+    if (vs) panel.add(txt(this, 0, 95, 'Mismas piezas para los dos', 30, '#8c7aa0', { weight: '700' }));
+    // Retar: el amigo juega con las mismas piezas que salieron en esta partida
+    const retar = button(this, 0, 205, 600, 120, vs ? (gano ? 'Regresarle el reto' : 'Retar a otro amigo') : 'Retar a un amigo', 0x7a4ad8,
+      () => compartirReto(this, this.semilla, this.score, this.tiempo, gano), { size: 44 });
+    panel.add(retar);
+    this.tweens.add({ targets: retar, scale: 1.04, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    if (vs) {
+      panel.add(button(this, -155, 340, 290, 110, 'Revancha', 0x5ac85a, () => this.scene.restart({ reto: false, vs }), { size: 40 }));
+      panel.add(button(this, 155, 340, 290, 110, 'Jugar normal', 0xff8c2b, () => this.scene.restart({ reto: false, modo: null }), { size: 36 }));
+    } else {
+      panel.add(button(this, 0, 340, 600, 110, this.tiempo ? 'Otra vez (60 s)' : 'Otra partida', 0x5ac85a, () => this.scene.restart({ reto: false, modo: this.tiempo ? 'tiempo' : null }), { size: 44 }));
+      panel.add(button(this, 0, 465, 600, 100, 'Ir al pueblo', 0xff8c2b, () => this.scene.start('Village'), { size: 38 }));
+    }
+    if (vs) panel.add(button(this, 0, 465, 600, 100, 'Ir al pueblo', 0x8a6a3a, () => this.scene.start('Village'), { size: 38 }));
     this.tweens.add({ targets: panel, scale: 1, duration: 380, ease: 'Back.Out' });
-    if (newRecord) confetti(this, W / 2, 600, 80);
+    if (newRecord || gano) confetti(this, W / 2, 600, 80);
   }
 }
