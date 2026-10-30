@@ -14,7 +14,7 @@ V = lambda n: [[i, 0] for i in range(n)]
 SQ = [[0, 0], [0, 1], [1, 0], [1, 1]]
 
 rec = Recorder({'bricks': 262, 'record': 9800, 'games': 22, 'built': ['casa', 'panaderia', 'pozo', 'herreria'],
-                'muertos': {'flores': 58, 'tema': False}, 'oroVisto': True, 'peligros': {'bomba': True, 'hielo': True}})
+                'muertos': {'flores': 30, 'tema': False}, 'oroVisto': True, 'peligros': {'bomba': True, 'hielo': True}})
 rec.start_scene('Game')
 M = {}
 
@@ -29,7 +29,7 @@ if MODO == 'salva':
              'rgob.Ipk',
              'g..k....',
              'pyB..gbr',
-             'o.r.y...',
+             '..r.y...',
              '........',
              'k.y.....']
     trays = [[{'cells': H(3), 'color': 'orange'}, {'cells': V(2), 'color': 'blue'}, {'cells': SQ, 'color': 'green'}],
@@ -76,13 +76,13 @@ else:
     rec.step(2)
     rec.begin()
     f = Finger(980, 1820)
-    f.wait(rec, 0.4, visible=False)
+    f.wait(rec, 1.3, visible=False)
     M['m1'] = len(rec.frames)
-    drag(rec, f, 0, 4, 7, approach=0.3, travel=0.5, after=0.5)
+    drag(rec, f, 0, 4, 7, approach=0.35, travel=0.55, after=0.9)
     M['m2'] = len(rec.frames)
     drag(rec, f, 1, 7, 3, approach=0.3, travel=0.5, after=0.1)
     M['boom'] = len(rec.frames)
-    rec.hold(2.9, None)
+    rec.hold(3.2, None)
     M['fin'] = len(rec.frames)
     c = M['boom'] - 4
     segs = [(c, c + 40), (0, M['fin'])]
