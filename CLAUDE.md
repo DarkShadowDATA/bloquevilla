@@ -10,6 +10,7 @@
 - Flujo desde oct 2026: cada contenido nuevo se entrega en dos partes al mismo tiempo: (1) lo jugable, publicado en el dominio, y (2) su video, guardado en la carpeta de la computadora de Alejandro `Videos/Bloquevilla` con nombre `AAAA-MM-DD HH-MM Título.mp4` (fecha y hora de publicación, cada 12 h a las 08:00 y 20:00) y su texto agregado a `00 Textos para publicar.txt`. Metricool llegó a su límite mensual, así que él los sube a mano desde esa carpeta.
 
 ### Reglas de los videos (la gente se iba en el segundo 1)
+- **Si el contenido nuevo necesita imágenes de ChatGPT, primero se entregan los prompts y NO se graba el video hasta que Alejandro mande las imágenes finales.** El juego puede publicarse con el arte dibujado con código, pero el video se graba una sola vez, ya con el arte final.
 - El **primer cuadro ya es el mejor momento** de la partida (un combo, el tablero limpiándose, el premio). Nada de pantallas de título, menús quietos ni fundidos al principio.
 - **Texto gancho grande** visible desde el cuadro 0.
 - **Golpe de música** en el segundo 0.
