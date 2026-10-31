@@ -14,6 +14,7 @@ import { track } from '../stats.js';
 import { rngDe, barajar } from '../rng.js';
 import { compartirReto, pedirApodo } from '../share.js';
 import { enviarPuntaje } from '../ranking.js';
+import { NIVELES, OBJ_TEXTO, OBJ_ICONO, calcularEstrellas, guardarResultado } from '../aventura.js';
 
 export default class Game extends Phaser.Scene {
   constructor() { super('Game'); }
@@ -21,8 +22,10 @@ export default class Game extends Phaser.Scene {
   create(data) {
     this.reto = data && data.reto === true ? generarReto(today()) : null;
     this.vs = !this.reto && data && data.vs ? data.vs : null;   // reto de un amigo: {s, p, n, m}
+    this.nivel = !this.reto && !this.vs && data && Number.isInteger(data.nivel) ? data.nivel : null;   // Modo Aventura
+    this.av = null;
     this.tiempo = !this.reto && !!data && (data.modo === 'tiempo' || (this.vs && this.vs.m === 't'));
-    this.semilla = this.vs ? this.vs.s : Math.floor(Math.random() * 1e9);
+    this.semilla = this.vs ? this.vs.s : this.nivel != null ? 7000 + this.nivel * 131 + (data.intento || 0) : Math.floor(Math.random() * 1e9);
     this.trayN = 0;
     this.ofertaN = 0;
     this.superado = false;
@@ -130,19 +133,19 @@ export default class Game extends Phaser.Scene {
 
     // ¿Hay una partida a medias? Se retoma tal cual
     const p = save.partida;
-    if (!this.reto && !this.tiempo && !this.vs && !window.__capture && p && p.v === 1 && !(data && data.nueva)) {
+    if (!this.reto && !this.tiempo && !this.vs && this.nivel == null && !window.__capture && p && p.v === 1 && !(data && data.nueva)) {
       this.reanudar(p);
       return;
     }
-    if (!this.reto && !this.tiempo && !this.vs && save.partida) { save.partida = null; persist(); }
+    if (!this.reto && !this.tiempo && !this.vs && this.nivel == null && save.partida) { save.partida = null; persist(); }
 
-    if (save.pendingPower && !this.reto && !this.tiempo && !this.vs) {
+    if (save.pendingPower && !this.reto && !this.tiempo && !this.vs && this.nivel == null) {
       this.powers.push(save.pendingPower);
       save.pendingPower = null;
       persist();
     }
     // Poderes comprados en la tienda para esta partida
-    if (!this.reto && !this.tiempo && !this.vs && save.proximos.length) {
+    if (!this.reto && !this.tiempo && !this.vs && this.nivel == null && save.proximos.length) {
       const n0 = this.powers.length;
       while (this.powers.length < MAX_POWERS && save.proximos.length) this.powers.push(save.proximos.shift());
       persist();
@@ -152,9 +155,11 @@ export default class Game extends Phaser.Scene {
       this.iniciarReto();
       return;
     }
+    if (this.nivel != null) this.iniciarAventura(data);
     this.renderPowers();
     this.newTray(true);
     if (this.tiempo) { this.iniciarTiempo(); return; }
+    if (this.nivel != null) return;
     this.guardarPartida();
 
     if (save.games === 0) {
@@ -164,7 +169,7 @@ export default class Game extends Phaser.Scene {
 
   // ---------- Construcción de la pantalla ----------
   buildHud() {
-    button(this, 120, 215, 170, 84, 'Menú', 0x2c3070, () => this.scene.start('Menu'), { size: 32 });
+    button(this, 120, 215, 170, 84, 'Menú', 0x2c3070, () => this.scene.start(this.nivel != null ? 'Aventura' : 'Menu'), { size: 32 });
     this.scoreText = txt(this, W / 2, 205, '0', 88, '#ffffff', { stroke: '#141432', strokeW: 10 });
     this.recordText = txt(this, W / 2, 285, this.tiempo ? `Récord 60 s: ${save.tiempo.record.toLocaleString('es-MX')}` : `Récord ${save.record.toLocaleString('es-MX')}`, 28, '#b8b8e0', { weight: '700' });
     if (this.vs) this.recordText.setText(`Reto de ${this.vs.n}: ${this.vs.p.toLocaleString('es-MX')}`).setColor('#ffd93d');
@@ -283,7 +288,7 @@ export default class Game extends Phaser.Scene {
     const rnd = rngDe(`${this.semilla}:t${this.trayN++}`);
     this.spawnPeligros(rnd);
     const defs = makeTray(this.board, rnd);
-    if (rnd() < ORO.chance) {
+    if (rnd() < (this.av && this.av.def.oro != null ? this.av.def.oro : ORO.chance)) {
       const d = defs[Math.floor(rnd() * defs.length)];
       d.gold = Math.floor(rnd() * d.cells.length);
       if (!save.oroVisto && !window.__capture) {
@@ -390,12 +395,14 @@ export default class Game extends Phaser.Scene {
       pieces: this.pieces.map((p) => ({ cells: (p.cells || []).map((x) => [...x]), color: p.color, gold: p.gold, used: p.used })),
       score: this.score, runBricks: this.runBricks, combo: this.combo, miss: this.miss,
       linesTotal: this.linesTotal, nextOffer: this.nextOffer, bombas: { ...this.bombas },
+      av: this.av ? { progreso: this.av.progreso, usadas: this.av.usadas } : null,
     };
   }
 
   place(pc, r, c) {
     this.snapshot();
     this.tickPendiente = true;
+    if (this.av) this.av.usadas += 1;
     pc.used = true;
     this.atorado = false;
     pc.c.destroy();
@@ -451,6 +458,7 @@ export default class Game extends Phaser.Scene {
     this.clearCells(cells, 14, true);
     this.addScore(pts);
     if (oros.length) this.premioOro(oros);
+    if (this.av) { this.avSumar('oro', oros.length); this.avSumar('lineas', n); if (this.combo >= 2) this.avMax('combo', this.combo); }
     this.addBricks(bricks, x, y);
     sfx.clear(this.combo);
     vibe(n > 1 ? 40 : 20);
@@ -501,6 +509,7 @@ export default class Game extends Phaser.Scene {
       // El hielo entero solo se agrieta con una línea; los poderes lo rompen de una vez
       if (porLinea && color === 'hielo') {
         this.board[r][c] = 'hielo2';
+        if (this.av) this.avSumar('hielo', 0);
         if (im) {
           this.time.delayedCall(80 + i * stagger, () => {
             im.setTexture(this.blockTex('hielo2')).setDisplaySize(CELL, CELL);
@@ -516,6 +525,7 @@ export default class Game extends Phaser.Scene {
         if (this.bombaTxt[k]) { this.bombaTxt[k].destroy(); delete this.bombaTxt[k]; }
         desactivadas.push([r, c]);
       }
+      if (this.av && (color === 'hielo' || color === 'hielo2')) this.avSumar('hielo', 1);
       this.board[r][c] = null;
       this.sprites[r][c] = null;
       if (!im) return;
@@ -546,7 +556,7 @@ export default class Game extends Phaser.Scene {
 
   updateComboText() {
     if (!this.comboText) this.comboText = txt(this, W / 2, this.tiempo ? 1790 : 345, '', 30, '#ffd93d', { weight: '800' }).setDepth(50);
-    this.comboText.setText(this.combo >= 2 && !this.reto ? `Combo x${this.combo} activo` : '');
+    this.comboText.setText(this.combo >= 2 && !this.reto && !this.av ? `Combo x${this.combo} activo` : '');
     if (this.fire) {
       this.fire.emitting = this.combo >= 4 && this.combo < 6;
       this.rainbow.emitting = this.combo >= 6;
@@ -592,6 +602,7 @@ export default class Game extends Phaser.Scene {
   addScore(n) {
     this.score += n;
     this.scoreText.setText(this.score.toLocaleString('es-MX'));
+    if (this.av && this.av.def.t === 'puntos') this.avPintar();
     if (this.vs && !this.superado && this.score > this.vs.p) {
       this.superado = true;
       this.recordText.setText(`¡Superaste a ${this.vs.n}!`).setColor('#7ef0a0');
@@ -627,6 +638,7 @@ export default class Game extends Phaser.Scene {
       this.tickPendiente = false;
       if (this.tickBombas()) return;
     }
+    if (this.av && this.avRevisar()) return;
     this.guardarPartida();
     if (this.offerPending) {
       this.offerPending = false;
@@ -650,6 +662,7 @@ export default class Game extends Phaser.Scene {
       return;
     }
     if (this.reto) { this.finReto(); return; }
+    if (this.av) { this.finAventura(false, '¡Sin espacio!'); return; }
     if (this.tiempo) {
       // En contrarreloj no se pierde por trabarse: piezas nuevas a cambio de tiempo
       if (this.atorado) { this.gameOver('¡Sin espacio!'); return; }
@@ -889,6 +902,7 @@ export default class Game extends Phaser.Scene {
     this.miss = s.miss;
     this.linesTotal = s.linesTotal;
     this.nextOffer = s.nextOffer;
+    if (this.av && s.av) { this.av.progreso = s.av.progreso; this.av.usadas = s.av.usadas; this.avPintar(); }
     this.updateComboText();
   }
 
@@ -918,6 +932,7 @@ export default class Game extends Phaser.Scene {
 
   spawnPeligros(rnd = Math.random) {
     if (this.reto || this.tiempo || this.over || this.linesTotal < PELIGRO.desdeLineas) return;
+    if (this.av && !['bombas', 'hielo'].includes(this.av.def.t)) return;   // en aventura solo salen si el objetivo los pide
     const libres = [];
     for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
       if (this.board[r][c]) continue;
@@ -927,7 +942,9 @@ export default class Game extends Phaser.Scene {
     }
     barajar(libres, rnd);
     let aviso = null;
-    if (!Object.keys(this.bombas).length && libres.length && rnd() < PELIGRO.bomba.chance) {
+    const conBomba = !this.av || this.av.def.t === 'bombas';
+    const conHielo = !this.av || this.av.def.t === 'hielo';
+    if (conBomba && !Object.keys(this.bombas).length && libres.length && rnd() < PELIGRO.bomba.chance) {
       const [r, c] = libres.pop();
       const k = r * N + c;
       this.board[r][c] = 'bomba';
@@ -939,7 +956,7 @@ export default class Game extends Phaser.Scene {
       if (!save.peligros.bomba) aviso = ['bomba', '¡BOMBA! Limpia su línea antes del 0'];
     }
     const hielos = this.board.flat().filter((v) => v === 'hielo' || v === 'hielo2').length;
-    if (hielos < PELIGRO.hielo.max && libres.length && rnd() < PELIGRO.hielo.chance) {
+    if (conHielo && hielos < PELIGRO.hielo.max && libres.length && rnd() < PELIGRO.hielo.chance) {
       const n = Math.min(libres.length, rnd() < 0.5 ? 1 : 2);
       for (let i = 0; i < n; i++) {
         const [r, c] = libres.pop();
@@ -991,6 +1008,7 @@ export default class Game extends Phaser.Scene {
   }
 
   desactivarBomba(r, c) {
+    if (this.av) this.avSumar('bombas', 1);
     const { x, y } = this.cellXY(r, c);
     this.bombasDesactivadas += 1;
     this.addScore(PELIGRO.bomba.puntos);
@@ -1004,9 +1022,130 @@ export default class Game extends Phaser.Scene {
     });
   }
 
+  // ---------- Modo Aventura ----------
+  iniciarAventura() {
+    const def = NIVELES[this.nivel];
+    this.av = { def, progreso: 0, usadas: 0, fin: false };
+    this.linesTotal = ['bombas', 'hielo'].includes(def.t) ? PELIGRO.desdeLineas : 0;
+    this.nextOffer = this.linesTotal + 6;
+    // tablero inicial del nivel
+    const COL = { r: 'red', o: 'orange', y: 'yellow', g: 'green', b: 'blue', p: 'purple', k: 'pink', B: 'bomba', I: 'hielo', G: 'gold' };
+    // las bombas del nivel tienen cuentas escalonadas por fila, para desactivarlas una tras otra
+    const filasBomba = (def.plantilla || []).map((row, r) => (row.includes('B') ? r : -1)).filter((r) => r >= 0);
+    (def.plantilla || []).forEach((row, r) => [...row].forEach((ch, c) => {
+      if (ch === '.') return;
+      if (ch === 'B') this.bombas[r * N + c] = PELIGRO.bomba.turnos + 2 + 3 * filasBomba.indexOf(r);
+      this.board[r][c] = COL[ch];
+      this.addBlock(r, c, COL[ch], false);
+      if (ch === 'B') this.pintarBomba(r * N + c);
+    }));
+    this.recordText.setText(`AVENTURA · NIVEL ${this.nivel + 1}`).setColor('#ffd93d');
+    // barra del objetivo
+    const y = 362;
+    const g = this.add.graphics().setDepth(5);
+    g.fillStyle(0x0c0f30, 0.85); g.fillRoundedRect(BX - 22, y - 28, N * CELL + 44, 56, 28);
+    this.avIcon = icon(this, BX + 18, y, OBJ_ICONO[def.t], 44).setDepth(6);
+    this.avTxt = txt(this, BX + 52, y, '', 30, '#ffffff', { weight: '800', ox: 0 }).setDepth(6);
+    this.avPiezas = txt(this, BX + N * CELL + 6, y, '', 30, '#ffd93d', { ox: 1 }).setDepth(6);
+    this.avPintar();
+    this.time.delayedCall(350, () => toast(this, `${def.nombre}: ${OBJ_TEXTO[def.t](def.n)}`, 1655, 2600));
+  }
+
+  avPintar() {
+    if (!this.avTxt) return;
+    const { def, progreso, usadas } = this.av;
+    const val = def.t === 'puntos' ? this.score : progreso;
+    const meta = def.t === 'puntos' ? def.n.toLocaleString('es-MX') : def.n;
+    const ahora = def.t === 'puntos' ? Math.min(val, def.n).toLocaleString('es-MX') : Math.min(val, def.n);
+    this.avTxt.setText(`${OBJ_TEXTO[def.t](def.n)}  ${ahora}/${meta}`);
+    const quedan = def.p - usadas;
+    this.avPiezas.setText(`${quedan} piezas`).setColor(quedan <= 3 ? '#ff7a7a' : '#ffd93d');
+  }
+
+  avSumar(tipo, n) {
+    if (!this.av || this.av.def.t !== tipo || this.av.fin) return;
+    this.av.progreso += n;
+    if (n > 0) this.tweens.add({ targets: this.avTxt, scale: 1.08, duration: 110, yoyo: true });
+    this.avPintar();
+  }
+
+  avMax(tipo, v) {
+    if (!this.av || this.av.def.t !== tipo) return;
+    if (v > this.av.progreso) { this.av.progreso = v; this.avPintar(); }
+  }
+
+  // true si el nivel terminó (ganado o sin piezas)
+  avRevisar() {
+    const { def, progreso, usadas } = this.av;
+    this.avPintar();
+    const val = def.t === 'puntos' ? this.score : progreso;
+    if (val >= def.n) { this.finAventura(true); return true; }
+    if (usadas >= def.p) { this.finAventura(false, '¡Sin piezas!'); return true; }
+    return false;
+  }
+
+  finAventura(gano, titulo) {
+    if (this.over) return;
+    this.over = true;
+    this.busy = true;
+    this.cancelDrag();
+    const { def, usadas } = this.av;
+    this.av.fin = true;
+    const estrellas = gano ? calcularEstrellas(usadas, def.p) : 0;
+    const premio = gano ? guardarResultado(this.nivel, estrellas) : 0;
+    if (premio) { this.brickChip.setValue(save.bricks); }
+    track('aventura', { nivel: this.nivel + 1, gano, estrellas, piezas: usadas, puntos: this.score });
+    if (gano) { sfx.build(); confetti(this, W / 2, 600, 100); this.cameras.main.flash(200, 255, 240, 160); }
+    else { sfx.over(); for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (this.sprites[r][c]) this.sprites[r][c].setTint(0x777788); }
+    this.time.delayedCall(gano ? 900 : 700, () => this.resumenAventura(gano, estrellas, premio, titulo));
+  }
+
+  resumenAventura(gano, estrellas, premio, titulo) {
+    const layer = this.add.container(0, 0).setDepth(300);
+    layer.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6).setInteractive());
+    const panel = this.add.container(W / 2, 900).setScale(0.3);
+    layer.add(panel);
+    const g = this.add.graphics();
+    g.fillStyle(gano ? 0x2a7a3a : 0xaa5a1e, 1); g.fillRoundedRect(-420, -430, 840, 900, 50);
+    g.fillStyle(0xfff7e8, 1); g.fillRoundedRect(-420, -440, 840, 890, 50);
+    panel.add(g);
+    panel.add(txt(this, 0, -360, gano ? `¡Nivel ${this.nivel + 1} superado!` : titulo, 62, '#46286e'));
+    panel.add(txt(this, 0, -290, NIVELES[this.nivel].nombre, 34, '#8c7aa0', { weight: '700' }));
+    // estrellas
+    [-170, 0, 170].forEach((x, i) => {
+      const on = i < estrellas;
+      const st = icon(this, x, -165 + (i === 1 ? -20 : 0), 'ui_estrella', i === 1 ? 170 : 140);
+      if (!on) st.setTint(0x777788).setAlpha(0.45);
+      panel.add(st);
+      if (on) {
+        st.setScale(0.01);
+        this.tweens.add({ targets: st, scale: (i === 1 ? 170 : 140) / st.width, delay: 450 + i * 300, duration: 380, ease: 'Back.Out', onStart: () => sfx.coin() });
+      }
+    });
+    if (gano) {
+      panel.add(txt(this, 0, -30, `Te sobraron ${NIVELES[this.nivel].p - this.av.usadas} piezas`, 34, '#2a9a4a', { weight: '700' }));
+      if (premio) {
+        const bt = txt(this, 45, 50, `+${premio} ladrillos`, 50, '#c8502a');
+        panel.add(bt);
+        panel.add(icon(this, 45 - bt.width / 2 - 55, 50, 'ui_ladrillo', 80));
+      } else panel.add(txt(this, 0, 50, estrellas < 3 ? 'Sobran más piezas = más estrellas' : '¡Ya tenías las 3 estrellas!', 30, '#8c7aa0', { weight: '700' }));
+    } else {
+      panel.add(txt(this, 0, -10, OBJ_TEXTO[NIVELES[this.nivel].t](NIVELES[this.nivel].n), 38, '#c84a4a', { weight: '700' }));
+      panel.add(txt(this, 0, 50, '¡Inténtalo de nuevo!', 32, '#8c7aa0', { weight: '700' }));
+    }
+    const siguiente = this.nivel + 1 < NIVELES.length;
+    if (gano && siguiente) {
+      panel.add(button(this, 0, 180, 600, 120, `Nivel ${this.nivel + 2}`, 0x5ac85a, () => this.scene.restart({ reto: false, nivel: this.nivel + 1 })));
+    } else {
+      panel.add(button(this, 0, 180, 600, 120, 'Reintentar', 0x5ac85a, () => this.scene.restart({ reto: false, nivel: this.nivel, intento: Math.floor(Math.random() * 1000) })));
+    }
+    panel.add(button(this, 0, 320, 600, 110, 'Mapa de niveles', 0x6a3ab8, () => this.scene.start('Aventura'), { size: 42 }));
+    this.tweens.add({ targets: panel, scale: 1, duration: 380, ease: 'Back.Out' });
+  }
+
   // ---------- Partida guardada ----------
   guardarPartida() {
-    if (this.reto || this.tiempo || this.vs || this.over || window.__capture || !this.pieces.length) return;
+    if (this.reto || this.tiempo || this.vs || this.nivel != null || this.over || window.__capture || !this.pieces.length) return;
     save.partida = {
       v: 1,
       semilla: this.semilla,
@@ -1197,6 +1336,7 @@ export default class Game extends Phaser.Scene {
 
   // ---------- Fin de partida ----------
   gameOver(titulo) {
+    if (this.av && !this.av.fin) { this.finAventura(false, titulo || '¡Sin espacio!'); return; }
     if (this.over && this.summaryShown) return;
     this.over = true;
     this.summaryShown = true;

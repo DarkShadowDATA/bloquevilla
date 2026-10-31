@@ -58,8 +58,13 @@ export default class Menu extends Phaser.Scene {
       button(this, W / 2, 1040, 640, 150, 'Jugar', 0x5ac85a, () => this.scene.start('Game', { reto: false, modo: null }), { size: 72 });
     }
     const hecho = save.reto.last === today();
-    const rb = button(this, W / 2, 1182, 640, 104, hecho ? `Reto #${retoNumero(today())} · ¡Superado!` : `Reto del día #${retoNumero(today())}`,
-      hecho ? 0x5a4a8a : 0x7a4ad8, () => this.scene.start('Game', { reto: true }), { size: 42 });
+    const rb = button(this, W / 2 - 165, 1182, 310, 104, hecho ? `Reto #${retoNumero(today())} ✓` : `Reto del día`,
+      hecho ? 0x5a4a8a : 0x7a4ad8, () => this.scene.start('Game', { reto: true }), { size: 38 });
+    const av = button(this, W / 2 + 165, 1182, 310, 104, 'Aventura', 0x2e9a5a, () => this.scene.start('Aventura'), { size: 40 });
+    if (!(save.aventura.estrellas || []).some((e) => e > 0)) {
+      const nva = txt(this, W / 2 + 290, 1138, '¡NUEVO!', 26, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12).setDepth(5);
+      this.tweens.add({ targets: [nva, av], scale: 1.08, duration: 500, yoyo: true, repeat: -1 });
+    }
     if (!hecho) this.tweens.add({ targets: rb, scale: 1.04, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
     const tb60 = button(this, W / 2 - 75, 1300, 490, 104, 'Contrarreloj 60 s', 0x1f9aa8, () => this.scene.start('Game', { reto: false, modo: 'tiempo' }), { size: 42 });
     if (!save.tiempo.partidas) {
@@ -108,7 +113,7 @@ export default class Menu extends Phaser.Scene {
       confetti(this, W / 2, 700, 90);
       toast(this, `¡Quedaste #${p.lugar} en el ranking de la semana pasada! +${p.premio} ladrillos`, 700, 3500);
     }).catch(() => {});
-    txt(this, W / 2, H - 60, 'v1.0 · Ranking semanal', 24, '#ffffffaa', { weight: '500' });
+    txt(this, W / 2, H - 60, 'v1.1 · Aventura', 24, '#ffffffaa', { weight: '500' });
   }
 
   bannerEvento() {
