@@ -160,7 +160,7 @@ export default class Menu extends Phaser.Scene {
       const x = 250 + i * 290;
       icon(this, x - 60, y, key, 62);
       txt(this, x + 30, y, val, 42);
-    });
+    }).catch(() => {});
   }
 
   toggle(x, y, key, on, cb) {

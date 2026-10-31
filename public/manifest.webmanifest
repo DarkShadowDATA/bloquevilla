@@ -1,0 +1,16 @@
+{
+  "name": "Bloquevilla",
+  "short_name": "Bloquevilla",
+  "description": "Puzzle de bloques: limpia líneas y reconstruye tu pueblo. Se juega sin internet una vez instalado.",
+  "start_url": "/?src=app",
+  "scope": "/",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#0d1033",
+  "theme_color": "#161c4e",
+  "lang": "es",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

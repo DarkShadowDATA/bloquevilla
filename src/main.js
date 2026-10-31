@@ -60,3 +60,8 @@ async function start() {
 }
 
 start();
+
+// Jugar sin internet: guarda el juego en el celular (se instala con «Agregar a pantalla de inicio»)
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost') && window.top === window.self) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
