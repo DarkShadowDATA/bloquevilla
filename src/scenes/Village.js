@@ -8,6 +8,8 @@ import { track } from '../stats.js';
 
 // Posiciones alineadas con los 6 terrenos del fondo bg_village (suelo = parte baja del edificio)
 const PLOTS = [[245, 750], [840, 770], [245, 1140], [840, 1160], [245, 1550], [845, 1570]];
+// Zona 2: muelle y barca en el mar; los otros 4 en los terrenos de arena de bg_muelle
+const PLOTS2 = [[250, 860], [830, 860], [225, 1270], [860, 1270], [225, 1650], [860, 1650]];
 const BSIZE = 300;
 
 export default class Village extends Phaser.Scene {
@@ -161,7 +163,7 @@ export default class Village extends Phaser.Scene {
   }
 
   makePlot(b, i) {
-    const [x, gy] = PLOTS[i];
+    const [x, gy] = (this.zona === 2 ? PLOTS2 : PLOTS)[i];
     const c = this.add.container(x, gy).setDepth(10 - Math.floor(i / 2));
     c.setInteractive(new Phaser.Geom.Rectangle(-180, -BSIZE, 360, BSIZE + 80), Phaser.Geom.Rectangle.Contains);
     c.on('pointerdown', () => this.onPlot(b, i));
@@ -176,7 +178,7 @@ export default class Village extends Phaser.Scene {
     const built = isBuilt(b.id);
     const next = this.nextId() === b.id;
     const im = this.add.image(0, 0, built ? 'bld_' + b.id : 'bld_' + b.id + '_ruina').setOrigin(0.5, 1);
-    im.setDisplaySize(BSIZE, BSIZE * (im.height / im.width));
+    im.setScale(Math.min(BSIZE / im.width, this.zona === 2 ? 360 / im.height : 9));   // en el Muelle el faro no tapa lo de arriba
     if (!built && !next) im.setTint(0x9a9aa8);
     c.add(im);
     const g = this.add.graphics();
@@ -220,7 +222,7 @@ export default class Village extends Phaser.Scene {
     panel.add(this.add.rectangle(0, 0, 840, 950).setInteractive());
     panel.add(txt(this, 0, -420, b.name, 70, '#46286e'));
     const ruinImg = this.add.image(0, -60, 'bld_' + b.id + '_ruina').setOrigin(0.5, 1);
-    ruinImg.setDisplaySize(300, 300 * (ruinImg.height / ruinImg.width));
+    ruinImg.setScale(Math.min(300 / ruinImg.width, 300 / ruinImg.height));
     panel.add(ruinImg);
     panel.add(txt(this, 0, 10, 'Desbloquea:', 32, '#8c7aa0', { weight: '700' }));
     panel.add(txt(this, 0, 62, b.unlock, 40, '#2a7a4a', { wrap: 700 }));
@@ -246,7 +248,7 @@ export default class Village extends Phaser.Scene {
     track('construir', { id: b.id, n: save.built.length });
     this.brickChip.setValue(save.bricks);
     const c = this.plots[i];
-    const [x, gy] = PLOTS[i];
+    const [x, gy] = (this.zona === 2 ? PLOTS2 : PLOTS)[i];
     sfx.build();
     vibe(60);
     // ladrillos que vuelan a la obra

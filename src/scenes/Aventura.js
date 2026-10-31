@@ -37,7 +37,7 @@ export default class Aventura extends Phaser.Scene {
       const c = this.add.container(x, y);
       const key = this.textures.exists(abierto ? (i === actual ? 'nivel_actual' : 'nivel_abierto') : 'nivel_cerrado') ? (abierto ? (i === actual ? 'nivel_actual' : 'nivel_abierto') : 'nivel_cerrado') : null;
       if (key) {
-        c.add(icon(this, 0, 0, key, 150));
+        c.add(icon(this, 0, 0, key, key === 'nivel_actual' ? 178 : 150));
       } else {
         const b = this.add.graphics();
         const col = !abierto ? 0x6a6a80 : i === actual ? 0xffb23f : est ? 0x5ac85a : 0x4a8ad8;
