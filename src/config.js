@@ -37,11 +37,25 @@ export const BUILDINGS = [
   // La Casa sale en la primera o segunda partida para que se entienda el ciclo.
   { id: 'casa', name: 'Casa', cost: 20, unlock: 'Poder Deshacer' },
   { id: 'panaderia', name: 'Panadería', cost: 60, unlock: 'Recompensa diaria' },
-  { id: 'pozo', name: 'Pozo', cost: 120, unlock: 'Tema de bloques "Agua"' },
+  { id: 'pozo', art: 'el', name: 'Pozo', cost: 120, unlock: 'Tema de bloques "Agua"' },
   { id: 'herreria', name: 'Herrería', cost: 200, unlock: 'Poder Doble ladrillo' },
   { id: 'torre', name: 'Torre', cost: 300, unlock: 'Poder Segunda oportunidad' },
-  { id: 'plaza', name: 'Plaza', cost: 450, unlock: 'Zona 2 (próximamente)' },
+  { id: 'plaza', name: 'Plaza', cost: 450, unlock: 'Zona 2: el Muelle' },
+  // Zona 2, el Muelle: 2,520 ladrillos; cada edificio da un bono permanente
+  { id: 'muelle', art: 'el', zona: 2, name: 'Muelle', cost: 250, unlock: '+10% de ladrillos en cada partida' },
+  { id: 'barca', zona: 2, name: 'Barca', cost: 320, unlock: 'Regalo diario doble' },
+  { id: 'pescaderia', zona: 2, name: 'Pescadería', cost: 380, unlock: 'Más bloques dorados' },
+  { id: 'faro', art: 'el', zona: 2, name: 'Faro', cost: 450, unlock: 'Las bombas tardan 2 turnos más' },
+  { id: 'astillero', art: 'el', zona: 2, name: 'Astillero', cost: 520, unlock: 'Un 3er espacio de poder' },
+  { id: 'mercado', art: 'el', zona: 2, name: 'Mercado', cost: 600, unlock: '20% de descuento en la Tienda' },
 ];
+
+export const ZONAS = [
+  { n: 1, nombre: 'Pueblo', bg: 'bg_village' },
+  { n: 2, nombre: 'Muelle', bg: 'bg_muelle' },
+];
+export const zonaDe = (b) => b.zona || 1;
+export const conArt = (b) => `${b.art || 'la'} ${b.name}`;   // "la Casa", "el Faro"
 
 // Recompensa diaria (7 días); el día 7 también da un poder épico
 export const DAILY = [10, 15, 20, 25, 30, 40, 50];
@@ -81,7 +95,7 @@ export const DECO_POS = {
   fuente: [[548, 1335, 210]],
 };
 
-export const VERSION = '1.1';
+export const VERSION = '1.2';
 
 // Bloques peligrosos (solo en partida normal, después de unas líneas)
 // Bomba: cuenta regresiva por pieza colocada; si llega a 0 explota y se acaba la partida. Limpiar su línea la desactiva.

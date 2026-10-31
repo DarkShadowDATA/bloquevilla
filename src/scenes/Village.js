@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { W, H, BUILDINGS, DECO_POS } from '../config.js';
+import { W, H, BUILDINGS, DECO_POS, ZONAS, zonaDe, conArt } from '../config.js';
 import { save, persist, isBuilt } from '../save.js';
 import { eventoActivo } from '../evento.js';
 import { sfx, vibe } from '../sfx.js';
@@ -13,10 +13,16 @@ const BSIZE = 300;
 export default class Village extends Phaser.Scene {
   constructor() { super('Village'); }
 
-  create() {
-    background(this, 'bg_village', 'grad_sky');
-    if (!this.textures.exists('bg_village')) this.drawScenery();
-    if (eventoActivo()) this.decorarMuertos();
+  create(data) {
+    // Zona 2 (el Muelle) se abre al terminar la Plaza
+    const z2 = isBuilt('plaza');
+    const sig = BUILDINGS.find((b) => !isBuilt(b.id));
+    this.zona = z2 ? (data && data.zona) || (sig ? zonaDe(sig) : 2) : 1;
+    this.lista = BUILDINGS.filter((b) => zonaDe(b) === this.zona);
+    const Z = ZONAS[this.zona - 1];
+    background(this, Z.bg, 'grad_sky');
+    if (!this.textures.exists(Z.bg)) (this.zona === 2 ? this.drawMuelle() : this.drawScenery());
+    if (this.zona === 1 && eventoActivo()) this.decorarMuertos();
 
     button(this, 120, 110, 170, 84, 'Menú', 0x2c3070, () => this.scene.start('Menu'), { size: 32 }).setDepth(50);
     this.brickChip = chip(this, 905, 110, 230, 'ui_ladrillo', save.bricks).setDepth(50);
@@ -24,16 +30,49 @@ export default class Village extends Phaser.Scene {
     this.progressText = txt(this, W / 2, 215, '', 38, '#ffffff', { stroke: '#1e3a5a', strokeW: 8 }).setDepth(50);
     this.drawProgress();
 
-    this.plots = BUILDINGS.map((b, i) => this.makePlot(b, i));
-    this.decoraciones();
+    this.plots = this.lista.map((b, i) => this.makePlot(b, i));
+    if (this.zona === 1) this.decoraciones();
+    if (z2) this.botonZona();
     button(this, 650, 1790, 540, 130, 'Jugar', 0x5ac85a, () => this.scene.start('Game', { reto: false }), { size: 60 }).setDepth(50);
     button(this, 205, 1790, 290, 130, '  Decorar', 0xd8a020, () => this.scene.start('Shop', { tab: 'deco' }), { size: 38, iconKey: 'ui_tienda' }).setDepth(50);
 
     if (save.built.length === BUILDINGS.length) {
-      toast(this, '¡Zona 1 completa! La zona 2 llega pronto', 330, 3000);
+      toast(this, '¡Pueblo y Muelle restaurados! Pronto llegan más zonas', 420, 3000);
+    } else if (this.zona === 2 && !this.lista.some((b) => isBuilt(b.id))) {
+      toast(this, 'El Muelle: cada edificio te da un bono para siempre', 420, 3200);
+    } else if (this.zona === 1 && z2 && sig) {
+      toast(this, '¡Pueblo completo! El Muelle te espera', 420, 2600);
     } else if (save.built.length === 0) {
-      toast(this, 'Toca la Casa para empezar a reconstruir', 330, 2600);
+      toast(this, 'Toca la Casa para empezar a reconstruir', 420, 2600);
     }
+  }
+
+  botonZona() {
+    const otra = this.zona === 1 ? 2 : 1;
+    const b = button(this, W / 2, 345, 420, 76, this.zona === 1 ? 'Ir al Muelle  ›' : '‹  Volver al Pueblo', this.zona === 1 ? 0x1f8ac0 : 0x5a8a3a,
+      () => this.scene.restart({ zona: otra }), { size: 34 }).setDepth(50);
+    const nuevo = this.zona === 1 && !BUILDINGS.filter((x) => zonaDe(x) === 2).some((x) => isBuilt(x.id));
+    if (nuevo) this.tweens.add({ targets: b, scale: 1.07, duration: 550, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    return b;
+  }
+
+  // Fondo de la Zona 2 dibujado con código (mientras no esté bg_muelle)
+  drawMuelle() {
+    const g = this.add.graphics();
+    g.fillStyle(0xfff0a0, 1); g.fillCircle(1000, 440, 70);
+    g.fillStyle(0xffffff, 0.95);
+    [[150, 450, 0.9], [520, 400, 0.7]].forEach(([x, y, s]) => {
+      g.fillCircle(x, y, 50 * s); g.fillCircle(x + 55 * s, y - 20 * s, 62 * s); g.fillCircle(x + 115 * s, y, 48 * s);
+    });
+    g.fillStyle(0x2f86c8, 1); g.fillRect(0, 560, W, 420);
+    g.fillStyle(0x4aa6e0, 1); g.fillRect(0, 560, W, 30);
+    g.fillStyle(0xffffff, 0.35);
+    for (let r = 0; r < 6; r++) for (let k = 0; k < 7; k++) g.fillEllipse(80 + k * 160 + (r % 2) * 80, 630 + r * 58, 60, 8);
+    g.fillStyle(0xf0dca8, 1); g.fillEllipse(W / 2, 990, W * 1.5, 120); g.fillRect(0, 990, W, H - 990);
+    g.fillStyle(0xe4cc94, 1);
+    [[245, 1150], [840, 1170], [245, 1560], [845, 1580]].forEach(([x, y]) => g.fillEllipse(x, y - 10, 330, 70));
+    g.fillStyle(0xb07a4a, 1); g.fillPoints([{ x: 480, y: H }, { x: 600, y: H }, { x: 570, y: 990 }, { x: 510, y: 990 }], true);
+    g.lineStyle(3, 0x8a5a30, 1); for (let y = 1010; y < H; y += 34) g.lineBetween(486, y, 594, y);
   }
 
   decorarMuertos() {
@@ -107,13 +146,13 @@ export default class Village extends Phaser.Scene {
   }
 
   drawProgress() {
-    const n = save.built.length;
+    const n = this.lista.filter((b) => isBuilt(b.id)).length;
     this.progress.clear();
     this.progress.fillStyle(0x0c0f30, 0.55);
     this.progress.fillRoundedRect(140, 255, 800, 34, 17);
     this.progress.fillStyle(0x6edc6e, 1);
-    if (n) this.progress.fillRoundedRect(140, 255, (800 * n) / BUILDINGS.length, 34, 17);
-    this.progressText.setText(`Pueblo restaurado ${n}/${BUILDINGS.length}`);
+    if (n) this.progress.fillRoundedRect(140, 255, (800 * n) / this.lista.length, 34, 17);
+    this.progressText.setText(`${ZONAS[this.zona - 1].nombre} restaurado ${n}/${this.lista.length}`);
   }
 
   nextId() {
@@ -158,10 +197,10 @@ export default class Village extends Phaser.Scene {
 
   onPlot(b, i) {
     sfx.click();
-    if (isBuilt(b.id)) { toast(this, `${b.name}: ${b.unlock}`, 330); return; }
+    if (isBuilt(b.id)) { toast(this, `${b.name}: ${b.unlock}`, 420); return; }
     if (this.nextId() !== b.id) {
       const nb = BUILDINGS.find((x) => x.id === this.nextId());
-      toast(this, `Primero reconstruye la ${nb.name}`, 330);
+      toast(this, `Primero reconstruye ${conArt(nb)}`, 420);
       return;
     }
     this.openBuild(b, i);
@@ -195,7 +234,7 @@ export default class Village extends Phaser.Scene {
       }, { size: 52 }));
     } else {
       panel.add(txt(this, 0, 255, `Te faltan ${b.cost - save.bricks} ladrillos`, 38, '#c84a4a'));
-      panel.add(button(this, 0, 360, 600, 120, 'Jugar para ganar más', 0xff8c2b, () => this.scene.start('Game', { reto: false }), { size: 42 }));
+      panel.add(button(this, 0, 360, 600, 120, 'Jugar para ganar más', 0xff8c2b, () => this.scene.start('Game', { reto: false, nueva: false }), { size: 42 }));
     }
     this.tweens.add({ targets: panel, scale: 1, duration: 340, ease: 'Back.Out' });
   }
@@ -230,8 +269,9 @@ export default class Village extends Phaser.Scene {
         confetti(this, x, gy - 200, 70);
         this.cameras.main.shake(160, 0.004);
         this.drawProgress();
-        toast(this, `¡Desbloqueaste: ${b.unlock}!`, 330, 2400);
-        this.plots.forEach((p, j) => { if (j !== i) this.renderPlot(p, BUILDINGS[j]); });
+        toast(this, `¡Desbloqueaste: ${b.unlock}!`, 420, 2400);
+        this.plots.forEach((p, j) => { if (j !== i) this.renderPlot(p, this.lista[j]); });
+        if (b.id === 'plaza') this.time.delayedCall(1200, () => this.botonZona());
       });
     });
   }

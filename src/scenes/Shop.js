@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { W, H, TIENDA, MAX_POWERS, COLORS } from '../config.js';
+import { W, H, TIENDA, COLORS } from '../config.js';
+import { maxPoderes, precioTienda } from '../bonos.js';
 import { save, persist } from '../save.js';
 import { POWERS, RARITY } from '../powers.js';
 import { sfx, vibe } from '../sfx.js';
@@ -61,6 +62,7 @@ export default class Shop extends Phaser.Scene {
   }
 
   priceBtn(c, precio, onBuy, label) {
+    precio = precioTienda(precio);   // el Mercado del Muelle da descuento
     const ok = save.bricks >= precio;
     const b = button(this, 0, 150, 300, 84, label || `${precio}`, ok ? 0x5ac85a : 0x8a8aa0, () => {
       if (save.bricks < precio) {
@@ -96,7 +98,7 @@ export default class Shop extends Phaser.Scene {
       c.add(txt(this, 0, -CH / 2 + 37, rar.name, 22, '#ffffff'));
       c.add(icon(this, 0, -70, 'pw_' + it.id, 130));
       this.priceBtn(c, it.precio, () => {
-        if (save.proximos.length >= MAX_POWERS) save.proximos.shift();
+        if (save.proximos.length >= maxPoderes()) save.proximos.shift();
         save.proximos.push(it.id);
         persist();
         toast(this, `${p.name} listo para tu próxima partida`, 1850, 1800);
@@ -108,9 +110,9 @@ export default class Shop extends Phaser.Scene {
     const g = this.add.graphics();
     g.fillStyle(0x0c0f30, 0.7); g.fillRoundedRect(90, y - 100, 900, 250, 40);
     this.layer.add(g);
-    this.layer.add(txt(this, W / 2, y - 55, `Para tu próxima partida (máx. ${MAX_POWERS})`, 32, '#ffffff', { weight: '700' }));
-    for (let k = 0; k < MAX_POWERS; k++) {
-      const x = W / 2 - 110 + k * 220;
+    this.layer.add(txt(this, W / 2, y - 55, `Para tu próxima partida (máx. ${maxPoderes()})`, 32, '#ffffff', { weight: '700' }));
+    for (let k = 0; k < maxPoderes(); k++) {
+      const x = W / 2 - 110 * (maxPoderes() - 1) + k * 220;
       const sg = this.add.graphics();
       sg.lineStyle(5, 0x7a7eba, 1); sg.strokeRoundedRect(x - 70, y - 10, 140, 140, 26);
       this.layer.add(sg);
@@ -168,12 +170,12 @@ export default class Shop extends Phaser.Scene {
           this.time.delayedCall(250, () => this.show('deco'));
         });
       } else {
-        this.stateBtn(c, 'En tu pueblo', 0x2a8a4a, () => this.scene.start('Village'));
+        this.stateBtn(c, 'En tu pueblo', 0x2a8a4a, () => this.scene.start('Village', { zona: 1 }));
       }
     });
     // 6.º lugar: ir al pueblo
     const c = this.add.container(COLS[1], ROWS[2]);
-    c.add(button(this, 0, 0, 380, 130, 'Ver mi pueblo', 0xff8c2b, () => this.scene.start('Village'), { size: 42 }));
+    c.add(button(this, 0, 0, 380, 130, 'Ver mi pueblo', 0xff8c2b, () => this.scene.start('Village', { zona: 1 }), { size: 42 }));
     this.layer.add(c);
   }
 }

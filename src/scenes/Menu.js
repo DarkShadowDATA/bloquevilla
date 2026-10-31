@@ -6,6 +6,7 @@ import { retoNumero } from '../reto.js';
 import { sfx } from '../sfx.js';
 import { txt, background, icon, button, toast, confetti } from '../ui.js';
 import { premioPendiente, cobrarPremio } from '../ranking.js';
+import { multRegalo } from '../bonos.js';
 
 export default class Menu extends Phaser.Scene {
   constructor() { super('Menu'); }
@@ -113,7 +114,7 @@ export default class Menu extends Phaser.Scene {
       confetti(this, W / 2, 700, 90);
       toast(this, `¡Quedaste #${p.lugar} en el ranking de la semana pasada! +${p.premio} ladrillos`, 700, 3500);
     }).catch(() => {});
-    txt(this, W / 2, H - 60, 'v1.1 · Aventura', 24, '#ffffffaa', { weight: '500' });
+    txt(this, W / 2, H - 60, 'v1.2 · Zona 2: el Muelle', 24, '#ffffffaa', { weight: '500' });
   }
 
   bannerEvento() {
@@ -189,7 +190,8 @@ export default class Menu extends Phaser.Scene {
     panel.add(txt(this, 0, -350, 'Regalo diario', 66, '#6a1e4a'));
     panel.add(txt(this, 0, -280, 'Entra cada día para que el regalo crezca', 30, '#9a6a88', { weight: '700' }));
     const idx = dailyIndex();
-    DAILY.forEach((amt, i) => {
+    DAILY.forEach((base, i) => {
+      const amt = base * multRegalo();
       const row = i < 4 ? 0 : 1;
       const col = row === 0 ? i : i - 4;
       const perRow = row === 0 ? 4 : 3;
@@ -207,7 +209,7 @@ export default class Menu extends Phaser.Scene {
       panel.add(txt(this, x, y + 62, i === 6 ? `${amt} + Rayo` : String(amt), i === 6 ? 26 : 34, '#c8502a'));
     });
     panel.add(button(this, 0, 320, 560, 120, 'Reclamar', 0x5ac85a, () => {
-      const amt = DAILY[idx];
+      const amt = DAILY[idx] * multRegalo();
       save.bricks += amt;
       save.daily = { last: today(), streak: idx + 1 };
       if (idx === 6) save.pendingPower = 'rayo';

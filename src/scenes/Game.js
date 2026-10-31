@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
   W, H, N, CELL, BX, BY, TRAY_Y, SLOTS, TRAY_CELL, COLORS, HEX, SCORE, BRICKS,
-  COMBO_GRACE, LINES_PER_OFFER, MAX_POWERS, BUILDINGS, TIEMPO, ORO, PELIGRO,
+  COMBO_GRACE, LINES_PER_OFFER, conArt, BUILDINGS, TIEMPO, ORO, PELIGRO,
 } from '../config.js';
 import { size, canPlace, anyFit, makeTray, findLines, rotate } from '../pieces.js';
 import { save, persist, isBuilt, today, ayer } from '../save.js';
@@ -14,6 +14,7 @@ import { track } from '../stats.js';
 import { rngDe, barajar } from '../rng.js';
 import { compartirReto, pedirApodo } from '../share.js';
 import { enviarPuntaje } from '../ranking.js';
+import { extraLadrillos, oroChance, turnosBomba, maxPoderes } from '../bonos.js';
 import { NIVELES, OBJ_TEXTO, OBJ_ICONO, calcularEstrellas, guardarResultado } from '../aventura.js';
 
 export default class Game extends Phaser.Scene {
@@ -147,7 +148,7 @@ export default class Game extends Phaser.Scene {
     // Poderes comprados en la tienda para esta partida
     if (!this.reto && !this.tiempo && !this.vs && this.nivel == null && save.proximos.length) {
       const n0 = this.powers.length;
-      while (this.powers.length < MAX_POWERS && save.proximos.length) this.powers.push(save.proximos.shift());
+      while (this.powers.length < maxPoderes() && save.proximos.length) this.powers.push(save.proximos.shift());
       persist();
       if (this.powers.length > n0) this.time.delayedCall(500, () => toast(this, `Traes ${this.powers.length - n0 === 1 ? 'un poder' : 'dos poderes'} de la tienda`, 352, 2200));
     }
@@ -199,7 +200,7 @@ export default class Game extends Phaser.Scene {
 
   buildPowersBar() {
     txt(this, W / 2, 1655, 'PODERES · duran esta partida', 26, '#a8a8d8', { weight: '700' });
-    this.powerSlots = [430, 650].map((x, i) => {
+    this.powerSlots = (maxPoderes() > 2 ? [320, 540, 760] : [430, 650]).map((x, i) => {
       const c = this.add.container(x, 1785);
       c.setInteractive(new Phaser.Geom.Rectangle(-90, -90, 180, 180), Phaser.Geom.Rectangle.Contains);
       c.on('pointerdown', () => this.activatePower(i));
@@ -288,7 +289,7 @@ export default class Game extends Phaser.Scene {
     const rnd = rngDe(`${this.semilla}:t${this.trayN++}`);
     this.spawnPeligros(rnd);
     const defs = makeTray(this.board, rnd);
-    if (rnd() < (this.av && this.av.def.oro != null ? this.av.def.oro : ORO.chance)) {
+    if (rnd() < (this.av && this.av.def.oro != null ? this.av.def.oro : oroChance())) {
       const d = defs[Math.floor(rnd() * defs.length)];
       d.gold = Math.floor(rnd() * d.cells.length);
       if (!save.oroVisto && !window.__capture) {
@@ -642,7 +643,7 @@ export default class Game extends Phaser.Scene {
     this.guardarPartida();
     if (this.offerPending) {
       this.offerPending = false;
-      if (this.powers.length < MAX_POWERS) {
+      if (this.powers.length < maxPoderes()) {
         this.showOffer();
         return;
       }
@@ -909,7 +910,7 @@ export default class Game extends Phaser.Scene {
   // ---------- Bloques peligrosos ----------
   dibujarBomba(r, c) {
     const k = r * N + c;
-    if (this.bombas[k] == null) this.bombas[k] = PELIGRO.bomba.turnos;
+    if (this.bombas[k] == null) this.bombas[k] = turnosBomba();
     if (this.bombaTxt[k]) this.bombaTxt[k].destroy();
     const { x, y } = this.cellXY(r, c);
     const t = txt(this, x + 22, y + 24, String(this.bombas[k]), 46, '#ffffff', { stroke: '#3a0614', strokeW: 9 }).setDepth(14);
@@ -948,7 +949,7 @@ export default class Game extends Phaser.Scene {
       const [r, c] = libres.pop();
       const k = r * N + c;
       this.board[r][c] = 'bomba';
-      this.bombas[k] = PELIGRO.bomba.turnos;
+      this.bombas[k] = this.av ? PELIGRO.bomba.turnos : turnosBomba();
       this.bombasNuevas.add(k);
       this.addBlock(r, c, 'bomba', true);
       this.cameras.main.shake(120, 0.003);
@@ -1181,7 +1182,7 @@ export default class Game extends Phaser.Scene {
     this.miss = p.miss || 0;
     this.linesTotal = p.linesTotal || 0;
     this.nextOffer = p.nextOffer || LINES_PER_OFFER;
-    this.powers = (p.powers || []).slice(0, MAX_POWERS);
+    this.powers = (p.powers || []).slice(0, maxPoderes());
     if (p.doubleBricks) {
       this.doubleBricks = true;
       this.brickChip.list[0].clear().fillStyle(0xb47814, 0.9).fillRoundedRect(-115, -40, 230, 80, 40);
@@ -1344,7 +1345,8 @@ export default class Game extends Phaser.Scene {
     this.combo = 0;
     this.updateComboText();
     this.busy = true;
-    const endBricks = Math.floor(this.score / (this.evento ? EVENTO.divisorBono : BRICKS.endPer));
+    let endBricks = Math.floor(this.score / (this.evento ? EVENTO.divisorBono : BRICKS.endPer));
+    endBricks += Math.ceil((this.runBricks + endBricks) * extraLadrillos());   // bono del Muelle
     if (endBricks > 0) this.addBricks(endBricks, W / 2, 900);
     const recordPrev = this.tiempo ? save.tiempo.record : save.record;
     const newRecord = this.score > recordPrev;
@@ -1414,7 +1416,7 @@ export default class Game extends Phaser.Scene {
     const next = BUILDINGS.find((b) => !isBuilt(b.id));
     if (next && !vs && !this.tiempo) {
       const ok = save.bricks >= next.cost;
-      panel.add(txt(this, 0, 95, ok ? `¡Ya te alcanza para la ${next.name}!` : `Te faltan ${next.cost - save.bricks} para la ${next.name}`, 32, ok ? '#2a9a4a' : '#8c7aa0', { weight: '700' }));
+      panel.add(txt(this, 0, 95, ok ? `¡Ya te alcanza para ${conArt(next)}!` : `Te faltan ${next.cost - save.bricks} para ${conArt(next)}`, 32, ok ? '#2a9a4a' : '#8c7aa0', { weight: '700' }));
     }
     if (vs) panel.add(txt(this, 0, 95, 'Mismas piezas para los dos', 30, '#8c7aa0', { weight: '700' }));
     this.rankTxt = null;
