@@ -19,10 +19,13 @@ function jugador() {
   return save.jugador;
 }
 
+// ?src=itch: el juego abierto desde itch.io (su HTML abre la versión en línea). Se lee al cargar, antes de limpiar la URL.
+const SRC = (() => { try { return new URLSearchParams(location.search).get('src') || ''; } catch (e) { return ''; } })();
+
 // De dónde se está jugando: itch, el dominio del estudio u otro sitio
 function origen() {
   const h = location.hostname;
-  if (/itch\.(io|zone)$/.test(h)) return 'itch';
+  if (/itch\.(io|zone)$/.test(h) || SRC === 'itch') return 'itch';
   if (h.endsWith('darkshadow-studios.com')) return 'dominio';
   if (/claude|anthropic/.test(h)) return 'claude';
   return h.slice(0, 40) || 'otro';

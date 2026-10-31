@@ -3,7 +3,7 @@
 ## Publicación (darkshadow-studios.com)
 - Cloudflare Pages publica el sitio directamente desde la carpeta `dist/` del repositorio, sin compilar nada en Cloudflare (sin comando de build).
 - Por eso, **antes de cada push**: ejecuta `npm run build` y sube en el mismo commit el `dist/` actualizado (`dist/index.html`). Nunca hagas push de cambios en `src/` sin su `dist/` recompilado.
-- Regenera también `itch/bloquevilla_itch.zip` (zip de `dist/index.html`) para que la versión de itch.io quede igual a la del dominio.
+- itch.io (desde 30 oct 2026) ya no usa el zip: tiene subido `itch/bloquevilla_itch.html`, que abre la versión en línea (`?src=itch`) en un iframe. Cada push al dominio llega solo a itch; no hay que regenerar ni resubir nada.
 
 ## Contenido para redes
 - Todo contenido nuevo del juego va acompañado de videos para redes (los scripts están en `clips/`).
