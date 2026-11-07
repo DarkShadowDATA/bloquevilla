@@ -7,6 +7,8 @@ import { sfx } from '../sfx.js';
 import { txt, background, icon, button, toast, confetti } from '../ui.js';
 import { premioPendiente, cobrarPremio } from '../ranking.js';
 import { multRegalo } from '../bonos.js';
+import { misionesHoy, porCobrar, cobrar, abrirCofre, cofreListo, cumplida, textoMision, iconoMision, PREMIO_MISION, COFRE, faltaParaNuevas } from '../misiones.js';
+import { POWERS } from '../powers.js';
 
 export default class Menu extends Phaser.Scene {
   constructor() { super('Menu'); }
@@ -82,13 +84,27 @@ export default class Menu extends Phaser.Scene {
       this.tweens.add({ targets: nv, scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
     }
 
+    // Misiones diarias (izquierda) y Regalo diario (derecha)
+    const M = misionesHoy();
+    const hechas = M.lista.filter(cumplida).length;
+    const pend = porCobrar();
+    const mb = button(this, W / 2 - 165, 1540, 310, 104, `Misiones ${hechas}/3`, 0x3a7ad8, () => this.openMisiones(), { size: 38 });
+    if (pend) {
+      this.tweens.add({ targets: mb, scale: 1.05, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+      const bc = this.add.circle(W / 2 - 22, 1494, 26, 0xe83a3a).setStrokeStyle(5, 0xffffff).setDepth(6);
+      const bt = txt(this, W / 2 - 22, 1494, String(pend), 30).setDepth(7);
+      this.tweens.add({ targets: [bc, bt], scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
+    } else if (!save.misionesVistas) {
+      const nv = txt(this, W / 2 - 40, 1494, '¡NUEVO!', 26, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12).setDepth(5);
+      this.tweens.add({ targets: nv, scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
+    }
     if (dailyAvailable()) {
-      const b = button(this, W / 2, 1540, 640, 112, '  Regalo diario', 0xd84a8a, () => this.openDaily(), { size: 42, iconKey: 'ui_regalo' });
+      const b = button(this, W / 2 + 165, 1540, 310, 104, ' Regalo', 0xd84a8a, () => this.openDaily(), { size: 40, iconKey: 'ui_regalo' });
       this.tweens.add({ targets: b, scale: 1.05, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
     } else if (!isBuilt('panaderia')) {
-      txt(this, W / 2, 1540, 'Construye la Panadería para recibir regalos diarios', 30, '#ffffff', { weight: '700', wrap: 760, stroke: '#1e144688', strokeW: 6 });
+      button(this, W / 2 + 165, 1540, 310, 104, 'Regalo 🔒', 0x6a5a7a, () => toast(this, 'Construye la Panadería para recibir regalos diarios', 1400, 2200), { size: 36 });
     } else {
-      txt(this, W / 2, 1540, 'Vuelve mañana por tu regalo diario', 30, '#ffffff', { weight: '700', stroke: '#1e144688', strokeW: 6 });
+      button(this, W / 2 + 165, 1540, 310, 104, 'Regalo ✓', 0x6a5a7a, () => toast(this, 'Vuelve mañana por tu regalo diario', 1400, 2000), { size: 36 });
     }
 
     // Ajustes
@@ -114,7 +130,7 @@ export default class Menu extends Phaser.Scene {
       confetti(this, W / 2, 700, 90);
       toast(this, `¡Quedaste #${p.lugar} en el ranking de la semana pasada! +${p.premio} ladrillos`, 700, 3500);
     }).catch(() => {});
-    txt(this, W / 2, H - 60, 'v1.2 · Zona 2: el Muelle', 24, '#ffffffaa', { weight: '500' });
+    txt(this, W / 2, H - 60, 'v1.3 · Misiones diarias', 24, '#ffffffaa', { weight: '500' });
   }
 
   bannerEvento() {
@@ -176,6 +192,89 @@ export default class Menu extends Phaser.Scene {
     c.setInteractive(new Phaser.Geom.Circle(0, 0, 58), Phaser.Geom.Circle.Contains);
     let v = on;
     c.on('pointerdown', () => { v = !v; im.setAlpha(v ? 1 : 0.35); drawSlash(v); cb(v); sfx.click(); });
+  }
+
+  openMisiones() {
+    if (!save.misionesVistas) { save.misionesVistas = true; persist(); }
+    const M = misionesHoy();
+    const layer = this.add.container(0, 0).setDepth(300);
+    layer.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.65).setInteractive());
+    const panel = this.add.container(W / 2, 960).setScale(0.3);
+    layer.add(panel);
+    this.tweens.add({ targets: panel, scale: 1, duration: 320, ease: 'Back.Out' });
+    const g = this.add.graphics();
+    g.fillStyle(0x1e4a8a, 1); g.fillRoundedRect(-460, -560, 920, 1130, 50);
+    g.fillStyle(0xf2f7ff, 1); g.fillRoundedRect(-460, -570, 920, 1120, 50);
+    panel.add(g);
+    panel.add(txt(this, 0, -490, 'Misiones del día', 64, '#163a6e'));
+    panel.add(txt(this, 0, -420, `Nuevas en ${faltaParaNuevas()}`, 30, '#5a7aa8', { weight: '700' }));
+    const DIF = ['Fácil', 'Media', 'Difícil'];
+    const DCOL = [0x4ab86a, 0xe8a020, 0xe04a4a];
+    M.lista.forEach((m, i) => {
+      const y = -280 + i * 215;
+      const ok = cumplida(m);
+      const card = this.add.graphics();
+      card.fillStyle(m.cobrada ? 0xdfe6f0 : 0xffffff, 1); card.fillRoundedRect(-420, y - 90, 840, 180, 30);
+      card.lineStyle(5, ok && !m.cobrada ? 0x4ab86a : 0xc8d4e6, 1); card.strokeRoundedRect(-420, y - 90, 840, 180, 30);
+      card.fillStyle(DCOL[m.dif], 1); card.fillRoundedRect(-405, y - 75, 12, 150, 6);
+      panel.add(card);
+      panel.add(icon(this, -330, y, iconoMision(m), 86));
+      panel.add(txt(this, -260, y - 50, DIF[m.dif], 26, Phaser.Display.Color.IntegerToColor(DCOL[m.dif]).rgba, { weight: '800' }).setOrigin(0, 0.5));
+      const tm = txt(this, -260, y - 8, textoMision(m), 32, '#163a6e', { weight: '700' }).setOrigin(0, 0.5);
+      if (tm.width > 440) tm.setScale(440 / tm.width);
+      panel.add(tm);
+      // barra de progreso
+      const bar = this.add.graphics();
+      bar.fillStyle(0xdde6f2, 1); bar.fillRoundedRect(-260, y + 38, 380, 26, 13);
+      bar.fillStyle(ok ? 0x4ab86a : 0x3a7ad8, 1); bar.fillRoundedRect(-260, y + 38, Math.max(26, 380 * Math.min(1, m.p / m.n)), 26, 13);
+      panel.add(bar);
+      panel.add(txt(this, -70, y + 51, `${Math.min(m.p, m.n).toLocaleString('es-MX')} / ${m.n.toLocaleString('es-MX')}`, 22, '#163a6e', { weight: '800' }));
+      const premio = PREMIO_MISION[m.dif];
+      if (m.cobrada) {
+        panel.add(txt(this, 300, y, '✓ Cobrada', 34, '#4a8a5a', { weight: '800' }));
+      } else if (ok) {
+        const b = button(this, 300, y, 210, 100, `+${premio}`, 0x4ab86a, () => {
+          const n = cobrar(i);
+          if (!n) return;
+          sfx.build();
+          confetti(this, W / 2, 700, 50);
+          toast(this, `+${n} ladrillos`, 700, 1200);
+          this.time.delayedCall(700, () => { layer.destroy(); this.openMisiones(); });
+        }, { size: 40, iconKey: 'ui_ladrillo' });
+        this.tweens.add({ targets: b, scale: 1.07, duration: 450, yoyo: true, repeat: -1 });
+        panel.add(b);
+      } else {
+        panel.add(icon(this, 260, y, 'ui_ladrillo', 56));
+        panel.add(txt(this, 330, y, `+${premio}`, 40, '#c8502a'));
+      }
+    });
+    // Cofre por cumplir las 3
+    const yc = 370;
+    const cg = this.add.graphics();
+    cg.fillStyle(M.cofre ? 0xdfe6f0 : 0xfff3c8, 1); cg.fillRoundedRect(-420, yc - 75, 840, 150, 30);
+    cg.lineStyle(5, cofreListo() ? 0xe8a020 : 0xe6d8a8, 1); cg.strokeRoundedRect(-420, yc - 75, 840, 150, 30);
+    panel.add(cg);
+    panel.add(txt(this, -330, yc, '🎁', 72));
+    panel.add(txt(this, -260, yc - 24, 'Cofre de las 3 misiones', 32, '#6a4a08', { weight: '800' }).setOrigin(0, 0.5));
+    panel.add(txt(this, -260, yc + 22, `+${COFRE.ladrillos} ladrillos y un poder gratis`, 26, '#8a6a28', { weight: '700' }).setOrigin(0, 0.5));
+    if (M.cofre) {
+      panel.add(txt(this, 300, yc, '✓ Abierto', 34, '#4a8a5a', { weight: '800' }));
+    } else if (cofreListo()) {
+      const b = button(this, 300, yc, 210, 100, 'Abrir', 0xe8a020, () => {
+        const r = abrirCofre();
+        if (!r) return;
+        sfx.build();
+        confetti(this, W / 2, 700, 110);
+        const pw = r.poder ? ` y ${POWERS[r.poder] ? POWERS[r.poder].name : r.poder} para tu próxima partida` : '';
+        toast(this, `+${r.ladrillos} ladrillos${pw}`, 700, 2400);
+        this.time.delayedCall(900, () => { layer.destroy(); this.openMisiones(); });
+      }, { size: 40 });
+      this.tweens.add({ targets: b, scale: 1.08, duration: 450, yoyo: true, repeat: -1 });
+      panel.add(b);
+    } else {
+      panel.add(txt(this, 300, yc, `${M.lista.filter((m) => m.cobrada).length}/3`, 40, '#8a6a28'));
+    }
+    panel.add(button(this, 0, 495, 420, 100, 'Cerrar', 0x3a7ad8, () => this.scene.restart({ reto: false }), { size: 40 }));
   }
 
   openDaily() {

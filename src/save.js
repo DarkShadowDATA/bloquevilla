@@ -21,6 +21,8 @@ const DEFAULT = {
   aventura: { estrellas: [] },
   apodo: null,
   rankingCobrado: null,
+  misiones: null, // misiones diarias de hoy (misiones.js)
+  misionesVistas: false,
   partida: null, // partida normal en curso, para retomarla si el navegador se cierra
 };
 

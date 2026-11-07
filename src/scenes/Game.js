@@ -15,6 +15,7 @@ import { rngDe, barajar } from '../rng.js';
 import { compartirReto, pedirApodo } from '../share.js';
 import { enviarPuntaje } from '../ranking.js';
 import { extraLadrillos, oroChance, turnosBomba, maxPoderes } from '../bonos.js';
+import { avanzar, textoMision } from '../misiones.js';
 import { NIVELES, OBJ_TEXTO, OBJ_ICONO, calcularEstrellas, guardarResultado } from '../aventura.js';
 
 export default class Game extends Phaser.Scene {
@@ -460,6 +461,7 @@ export default class Game extends Phaser.Scene {
     this.addScore(pts);
     if (oros.length) this.premioOro(oros);
     if (this.av) { this.avSumar('oro', oros.length); this.avSumar('lineas', n); if (this.combo >= 2) this.avMax('combo', this.combo); }
+    this.mision('lineas', n); this.mision('oro', oros.length); if (this.combo >= 2) this.mision('combo', this.combo);
     this.addBricks(bricks, x, y);
     sfx.clear(this.combo);
     vibe(n > 1 ? 40 : 20);
@@ -527,6 +529,7 @@ export default class Game extends Phaser.Scene {
         desactivadas.push([r, c]);
       }
       if (this.av && (color === 'hielo' || color === 'hielo2')) this.avSumar('hielo', 1);
+      if (color === 'hielo' || color === 'hielo2') this.mision('hielo', 1);
       this.board[r][c] = null;
       this.sprites[r][c] = null;
       if (!im) return;
@@ -1010,6 +1013,7 @@ export default class Game extends Phaser.Scene {
 
   desactivarBomba(r, c) {
     if (this.av) this.avSumar('bombas', 1);
+    this.mision('bombas', 1);
     const { x, y } = this.cellXY(r, c);
     this.bombasDesactivadas += 1;
     this.addScore(PELIGRO.bomba.puntos);
@@ -1063,6 +1067,16 @@ export default class Game extends Phaser.Scene {
     this.avPiezas.setText(`${quedan} piezas`).setColor(quedan <= 3 ? '#ff7a7a' : '#ffd93d');
   }
 
+  // Misiones diarias: suma progreso y avisa cuando se cumple una
+  mision(tipo, v) {
+    if (!v || this.capturaSinMisiones) return;
+    avanzar(tipo, v).forEach((m, k) => this.time.delayedCall(300 + k * 1900, () => {
+      if (!this.sys.isActive()) return;
+      toast(this, `✔ Misión cumplida: ${textoMision(m)}`, 268, 1800);
+      sfx.build();
+    }));
+  }
+
   avSumar(tipo, n) {
     if (!this.av || this.av.def.t !== tipo || this.av.fin) return;
     this.av.progreso += n;
@@ -1093,7 +1107,9 @@ export default class Game extends Phaser.Scene {
     const { def, usadas } = this.av;
     this.av.fin = true;
     const estrellas = gano ? calcularEstrellas(usadas, def.p) : 0;
+    const antes = (save.aventura.estrellas || [])[this.nivel] || 0;
     const premio = gano ? guardarResultado(this.nivel, estrellas) : 0;
+    this.mision('estrellas', Math.max(0, estrellas - antes)); this.mision('partidas', 1); this.mision('puntos', this.score);
     if (premio) { this.brickChip.setValue(save.bricks); }
     track('aventura', { nivel: this.nivel + 1, gano, estrellas, piezas: usadas, puntos: this.score });
     if (gano) { sfx.build(); confetti(this, W / 2, 600, 100); this.cameras.main.flash(200, 255, 240, 160); }
@@ -1290,12 +1306,14 @@ export default class Game extends Phaser.Scene {
     this.busy = true;
     const R = this.reto;
     const ok = this.linesTotal >= R.meta;
+    this.mision('partidas', 1); this.mision('puntos', this.score);
     let premio = 0;
     if (ok && save.reto.last !== today()) {
       save.reto.racha = save.reto.last === ayer() ? save.reto.racha + 1 : 1;
       save.reto.last = today();
       premio = RETO_PREMIO;
       persist();
+      this.mision('reto', 1);
       this.addBricks(premio, W / 2, 900, true);
     }
     track('reto', { numero: R.numero, ok, lineas: this.linesTotal, premio: premio > 0 });
@@ -1357,6 +1375,7 @@ export default class Game extends Phaser.Scene {
     } else if (newRecord) save.record = this.score;
     save.games += 1;
     save.partida = null;
+    this.mision('partidas', 1); this.mision('puntos', this.score); if (this.tiempo) this.mision('tiempo', 1);
     persist();
     sfx.over();
     for (let r = 0; r < N; r++) {
