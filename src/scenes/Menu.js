@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { W, H, COLORS, HEX, BUILDINGS, DAILY } from '../config.js';
+import { W, H, COLORS, HEX, BUILDINGS, DAILY, NOMBRE_TEMA } from '../config.js';
+import { nube, loginUrl } from '../nube.js';
 import { save, persist, isBuilt, dailyAvailable, dailyIndex, today } from '../save.js';
 import { EVENTO, eventoActivo, diasRestantes } from '../evento.js';
 import { retoNumero } from '../reto.js';
@@ -109,13 +110,14 @@ export default class Menu extends Phaser.Scene {
 
     // Ajustes
     this.toggle(960, 120, 'ui_sonido', save.sound, (v) => { save.sound = v; persist(); });
+    this.cuenta();
     const temas = ['clasico'];
     if (isBuilt('pozo')) temas.push('agua');
     if (save.muertos.tema) temas.push('muertos');
     save.tienda.temas.forEach((t) => temas.push(t));
     if (temas.length > 1) {
       if (!temas.includes(save.theme)) save.theme = 'clasico';
-      const nombre = { clasico: eventoActivo() ? 'Evento' : 'Clásico', agua: 'Agua', muertos: 'Día de Muertos', neon: 'Neón', caramelo: 'Caramelo' };
+      const nombre = { clasico: eventoActivo() ? 'Evento' : 'Clásico', agua: 'Agua', muertos: 'Día de Muertos', ...NOMBRE_TEMA };
       const label = () => `Bloques: ${nombre[save.theme]}`;
       const tb = button(this, W / 2, 1668, 480, 90, label(), 0x2c6ab0, () => {
         save.theme = temas[(temas.indexOf(save.theme) + 1) % temas.length];
@@ -130,7 +132,7 @@ export default class Menu extends Phaser.Scene {
       confetti(this, W / 2, 700, 90);
       toast(this, `¡Quedaste #${p.lugar} en el ranking de la semana pasada! +${p.premio} ladrillos`, 700, 3500);
     }).catch(() => {});
-    txt(this, W / 2, H - 60, 'v1.3 · Misiones diarias', 24, '#ffffffaa', { weight: '500' });
+    txt(this, W / 2, H - 60, 'v1.4 · Tienda Shadow', 24, '#ffffffaa', { weight: '500' });
   }
 
   bannerEvento() {
@@ -177,6 +179,21 @@ export default class Menu extends Phaser.Scene {
       icon(this, x - 60, y, key, 62);
       txt(this, x + 30, y, val, 42);
     });
+  }
+
+  // Cuenta DarkShadow (arriba a la izquierda): guardado en la nube y Shadow. Dentro de itch no se muestra.
+  cuenta() {
+    if (!nube.on && !nube.can) return;
+    const label = nube.on ? `☁️ ${nube.name}`.slice(0, 18) : '👤 Iniciar sesión';
+    const b = button(this, 190, 120, 320, 84, label, nube.on ? 0x2c3070 : 0x6a3ab8, () => {
+      if (nube.on) toast(this, 'Tu partida se guarda en tu cuenta DarkShadow', 900, 2200);
+      else location.href = loginUrl();
+    }, { size: nube.on ? 30 : 32 });
+    b.label.setFontSize(Math.min(32, Math.floor(30 * 280 / Math.max(280, b.label.width))));
+    if (save.fundador) {
+      const f = txt(this, 190, 192, '👑 Fundador', 28, '#ffd93d', { stroke: '#3a1250', strokeW: 8 });
+      this.tweens.add({ targets: f, scale: 1.06, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    }
   }
 
   toggle(x, y, key, on, cb) {

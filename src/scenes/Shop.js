@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { W, H, TIENDA, COLORS } from '../config.js';
+import { W, H, TIENDA, COLORS, TIENDA_SHADOW, NOMBRE_TEMA } from '../config.js';
+import { nube, comprar, loginUrl, shadowUrl } from '../nube.js';
 import { maxPoderes, precioTienda } from '../bonos.js';
 import { save, persist } from '../save.js';
 import { POWERS, RARITY } from '../powers.js';
@@ -7,7 +8,7 @@ import { sfx, vibe } from '../sfx.js';
 import { txt, background, icon, button, toast, chip, confetti } from '../ui.js';
 import { track } from '../stats.js';
 
-const TABS = [['poderes', 'Poderes'], ['temas', 'Temas'], ['deco', 'Pueblo']];
+const TABS = [['poderes', 'Poderes'], ['temas', 'Temas'], ['deco', 'Pueblo'], ['shadow', 'Shadow']];
 const COLS = [290, 790];
 const ROWS = [600, 1030, 1460];
 const CW = 460, CH = 400;
@@ -24,7 +25,7 @@ export default class Shop extends Phaser.Scene {
     if (!save.tienda.visto) { save.tienda.visto = true; persist(); }
     this.tab = (data && data.tab) || 'poderes';
     this.tabBtns = TABS.map(([id, name], i) => {
-      const b = button(this, 200 + i * 340, 265, 310, 96, name, 0x3a2e7a, () => this.show(id), { size: 40 });
+      const b = button(this, 145 + i * 263, 265, 245, 96, name, id === 'shadow' ? 0x4a2a8a : 0x3a2e7a, () => this.show(id), { size: 36 });
       b.tabId = id;
       return b;
     });
@@ -43,6 +44,7 @@ export default class Shop extends Phaser.Scene {
     this.layer.removeAll(true);
     if (id === 'poderes') this.showPoderes();
     else if (id === 'temas') this.showTemas();
+    else if (id === 'shadow') this.showShadow();
     else this.showDeco();
   }
 
@@ -150,6 +152,67 @@ export default class Shop extends Phaser.Scene {
     });
     this.layer.add(txt(this, W / 2, 880, 'Los temas son tuyos para siempre', 30, '#c8c0e8', { weight: '700' }));
     this.layer.add(txt(this, W / 2, 935, 'Cámbialos en el menú con el botón "Bloques"', 26, '#c8c0e8', { weight: '600' }));
+  }
+
+  // Tienda Shadow (opcional): temas exclusivos y ladrillos. Nada de aquí da ventaja en el ranking ni en los retos.
+  showShadow() {
+    const lista = nube.on && nube.tienda.length ? nube.tienda : TIENDA_SHADOW;
+    const top = this.add.container(W / 2, 352);
+    if (nube.on) {
+      top.add(icon(this, -150, 0, 'ui_shadow', 50));
+      top.add(txt(this, 30, 0, `Tienes ${nube.shadow} Shadow`, 34, '#ffffff', { weight: '800' }));
+    } else top.add(txt(this, 0, 0, 'Opcional: todo el juego se puede jugar gratis', 28, '#c8c0e8', { weight: '700' }));
+    this.layer.add(top);
+    lista.forEach((it, i) => {
+      const c = this.card(i, it.nombre, it.desc, it.id === 'fundador' ? 0xe0a33a : 0x7a4ad8);
+      c.itemId = it.id;
+      if (it.tema) {
+        [0, 1, 2, 3].forEach((k) => {
+          const im = this.add.image(-105 + k * 70, -80 + (k % 2) * 34, `${it.tema}_${COLORS[(k * 2 + i) % COLORS.length]}`);
+          im.setDisplaySize(96, 96);
+          c.add(im);
+        });
+        if (it.id === 'fundador') c.add(txt(this, 150, -150, '👑', 54));
+      } else {
+        c.add(icon(this, -95, -75, 'ui_ladrillo', 110));
+        c.add(txt(this, 50, -75, `×${it.ladrillos.toLocaleString('es-MX')}`, 48, '#c8502a'));
+      }
+      const tiene = it.unaVez && (nube.compras[it.id] || 0) > 0;
+      if (tiene) {
+        if (it.tema && save.theme !== it.tema) this.stateBtn(c, 'Usar', 0x2c6ab0, () => { save.theme = it.tema; persist(); sfx.power(); this.show('shadow'); });
+        else this.stateBtn(c, it.tema ? 'En uso' : 'Lo tienes', 0x2a8a4a);
+        return;
+      }
+      if (!nube.on) {
+        this.stateBtn(c, `${it.shadow} Shadow`, 0x6a5a8a, () => this.pedirSesion());
+        return;
+      }
+      let armado = false;
+      const b = button(this, 0, 150, 300, 84, `${it.shadow}`, 0x7a4ad8, () => {
+        if (nube.shadow < it.shadow) { toast(this, `Te faltan ${it.shadow - nube.shadow} Shadow`, 1850, 1800); return; }
+        if (!armado) { armado = true; b.label.setText('¿Comprar?'); b.list[2] && b.list[2].setVisible(false); return; }   // 2.º toque confirma
+        b.setEnabled(false); b.label.setText('…');
+        comprar(it.id).then((r) => {
+          sfx.build(); vibe(40); confetti(this, c.x, c.y - 60, 60);
+          if (it.tema) { save.theme = it.tema; persist(); }
+          this.brickChip.setValue(save.bricks);
+          toast(this, it.tema ? `¡Tema ${NOMBRE_TEMA[it.tema]} puesto!${r.sumados ? ` +${r.sumados} ladrillos` : ''}` : `+${r.sumados} ladrillos`, 1850, 2400);
+          this.time.delayedCall(300, () => this.show('shadow'));
+        }).catch((e) => { toast(this, e.message, 1850, 2400); this.show('shadow'); });
+      }, { size: 40, iconKey: 'ui_shadow' });
+      c.add(b);
+    });
+    const pie = nube.on
+      ? button(this, W / 2, 1755, 520, 100, 'Conseguir Shadow', 0x4a2a8a, () => { location.href = shadowUrl(); }, { size: 38, iconKey: 'ui_shadow' })
+      : button(this, W / 2, 1755, 520, 100, nube.can ? 'Iniciar sesión' : 'Ir a la página del juego', 0x6a3ab8, () => this.pedirSesion(), { size: 38 });
+    this.layer.add(pie);
+  }
+
+  pedirSesion() {
+    if (nube.can) { location.href = loginUrl(); return; }
+    // Dentro de itch (o sin conexión con la cuenta): la tienda se usa en la página del juego
+    try { window.open('https://bloquevilla.darkshadow-studios.com/?src=itch', '_blank'); } catch (e) { /* nada */ }
+    toast(this, 'La Tienda Shadow se usa en bloquevilla.darkshadow-studios.com', 1850, 2600);
   }
 
   showDeco() {

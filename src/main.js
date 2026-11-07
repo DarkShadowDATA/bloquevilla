@@ -7,6 +7,7 @@ import Village from './scenes/Village.js';
 import Shop from './scenes/Shop.js';
 import Ranking from './scenes/Ranking.js';
 import Aventura from './scenes/Aventura.js';
+import { startNube, onNube } from './nube.js';
 import { sfx } from './sfx.js';
 
 // Modo captura (?capture): el juego avanza cuadro por cuadro para grabar videos.
@@ -60,6 +61,12 @@ async function start() {
 }
 
 start();
+
+// Cuenta DarkShadow (opcional): guardado en la nube y Tienda Shadow. Si cambia el guardado, el menú se vuelve a pintar.
+if (!CAPTURE) {
+  onNube(() => { const g = window.__game; if (g && g.scene.isActive('Menu')) g.scene.getScene('Menu').scene.restart(); });
+  startNube();
+}
 
 // Jugar sin internet: guarda el juego en el celular (se instala con «Agregar a pantalla de inicio»)
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost') && window.top === window.self) {

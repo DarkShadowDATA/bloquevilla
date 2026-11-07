@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
   W, H, N, CELL, BX, BY, TRAY_Y, SLOTS, TRAY_CELL, COLORS, HEX, SCORE, BRICKS,
-  COMBO_GRACE, LINES_PER_OFFER, conArt, BUILDINGS, TIEMPO, ORO, PELIGRO,
+  COMBO_GRACE, LINES_PER_OFFER, conArt, BUILDINGS, TEMAS_IMG, TIEMPO, ORO, PELIGRO,
 } from '../config.js';
 import { size, canPlace, anyFit, makeTray, findLines, rotate } from '../pieces.js';
 import { save, persist, isBuilt, today, ayer } from '../save.js';
@@ -241,7 +241,7 @@ export default class Game extends Phaser.Scene {
     const tema = this.tema || (this.tema = temaBloques(isBuilt('pozo')));
     if (tema === 'agua') return 'water_' + ((COLORS.indexOf(color) % 3) + 1);
     if (tema === 'muertos') return 'muertos_' + ((COLORS.indexOf(color) % 4) + 1);
-    if (tema === 'neon' || tema === 'caramelo') return tema + '_' + color;
+    if (TEMAS_IMG.includes(tema)) return tema + '_' + color;
     return 'block_' + color;
   }
 

@@ -1,4 +1,4 @@
-// Guardado en el navegador (localStorage). Sin cuentas en el MVP.
+// Guardado en el navegador (localStorage). Con cuenta DarkShadow también se guarda en la nube (nube.js).
 const KEY = 'bloquevilla_v1';
 const DEFAULT = {
   bricks: 0,
@@ -23,6 +23,8 @@ const DEFAULT = {
   rankingCobrado: null,
   misiones: null, // misiones diarias de hoy (misiones.js)
   misionesVistas: false,
+  ladrillosCobrados: 0, // ladrillos comprados con Shadow que ya se sumaron (nube.js)
+  fundador: false,
   partida: null, // partida normal en curso, para retomarla si el navegador se cierra
 };
 
@@ -39,9 +41,42 @@ function load() {
 
 export const save = load();
 
+let onChange = null;
+export function onPersist(fn) { onChange = fn; }   // la nube (nube.js) se entera de cada guardado
 export function persist() {
   try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) { /* ignorar */ }
+  if (onChange) onChange();
 }
+
+// Junta dos guardados (celular y nube): manda el que va más avanzado y no se pierde nada de lo ganado en el otro
+const avance = (s) => ((s && s.built) || []).length * 100000 + ((s && s.games) || 0);
+export function mergeSaves(local, nube) {
+  if (!nube) return local;
+  const fresh = JSON.parse(JSON.stringify(DEFAULT));
+  const nubeGana = avance(nube) > avance(local);
+  const base = JSON.parse(JSON.stringify(nubeGana ? nube : local));
+  const otro = nubeGana ? local : nube;
+  const out = { ...fresh, ...base, tienda: { ...fresh.tienda, ...(base.tienda || {}) }, tiempo: { ...fresh.tiempo, ...(base.tiempo || {}) },
+    muertos: { ...fresh.muertos, ...(base.muertos || {}) }, aventura: { ...fresh.aventura, ...(base.aventura || {}) } };
+  const union = (a, b) => [...new Set([...(a || []), ...(b || [])])];
+  out.built = union(out.built, otro.built);
+  out.tienda.temas = union(out.tienda.temas, otro.tienda && otro.tienda.temas);
+  out.tienda.deco = union(out.tienda.deco, otro.tienda && otro.tienda.deco);
+  out.record = Math.max(out.record || 0, otro.record || 0);
+  out.games = Math.max(out.games || 0, otro.games || 0);
+  out.ladrillosCobrados = Math.max(out.ladrillosCobrados || 0, otro.ladrillosCobrados || 0);
+  out.tiempo.record = Math.max(out.tiempo.record || 0, (otro.tiempo && otro.tiempo.record) || 0);
+  out.tiempo.partidas = Math.max(out.tiempo.partidas || 0, (otro.tiempo && otro.tiempo.partidas) || 0);
+  out.muertos.flores = Math.max(out.muertos.flores || 0, (otro.muertos && otro.muertos.flores) || 0);
+  out.muertos.tema = !!(out.muertos.tema || (otro.muertos && otro.muertos.tema));
+  for (const k of ['oroVisto', 'misionesVistas', 'fundador']) out[k] = !!(out[k] || otro[k]);
+  const e1 = out.aventura.estrellas || [], e2 = (otro.aventura && otro.aventura.estrellas) || [];
+  out.aventura.estrellas = Array.from({ length: Math.max(e1.length, e2.length) }, (_, i) => Math.max(e1[i] || 0, e2[i] || 0));
+  out.partida = local.partida || null;   // la partida a medias es de este celular
+  out.sound = local.sound; out.theme = local.theme;
+  return out;
+}
+export function replaceSave(s) { for (const k of Object.keys(save)) delete save[k]; Object.assign(save, s); }
 
 export const isBuilt = (id) => save.built.includes(id);
 
