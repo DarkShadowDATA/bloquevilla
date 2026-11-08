@@ -11,6 +11,7 @@ import { sfx, vibe } from '../sfx.js';
 import { POWERS, RARITY, rollOffer } from '../powers.js';
 import { txt, background, icon, button, toast, floatText, chip, confetti } from '../ui.js';
 import { track } from '../stats.js';
+import { dsTrack } from '../dsev.js';
 import { rngDe, barajar } from '../rng.js';
 import { compartirReto, pedirApodo } from '../share.js';
 import { enviarPuntaje } from '../ranking.js';
@@ -22,6 +23,7 @@ export default class Game extends Phaser.Scene {
   constructor() { super('Game'); }
 
   create(data) {
+    dsTrack('game_started', 'bloquevilla');   // analítica anónima del estudio: empezó una partida (cualquier modo)
     this.reto = data && data.reto === true ? generarReto(today()) : null;
     this.vs = !this.reto && data && data.vs ? data.vs : null;   // reto de un amigo: {s, p, n, m}
     this.nivel = !this.reto && !this.vs && data && Number.isInteger(data.nivel) ? data.nivel : null;   // Modo Aventura

@@ -5,6 +5,7 @@ import { W, H } from '../config.js';
 import { txt } from '../ui.js';
 import { save } from '../save.js';
 import { trackAbrir } from '../stats.js';
+import { dsTrack } from '../dsev.js';
 import { leerReto, limpiarLink } from '../share.js';
 
 export default class Boot extends Phaser.Scene {
@@ -21,6 +22,7 @@ export default class Boot extends Phaser.Scene {
   create() {
     makeTextures(this);
     trackAbrir();
+    dsTrack('game_opened', 'bloquevilla');   // analítica anónima del estudio (además de la de Bloquevilla)
     // Quien entra por primera vez juega de inmediato; el menú aparece después
     const nuevo = save.games === 0 && save.built.length === 0 && !location.search.includes('capture');
     const vs = location.search.includes('capture') ? null : leerReto();
