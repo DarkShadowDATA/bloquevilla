@@ -42,6 +42,11 @@ export default class Menu extends Phaser.Scene {
     // Estadísticas
     const built = save.built.length;
     if (eventoActivo()) this.bannerEvento();
+    else {
+      // Pozo de la semana: premios en Shadow retirable
+      const pb = button(this, W / 2, 720, 640, 110, '💰 Pozo de la semana', 0xd8a020, () => this.scene.start('Pozo'), { size: 44 });
+      this.tweens.add({ targets: pb, scale: 1.04, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    }
 
     this.statRow(890, [
       ['ui_trofeo', save.record.toLocaleString('es-MX')],

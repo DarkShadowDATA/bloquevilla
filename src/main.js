@@ -8,6 +8,7 @@ import Shop from './scenes/Shop.js';
 import Ranking from './scenes/Ranking.js';
 import Logros from './scenes/Logros.js';
 import Aventura from './scenes/Aventura.js';
+import Pozo from './scenes/Pozo.js';
 import { startNube, onNube } from './nube.js';
 import { sfx } from './sfx.js';
 
@@ -53,7 +54,7 @@ async function start() {
     backgroundColor: '#161c4e',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     input: { activePointers: 1 },
-    scene: [Boot, Menu, Game, Village, Shop, Ranking, Aventura, Logros],
+    scene: [Boot, Menu, Game, Village, Shop, Ranking, Aventura, Logros, Pozo],
     render: { preserveDrawingBuffer: CAPTURE },
   });
   if (CAPTURE) setupCapture(game);

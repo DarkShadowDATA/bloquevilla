@@ -26,6 +26,7 @@ export default class Ranking extends Phaser.Scene {
     this.lista = this.add.container(0, 0);
     this.estado = txt(this, W / 2, 900, 'Cargando…', 40, '#ffffff', { weight: '700' });
     button(this, W / 2, 1720, 640, 140, 'Jugar Contrarreloj', 0x1f9aa8, () => this.scene.start('Game', { reto: false, modo: 'tiempo' }), { size: 50 });
+    button(this, W / 2, 1430, 640, 100, '💰 Pozo de la semana (Shadow)', 0xd8a020, () => this.scene.start('Pozo'), { size: 38 });
     if (!save.apodo) {
       button(this, W / 2, 1560, 640, 100, 'Poner mi apodo', 0x7a4ad8, async () => { await pedirApodo(); this.scene.restart(); }, { size: 40 });
     }
