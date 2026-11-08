@@ -17,6 +17,8 @@ import { compartirReto, pedirApodo } from '../share.js';
 import { enviarPuntaje } from '../ranking.js';
 import { extraLadrillos, oroChance, turnosBomba, maxPoderes } from '../bonos.js';
 import { avanzar, textoMision } from '../misiones.js';
+import { pozoNew, pozoPlay } from '../pozo-core.js';
+import { terminarPozo, usd } from '../pozo.js';
 import { NIVELES, OBJ_TEXTO, OBJ_ICONO, calcularEstrellas, guardarResultado } from '../aventura.js';
 
 export default class Game extends Phaser.Scene {
@@ -27,8 +29,10 @@ export default class Game extends Phaser.Scene {
     this.reto = data && data.reto === true ? generarReto(today()) : null;
     this.vs = !this.reto && data && data.vs ? data.vs : null;   // reto de un amigo: {s, p, n, m}
     this.nivel = !this.reto && !this.vs && data && Number.isInteger(data.nivel) ? data.nivel : null;   // Modo Aventura
+    this.pozo = !this.reto && !this.vs && this.nivel == null && data && data.pozo ? data.pozo : null;   // Pozo de la semana: {attemptId, seed}
+    this.pz = null; this.pzMoves = [];
     this.av = null;
-    this.tiempo = !this.reto && !!data && (data.modo === 'tiempo' || (this.vs && this.vs.m === 't'));
+    this.tiempo = !this.reto && !this.pozo && !!data && (data.modo === 'tiempo' || (this.vs && this.vs.m === 't'));
     this.semilla = this.vs ? this.vs.s : this.nivel != null ? 7000 + this.nivel * 131 + (data.intento || 0) : Math.floor(Math.random() * 1e9);
     this.trayN = 0;
     this.ofertaN = 0;
@@ -88,7 +92,7 @@ export default class Game extends Phaser.Scene {
     this.buildHud();
     this.buildBoard();
     this.buildTray();
-    if (!this.reto && !this.tiempo) this.buildPowersBar();
+    if (!this.reto && !this.tiempo && !this.pozo) this.buildPowersBar();
     else this.powerSlots = [];
 
     this.fx = {};
@@ -137,19 +141,19 @@ export default class Game extends Phaser.Scene {
 
     // ¿Hay una partida a medias? Se retoma tal cual
     const p = save.partida;
-    if (!this.reto && !this.tiempo && !this.vs && this.nivel == null && !window.__capture && p && p.v === 1 && !(data && data.nueva)) {
+    if (!this.reto && !this.tiempo && !this.vs && this.nivel == null && !this.pozo && !window.__capture && p && p.v === 1 && !(data && data.nueva)) {
       this.reanudar(p);
       return;
     }
-    if (!this.reto && !this.tiempo && !this.vs && this.nivel == null && save.partida) { save.partida = null; persist(); }
+    if (!this.reto && !this.tiempo && !this.vs && this.nivel == null && !this.pozo && save.partida) { save.partida = null; persist(); }
 
-    if (save.pendingPower && !this.reto && !this.tiempo && !this.vs && this.nivel == null) {
+    if (save.pendingPower && !this.reto && !this.tiempo && !this.vs && this.nivel == null && !this.pozo) {
       this.powers.push(save.pendingPower);
       save.pendingPower = null;
       persist();
     }
     // Poderes comprados en la tienda para esta partida
-    if (!this.reto && !this.tiempo && !this.vs && this.nivel == null && save.proximos.length) {
+    if (!this.reto && !this.tiempo && !this.vs && this.nivel == null && !this.pozo && save.proximos.length) {
       const n0 = this.powers.length;
       while (this.powers.length < maxPoderes() && save.proximos.length) this.powers.push(save.proximos.shift());
       persist();
@@ -160,8 +164,15 @@ export default class Game extends Phaser.Scene {
       return;
     }
     if (this.nivel != null) this.iniciarAventura(data);
+    if (this.pozo) {
+      // Pozo: las piezas y los puntos salen de pozo-core.js (lo mismo que el servidor usa para validar)
+      this.pz = pozoNew(this.pozo.seed);
+      this.nextOffer = Infinity;
+      this.recordText.setText('💰 Pozo de la semana · sin poderes').setColor('#ffd93d');
+    }
     this.renderPowers();
     this.newTray(true);
+    if (this.pozo) return;
     if (this.tiempo) { this.iniciarTiempo(); return; }
     if (this.nivel != null) return;
     this.guardarPartida();
@@ -283,6 +294,11 @@ export default class Game extends Phaser.Scene {
   }
 
   newTray(animate) {
+    if (this.pozo) {
+      this.pieces.forEach((p) => p.c && p.c.destroy());
+      this.pieces = this.pz.tray.map((d, i) => this.makePiece({ cells: d.cells.map((x) => [...x]), color: d.color }, i, animate));
+      return;
+    }
     if (this.reto) {
       if (this.pieces.length && this.pieces.every((p) => p.used)) this.time.delayedCall(700, () => this.finReto());
       return;
@@ -404,6 +420,11 @@ export default class Game extends Phaser.Scene {
   }
 
   place(pc, r, c) {
+    if (this.pozo) {
+      const slot = this.pieces.indexOf(pc);
+      if (!pozoPlay(this.pz, slot, r, c)) return;   // no debería pasar: el tablero y las piezas son los mismos
+      this.pzMoves.push([slot, r, c]);
+    }
     this.snapshot();
     this.tickPendiente = true;
     if (this.av) this.av.usadas += 1;
@@ -1164,6 +1185,7 @@ export default class Game extends Phaser.Scene {
 
   // ---------- Partida guardada ----------
   guardarPartida() {
+    if (this.pozo) return;
     if (this.reto || this.tiempo || this.vs || this.nivel != null || this.over || window.__capture || !this.pieces.length) return;
     save.partida = {
       v: 1,
@@ -1356,7 +1378,32 @@ export default class Game extends Phaser.Scene {
   }
 
   // ---------- Fin de partida ----------
+  // Fin del Pozo: el servidor vuelve a jugar la partida y da el puntaje oficial
+  async finPozo() {
+    if (this.over) return;
+    this.over = true; this.busy = true; this.cancelDrag();
+    const veil = this.add.rectangle(W / 2, H / 2, W, H, 0x0c0a24, 0.82).setDepth(300).setInteractive();
+    const t = txt(this, W / 2, 760, 'Revisando tu partida…', 54, '#ffffff', { stroke: '#141432', strokeW: 8 }).setDepth(301);
+    let r;
+    try { r = await terminarPozo(this.pozo.attemptId, this.pzMoves, save.apodo || undefined); }
+    catch (e) { r = { ok: false, error: e.message }; }
+    if (!this.sys.isActive()) return;
+    if (r.ok) {
+      t.setText(r.record ? '¡Nuevo récord del Pozo!' : 'Partida registrada');
+      txt(this, W / 2, 880, Number(r.score).toLocaleString('es-MX'), 110, '#ffd93d', { stroke: '#3a1250', strokeW: 12 }).setDepth(301);
+      txt(this, W / 2, 990, r.rank ? `Vas #${r.rank} esta semana` : '', 44, '#ffffff', { weight: '700' }).setDepth(301);
+      if (r.record) { confetti(this, W / 2, 700, 80); sfx.build(); }
+    } else {
+      t.setText(r.error || 'No se pudo registrar la partida');
+      t.setFontSize(40);
+    }
+    button(this, W / 2, 1250, 600, 130, 'Ver el Pozo', 0xd8a020, () => this.scene.start('Pozo'), { size: 46 }).setDepth(301);
+    button(this, W / 2, 1410, 600, 110, 'Menú', 0x2c3070, () => this.scene.start('Menu'), { size: 40 }).setDepth(301);
+    veil.setDepth(300);
+  }
+
   gameOver(titulo) {
+    if (this.pozo) { this.finPozo(); return; }
     if (this.av && !this.av.fin) { this.finAventura(false, titulo || '¡Sin espacio!'); return; }
     if (this.over && this.summaryShown) return;
     this.over = true;
