@@ -58,7 +58,9 @@ export default class Shop extends Phaser.Scene {
     if (rarColor) { g.lineStyle(8, rarColor, 1); g.strokeRoundedRect(-CW / 2 + 4, -CH / 2 + 4, CW - 8, CH - 8, 36); }
     c.add(g);
     c.add(txt(this, 0, 40, title, 40, '#46286e'));
-    c.add(txt(this, 0, 88, desc, 24, '#8c7aa0', { weight: '600', wrap: CW - 60 }));
+    const d = txt(this, 0, 88, desc, 24, '#8c7aa0', { weight: '600' });
+    if (d.width > CW - 40) d.setScale((CW - 40) / d.width);   // una sola línea: no se encima con el botón
+    c.add(d);
     this.layer.add(c);
     return c;
   }

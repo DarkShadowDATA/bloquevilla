@@ -63,7 +63,7 @@ async function start() {
 start();
 
 // Cuenta DarkShadow (opcional): guardado en la nube y Tienda Shadow. Si cambia el guardado, el menú se vuelve a pintar.
-if (!CAPTURE) {
+if (!CAPTURE || location.search.includes('devapi')) {   // en videos solo con el servidor local de prueba
   onNube(() => { const g = window.__game; if (g && g.scene.isActive('Menu')) g.scene.getScene('Menu').scene.restart(); });
   startNube();
 }

@@ -35,7 +35,7 @@ const timeout = (ms) => (typeof AbortSignal !== 'undefined' && AbortSignal.timeo
 
 /** Lee la sesión del dominio. Devuelve el usuario o null (sin cuenta, sin internet o fuera del dominio del estudio). */
 export async function initCuenta() {
-  if (DEVAPI) { user = { name: 'Dev 4242' }; return user; }
+  if (DEVAPI) { user = { name: new URLSearchParams(location.search).get('devname') || 'Dev 4242' }; return user; }
   if (!onStudio()) return null;
   try {
     cfg = await fetch(`${API}/config`, { signal: timeout(6000) }).then(r => r.json());

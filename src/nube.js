@@ -68,3 +68,5 @@ export async function comprar(item) {
   changed();
   return { ...r, sumados: lad };
 }
+
+if (typeof window !== 'undefined') window.__nube = nube;   // para revisar y grabar videos
