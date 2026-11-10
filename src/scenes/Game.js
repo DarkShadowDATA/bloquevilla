@@ -17,6 +17,7 @@ import { compartirReto, pedirApodo } from '../share.js';
 import { enviarPuntaje } from '../ranking.js';
 import { extraLadrillos, oroChance, turnosBomba, maxPoderes } from '../bonos.js';
 import { avanzar, textoMision } from '../misiones.js';
+import { contar } from '../logros.js';
 import { NIVELES, OBJ_TEXTO, OBJ_ICONO, calcularEstrellas, guardarResultado } from '../aventura.js';
 
 export default class Game extends Phaser.Scene {
@@ -1072,6 +1073,11 @@ export default class Game extends Phaser.Scene {
   // Misiones diarias: suma progreso y avisa cuando se cumple una
   mision(tipo, v) {
     if (!v || this.capturaSinMisiones) return;
+    // Logros: mismos contadores (el aviso sale al final de la partida para no tapar el tablero)
+    contar(tipo, v).forEach((x, k) => this.time.delayedCall(1200 + k * 1900, () => {
+      if (!this.sys.isActive()) return;
+      toast(this, `🏅 Logro: ${x.L.nombre} · ${['Bronce', 'Plata', 'Oro'][x.medalla]}`, 268, 1800);
+    }));
     avanzar(tipo, v).forEach((m, k) => this.time.delayedCall(300 + k * 1900, () => {
       if (!this.sys.isActive()) return;
       toast(this, `✔ Misión cumplida: ${textoMision(m)}`, 268, 1800);

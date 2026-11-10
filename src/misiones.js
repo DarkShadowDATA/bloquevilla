@@ -3,6 +3,7 @@
 import { save, persist, today } from './save.js';
 import { rngDe, barajar } from './rng.js';
 import { maxPoderes } from './bonos.js';
+import { contar } from './logros.js';
 
 const fmt = (n) => n.toLocaleString('es-MX');
 // n = meta por dificultad [fácil, media, difícil]; max = cuenta el mejor valor de una partida, no la suma
@@ -93,6 +94,7 @@ export function abrirCofre() {
   if (!cofreListo()) return null;
   const M = misionesHoy();
   M.cofre = true;
+  contar('cofres', 1);
   const rnd = rngDe('cofre-' + M.dia);
   let ladrillos = COFRE.ladrillos, poder = null;
   if ((save.proximos || []).length < maxPoderes()) {

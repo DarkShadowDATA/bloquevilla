@@ -25,6 +25,8 @@ const DEFAULT = {
   misionesVistas: false,
   ladrillosCobrados: 0, // ladrillos comprados con Shadow que ya se sumaron (nube.js)
   fundador: false,
+  logros: { c: {}, cobrados: {} }, // logros.js
+  logrosVistos: false,
   partida: null, // partida normal en curso, para retomarla si el navegador se cierra
 };
 
@@ -69,7 +71,11 @@ export function mergeSaves(local, nube) {
   out.tiempo.partidas = Math.max(out.tiempo.partidas || 0, (otro.tiempo && otro.tiempo.partidas) || 0);
   out.muertos.flores = Math.max(out.muertos.flores || 0, (otro.muertos && otro.muertos.flores) || 0);
   out.muertos.tema = !!(out.muertos.tema || (otro.muertos && otro.muertos.tema));
-  for (const k of ['oroVisto', 'misionesVistas', 'fundador']) out[k] = !!(out[k] || otro[k]);
+  for (const k of ['oroVisto', 'misionesVistas', 'fundador', 'logrosVistos']) out[k] = !!(out[k] || otro[k]);
+  const LA = local.logros || {}, LB = nube.logros || {};
+  out.logros = { c: { ...(LA.c || {}) }, cobrados: { ...(LA.cobrados || {}) } };
+  for (const [k, v] of Object.entries(LB.c || {})) out.logros.c[k] = Math.max(out.logros.c[k] || 0, v || 0);
+  for (const [k, v] of Object.entries(LB.cobrados || {})) out.logros.cobrados[k] = Math.max(out.logros.cobrados[k] || 0, v || 0);
   const e1 = out.aventura.estrellas || [], e2 = (otro.aventura && otro.aventura.estrellas) || [];
   out.aventura.estrellas = Array.from({ length: Math.max(e1.length, e2.length) }, (_, i) => Math.max(e1[i] || 0, e2[i] || 0));
   out.partida = local.partida || null;   // la partida a medias es de este celular

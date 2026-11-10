@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { W, H, COLORS, HEX, BUILDINGS, DAILY, NOMBRE_TEMA } from '../config.js';
 import { nube, loginUrl } from '../nube.js';
+import { porCobrarLogros, porcentaje } from '../logros.js';
 import { save, persist, isBuilt, dailyAvailable, dailyIndex, today } from '../save.js';
 import { EVENTO, eventoActivo, diasRestantes } from '../evento.js';
 import { retoNumero } from '../reto.js';
@@ -115,11 +116,25 @@ export default class Menu extends Phaser.Scene {
     if (isBuilt('pozo')) temas.push('agua');
     if (save.muertos.tema) temas.push('muertos');
     save.tienda.temas.forEach((t) => temas.push(t));
-    if (temas.length > 1) {
+    // Logros (izquierda) y tema de bloques (derecha)
+    const hayTemas = temas.length > 1;
+    const lx = hayTemas ? W / 2 - 165 : W / 2;
+    const lb = button(this, lx, 1668, 310, 90, `🏅 Logros ${porcentaje()}%`, 0x8a5a1a, () => this.scene.start('Logros'), { size: 32 });
+    const lp = porCobrarLogros();
+    if (lp) {
+      this.tweens.add({ targets: lb, scale: 1.05, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+      const bc = this.add.circle(lx + 140, 1626, 26, 0xe83a3a).setStrokeStyle(5, 0xffffff).setDepth(6);
+      const bt = txt(this, lx + 140, 1626, String(lp), 30).setDepth(7);
+      this.tweens.add({ targets: [bc, bt], scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
+    } else if (!save.logrosVistos) {
+      const nv = txt(this, lx + 110, 1626, '¡NUEVO!', 26, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12).setDepth(5);
+      this.tweens.add({ targets: nv, scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
+    }
+    if (hayTemas) {
       if (!temas.includes(save.theme)) save.theme = 'clasico';
       const nombre = { clasico: eventoActivo() ? 'Evento' : 'Clásico', agua: 'Agua', muertos: 'Día de Muertos', ...NOMBRE_TEMA };
-      const label = () => `Bloques: ${nombre[save.theme]}`;
-      const tb = button(this, W / 2, 1668, 480, 90, label(), 0x2c6ab0, () => {
+      const label = () => `🎨 ${nombre[save.theme]}`;
+      const tb = button(this, W / 2 + 165, 1668, 310, 90, label(), 0x2c6ab0, () => {
         save.theme = temas[(temas.indexOf(save.theme) + 1) % temas.length];
         persist();
         tb.label.setText(label());
@@ -132,7 +147,7 @@ export default class Menu extends Phaser.Scene {
       confetti(this, W / 2, 700, 90);
       toast(this, `¡Quedaste #${p.lugar} en el ranking de la semana pasada! +${p.premio} ladrillos`, 700, 3500);
     }).catch(() => {});
-    txt(this, W / 2, H - 60, 'v1.4 · Tienda Shadow', 24, '#ffffffaa', { weight: '500' });
+    txt(this, W / 2, H - 60, 'v1.5 · Logros', 24, '#ffffffaa', { weight: '500' });
   }
 
   bannerEvento() {

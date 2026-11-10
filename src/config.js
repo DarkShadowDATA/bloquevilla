@@ -95,7 +95,7 @@ export const DECO_POS = {
   fuente: [[548, 1335, 210]],
 };
 
-export const VERSION = '1.4';
+export const VERSION = '1.5';
 
 // Temas con imágenes (src/assets/img/<tema>_<color>.webp). Los premium se compran con Shadow (nube.js); el Fundador va en su paquete.
 export const TEMAS_IMG = ['neon', 'caramelo', 'cristal', 'galaxia', 'oropuro', 'fundador'];
