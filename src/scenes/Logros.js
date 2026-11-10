@@ -13,8 +13,8 @@ const NOMBRE = ['Bronce', 'Plata', 'Oro'];
 export function medalla(scene, x, y, k, size, gris = false) {
   const key = ['medalla_bronce', 'medalla_plata', 'medalla_oro'][k];
   if (scene.textures.exists(key)) {
-    const im = icon(scene, x, y, key, size);
-    if (gris) im.setTint(0x555566).setAlpha(0.45);
+    const im = icon(scene, x, y, key, size * 0.72);
+    if (gris) im.setTintFill(0x3a3454).setAlpha(0.6);
     return im;
   }
   const c = scene.add.container(x, y);
@@ -65,7 +65,7 @@ export default class Logros extends Phaser.Scene {
       bar.fillStyle(al >= 3 ? 0xf2c230 : 0x7a4ad8, 1); bar.fillRoundedRect(170, y + 30, Math.max(18, 330 * (al >= 3 ? 1 : p / meta)), 18, 9);
       txt(this, 520, y + 39, al >= 3 ? '¡Completo!' : `${p.toLocaleString('es-MX')}/${meta.toLocaleString('es-MX')}`, 20, '#6a5a8a', { weight: '800' }).setOrigin(0, 0.5);
       // 3 medallas
-      [0, 1, 2].forEach((k) => medalla(this, 690 + k * 72, y - 4, k, 70, k >= al));
+      [0, 1, 2].forEach((k) => medalla(this, 690 + k * 72, y, k, 70, k >= al));
       if (al > co) {
         const b = button(this, 955, y, 170, 92, `+${PREMIO_MEDALLA[co]}`, 0x4ab86a, () => {
           const n = cobrarLogro(L);
