@@ -11,7 +11,9 @@ const PLOTS = [[245, 750], [840, 770], [245, 1140], [840, 1160], [245, 1550], [8
 // Zona 2: muelle y barca en el mar; los otros 4 en los terrenos de arena de bg_muelle
 const PLOTS2 = [[250, 860], [830, 860], [225, 1270], [860, 1270], [225, 1650], [860, 1650]];
 // Zona 3: 2 terrenos abajo, 3 en medio y el Castillo arriba, en la colina (se construye de abajo hacia arriba)
-const PLOTS3 = [[300, 1650], [780, 1650], [190, 1290], [540, 1290], [890, 1290], [540, 900]];
+const PLOTS3 = [[236, 1590], [825, 1590], [165, 1190], [536, 1190], [902, 1190], [540, 790]];
+// tamaño máximo [ancho, alto] de cada edificio de la zona 3, según su terreno en bg_castillo
+const TAM3 = [[380, 330], [380, 340], [292, 300], [292, 300], [292, 300], [410, 400]];
 const PLOTS_Z = { 1: PLOTS, 2: PLOTS2, 3: PLOTS3 };
 const BSIZE = 300;
 const zonaAbierta = (n) => n === 1 || isBuilt(LLAVE_ZONA[n]);
@@ -219,8 +221,8 @@ export default class Village extends Phaser.Scene {
     const next = this.nextId() === b.id;
     const im = this.add.image(0, 0, built ? 'bld_' + b.id : 'bld_' + b.id + '_ruina').setOrigin(0.5, 1);
     // en el Muelle el faro no tapa lo de arriba; en la zona 3 el Castillo es grande y los demás un poco más chicos
-    const ancho = b.id === 'castillo' ? 470 : this.zona === 3 ? 285 : BSIZE;
-    im.setScale(Math.min(ancho / im.width, (b.id === 'castillo' ? 450 : this.zona === 1 ? 9999 : 360) / im.height));
+    const [ancho, alto] = this.zona === 3 ? TAM3[this.lista.indexOf(b)] : [BSIZE, this.zona === 1 ? 9999 : 360];
+    im.setScale(Math.min(ancho / im.width, alto / im.height));
     if (!built && !next) im.setTint(0x9a9aa8);
     c.add(im);
     const g = this.add.graphics();
