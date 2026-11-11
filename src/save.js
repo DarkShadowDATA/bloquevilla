@@ -30,6 +30,7 @@ const DEFAULT = {
   cofreSemana: '',       // lunes de la última semana en que se cobró el cofre de la Tesorería
   finalVisto: false,     // ya vio la escena final (Castillo)
   prueba: null,          // prueba.js: tema del día { dia, usado, enJuego }
+  coleccion: { vistos: [], premio: false },   // coleccion.js
   apoyo: 0,              // veces que apoyó al creador (insignia ☕)
   partida: null, // partida normal en curso, para retomarla si el navegador se cierra
 };
@@ -85,6 +86,8 @@ export function mergeSaves(local, nube) {
   out.aventura.meta150 = !!(out.aventura.meta150 || (otro.aventura && otro.aventura.meta150));
   out.aventura.vistos = { ...((otro.aventura && otro.aventura.vistos) || {}), ...(out.aventura.vistos || {}) };
   out.apoyo = Math.max(out.apoyo || 0, otro.apoyo || 0);
+  const ca = out.coleccion || {}, cb = otro.coleccion || {};
+  out.coleccion = { vistos: [...new Set([...(ca.vistos || []), ...(cb.vistos || [])])], premio: !!(ca.premio || cb.premio) };
   out.cofreSemana = [out.cofreSemana || '', otro.cofreSemana || ''].sort().pop();
   out.finalVisto = !!(out.finalVisto || otro.finalVisto);
   // tema del día: si ya se usó hoy en cualquiera de los dos, ya se usó

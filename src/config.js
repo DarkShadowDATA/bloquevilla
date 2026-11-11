@@ -105,11 +105,11 @@ export const DECO_POS = {
   fuente: [[548, 1335, 210]],
 };
 
-export const VERSION = '1.8';
+export const VERSION = '1.9';
 export const APOYO_SHADOW = 10;   // «Invítame un café» (Tienda Shadow); el precio que vale es el del servidor
 
 // Temas con imágenes (src/assets/img/<tema>_<color>.webp). Los premium se compran con Shadow (nube.js); el Fundador va en su paquete.
-export const TEMAS_IMG = ['neon', 'caramelo', 'cristal', 'galaxia', 'oropuro', 'fundador'];
+export const TEMAS_IMG = ['neon', 'caramelo', 'cristal', 'galaxia', 'oropuro', 'fundador', 'dragon'];
 // Copia para mostrar la Tienda Shadow sin sesión; los precios que valen son los del servidor (BQ_TIENDA en el repo de Mutantes)
 export const TIENDA_SHADOW = [
   { id: 'fundador', nombre: 'Paquete Fundador', desc: 'Tema exclusivo + 500 ladrillos + 👑', shadow: 30, unaVez: true, tema: 'fundador', ladrillos: 500 },
@@ -119,7 +119,7 @@ export const TIENDA_SHADOW = [
   { id: 'lad500', nombre: '500 ladrillos', desc: 'Para reconstruir más rápido', shadow: 10, unaVez: false, tema: null, ladrillos: 500 },
   { id: 'lad1500', nombre: '1,500 ladrillos', desc: 'Para reconstruir más rápido', shadow: 25, unaVez: false, tema: null, ladrillos: 1500 },
 ];
-export const NOMBRE_TEMA = { neon: 'Neón', caramelo: 'Caramelo', cristal: 'Cristal', galaxia: 'Galaxia', oropuro: 'Oro puro', fundador: 'Fundador' };
+export const NOMBRE_TEMA = { neon: 'Neón', caramelo: 'Caramelo', cristal: 'Cristal', galaxia: 'Galaxia', oropuro: 'Oro puro', fundador: 'Fundador', dragon: 'Dragón' };
 
 // Bloques peligrosos (solo en partida normal, después de unas líneas)
 // Bomba: cuenta regresiva por pieza colocada; si llega a 0 explota y se acaba la partida. Limpiar su línea la desactiva.

@@ -3,6 +3,7 @@ import { W, H, COLORS, HEX, BUILDINGS, DAILY, NOMBRE_TEMA } from '../config.js';
 import { nube, loginUrl } from '../nube.js';
 import { porCobrarLogros, porcentaje } from '../logros.js';
 import { pruebaDisponible } from '../prueba.js';
+import { temaDragon, nuevos, premioListo } from '../coleccion.js';
 import { cobrarCofreSemanal } from '../bonos.js';
 import { save, persist, isBuilt, dailyAvailable, dailyIndex, today } from '../save.js';
 import { EVENTO, eventoActivo, diasRestantes } from '../evento.js';
@@ -123,6 +124,7 @@ export default class Menu extends Phaser.Scene {
     const temas = ['clasico'];
     if (isBuilt('pozo')) temas.push('agua');
     if (save.muertos.tema) temas.push('muertos');
+    if (temaDragon()) temas.push('dragon');
     save.tienda.temas.forEach((t) => temas.push(t));
     const prueba = pruebaDisponible();   // tema premium que hoy se presta por una partida
     if (prueba) temas.splice(1, 0, prueba);   // queda a un toque del Clásico
@@ -130,7 +132,9 @@ export default class Menu extends Phaser.Scene {
     const hayTemas = temas.length > 1;
     const lx = hayTemas ? W / 2 - 165 : W / 2;
     const lb = button(this, lx, 1668, 310, 90, `🏅 Logros ${porcentaje()}%`, 0x8a5a1a, () => this.scene.start('Logros'), { size: 32 });
-    const lp = porCobrarLogros();
+    const nuevosCol = nuevos();
+    const lp = porCobrarLogros() + nuevosCol.length + (premioListo() ? 1 : 0);
+    if (nuevosCol.length) this.time.delayedCall(900, () => this.sys.isActive() && toast(this, `📖 Nueva pieza en tu colección: ${nuevosCol[0].nombre}`, 1560, 2800));
     if (lp) {
       this.tweens.add({ targets: lb, scale: 1.05, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
       const bc = this.add.circle(lx + 140, 1626, 26, 0xe83a3a).setStrokeStyle(5, 0xffffff).setDepth(6);
@@ -170,7 +174,7 @@ export default class Menu extends Phaser.Scene {
       confetti(this, W / 2, 700, 90);
       toast(this, `¡Quedaste #${p.lugar} en el ranking de la semana pasada! +${p.premio} ladrillos`, 700, 3500);
     }).catch(() => {});
-    txt(this, W / 2, H - 60, 'v1.8 · Aventura completa', 24, '#ffffffaa', { weight: '500' });
+    txt(this, W / 2, H - 60, 'v1.9 · Colección', 24, '#ffffffaa', { weight: '500' });
   }
 
   bannerEvento() {
@@ -233,6 +237,7 @@ export default class Menu extends Phaser.Scene {
       this.tweens.add({ targets: f, scale: 1.06, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
     }
     if (save.apoyo > 0) txt(this, 190, save.fundador ? 236 : 192, '☕ Apoyo', 26, '#ffe9c8', { stroke: '#3a1250', strokeW: 8 });
+    if (save.coleccion && save.coleccion.premio) txt(this, save.apoyo > 0 ? 350 : 220, save.fundador ? 236 : 192, '📖 Coleccionista', 26, '#c8f0ff', { stroke: '#3a1250', strokeW: 8 });
   }
 
   toggle(x, y, key, on, cb) {

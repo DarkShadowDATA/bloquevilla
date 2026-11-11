@@ -1,6 +1,7 @@
 // Evento de temporada: Día de Muertos 2026
 import { TEMAS_IMG } from './config.js';
 import { today, save, persist } from './save.js';
+import { temaDragon } from './coleccion.js';
 
 export const EVENTO = {
   id: 'muertos2026',
@@ -39,6 +40,7 @@ export function sumarFlores(n) {
 // Tema de bloques que se ve: durante el evento el clásico se viste de Día de Muertos
 export function temaBloques(pozoConstruido) {
   if (TEMAS_IMG.includes(save.theme) && save.tienda.temas.includes(save.theme)) return save.theme;
+  if (save.theme === 'dragon' && temaDragon()) return 'dragon';
   if (save.theme === 'agua' && pozoConstruido) return 'agua';
   if (save.theme === 'muertos' && save.muertos.tema) return 'muertos';
   if (save.theme === 'clasico' && eventoActivo()) return 'muertos';

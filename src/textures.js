@@ -508,6 +508,21 @@ function neonBlock(g, s, hex) {
   g.fillStyle(shade(hex, 0.6), 0.9); g.fillCircle(s * 0.3, s * 0.28, s * 0.045);
 }
 
+function dragonBlock(g, s, hex) {
+  const r = s * 0.2;
+  g.fillStyle(shade(hex, -0.45), 1); g.fillRoundedRect(3, 5, s - 6, s - 6, r);
+  g.fillStyle(shade(hex, -0.1), 1); g.fillRoundedRect(3, 3, s - 6, s - 10, r);
+  // escamas
+  for (let fy = 0; fy < 3; fy++) for (let fx = 0; fx < 3; fx++) {
+    const x = s * (0.22 + fx * 0.28) + (fy % 2 ? s * 0.14 : 0), y = s * (0.26 + fy * 0.24);
+    if (x > s - 10) continue;
+    g.fillStyle(shade(hex, 0.25), 1); g.fillEllipse(x, y, s * 0.24, s * 0.2);
+    g.fillStyle(shade(hex, -0.25), 1); g.fillEllipse(x, y + s * 0.05, s * 0.2, s * 0.08);
+  }
+  g.lineStyle(5, 0xf2c230, 1); g.strokeRoundedRect(6, 6, s - 12, s - 16, r * 0.8);
+  g.fillStyle(0xffffff, 0.55); g.fillEllipse(s * 0.3, s * 0.2, s * 0.26, s * 0.08);
+}
+
 function carameloBlock(g, s, hex) {
   const r = s * 0.24;
   g.fillStyle(shade(hex, -0.3), 1); g.fillRoundedRect(3, 5, s - 6, s - 6, r);
@@ -702,6 +717,30 @@ export function makeTextures(scene) {
   COLORS.forEach((c) => {
     gen('neon_' + c, CELL, CELL, (gg, sz) => neonBlock(gg, sz, HEX[c]));
     gen('caramelo_' + c, CELL, CELL, (gg, sz) => carameloBlock(gg, sz, HEX[c]));
+    gen('dragon_' + c, CELL, CELL, (gg, sz) => dragonBlock(gg, sz, HEX[c]));
+  });
+  // decoraciones exclusivas de la Colección (mientras llega su imagen)
+  gen('deco_globo', 220, 300, (gg, w, h) => {
+    gg.lineStyle(4, 0x6a4a30, 1); gg.lineBetween(w * 0.36, h * 0.66, w * 0.42, h * 0.8); gg.lineBetween(w * 0.64, h * 0.66, w * 0.58, h * 0.8);
+    gg.fillStyle(0xe84a4a, 1); gg.fillCircle(w / 2, h * 0.36, w * 0.42);
+    gg.fillTriangle(w * 0.14, h * 0.48, w * 0.86, h * 0.48, w / 2, h * 0.7);
+    gg.fillStyle(0xffd93d, 1); [-0.22, 0, 0.22].forEach((d) => gg.fillEllipse(w * (0.5 + d), h * 0.36, w * 0.1, h * 0.5));
+    gg.fillStyle(0xffffff, 0.35); gg.fillCircle(w * 0.36, h * 0.24, w * 0.1);
+    gg.fillStyle(0x8a5a34, 1); gg.fillRoundedRect(w * 0.38, h * 0.8, w * 0.24, h * 0.14, 6);
+  });
+  gen('deco_estatua', 200, 300, (gg, w, h) => {
+    gg.fillStyle(0x9a9aa8, 1); gg.fillRect(w * 0.18, h * 0.78, w * 0.64, h * 0.22); gg.fillStyle(0xb8b8c8, 1); gg.fillRect(w * 0.14, h * 0.74, w * 0.72, h * 0.06);
+    gg.fillStyle(0xd8a020, 1); gg.fillRoundedRect(w * 0.36, h * 0.34, w * 0.28, h * 0.4, 12); gg.fillCircle(w / 2, h * 0.26, w * 0.13);
+    gg.fillRect(w * 0.6, h * 0.12, w * 0.08, h * 0.3); gg.fillPoints(starPts(w * 0.64, h * 0.1, w * 0.12, 0.45, 5), true);
+    gg.fillStyle(0xffe680, 0.6); gg.fillCircle(w * 0.45, h * 0.22, w * 0.04); gg.fillRect(w * 0.4, h * 0.38, w * 0.05, h * 0.3);
+  });
+  gen('deco_copa', 200, 260, (gg, w, h) => {
+    gg.fillStyle(0x6a4a30, 1); gg.fillRoundedRect(w * 0.22, h * 0.84, w * 0.56, h * 0.14, 8);
+    gg.fillStyle(0xd8a020, 1); gg.fillRect(w * 0.44, h * 0.6, w * 0.12, h * 0.26); gg.fillRoundedRect(w * 0.32, h * 0.74, w * 0.36, h * 0.1, 6);
+    gg.fillStyle(0xf2c230, 1); gg.fillEllipse(w / 2, h * 0.14, w * 0.66, h * 0.1); gg.fillPoints([{ x: w * 0.17, y: h * 0.14 }, { x: w * 0.83, y: h * 0.14 }, { x: w * 0.62, y: h * 0.6 }, { x: w * 0.38, y: h * 0.6 }], true);
+    gg.lineStyle(10, 0xf2c230, 1); gg.strokeCircle(w * 0.14, h * 0.3, w * 0.1); gg.strokeCircle(w * 0.86, h * 0.3, w * 0.1);
+    gg.fillStyle(0xffffff, 0.5); gg.fillEllipse(w * 0.36, h * 0.3, w * 0.08, h * 0.2);
+    gg.fillStyle(0xffffff, 1); gg.fillPoints(starPts(w / 2, h * 0.34, w * 0.1, 0.45, 5), true);
   });
   gen('deco_farola', 120, 230, (gg, w, h) => farola(gg, w, h));
   gen('deco_arbol', 220, 260, (gg, w, h) => arbol(gg, w, h));

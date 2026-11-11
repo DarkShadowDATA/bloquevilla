@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { W, H, BUILDINGS, DECO_POS, ZONAS, LLAVE_ZONA, zonaDe, conArt } from '../config.js';
+import { PIEZAS, TROFEOS_POS } from '../coleccion.js';
 import { save, persist, isBuilt } from '../save.js';
 import { eventoActivo } from '../evento.js';
 import { sfx, vibe } from '../sfx.js';
@@ -42,6 +43,7 @@ export default class Village extends Phaser.Scene {
 
     this.plots = this.lista.map((b, i) => this.makePlot(b, i));
     if (this.zona === 1) this.decoraciones();
+    if (this.zona === 3) this.trofeos();
     if (z2) this.botonZona();
     button(this, 650, 1790, 540, 130, 'Jugar', 0x5ac85a, () => this.scene.start('Game', { reto: false }), { size: 60 }).setDepth(50);
     button(this, 205, 1790, 290, 130, '  Decorar', 0xd8a020, () => this.scene.start('Shop', { tab: 'deco' }), { size: 38, iconKey: 'ui_tienda' }).setDepth(50);
@@ -323,6 +325,22 @@ export default class Village extends Phaser.Scene {
         if (b.id === 'plaza' || b.id === 'mercado') this.time.delayedCall(1200, () => this.botonZona());
         if (b.id === 'castillo') this.time.delayedCall(2600, () => this.final());
       });
+    });
+  }
+
+  // Decoraciones exclusivas de la Colección (globo, estatua, copa) en la colina del Castillo
+  trofeos() {
+    const KEY = { globo: 'deco_globo', estatua: 'deco_estatua', copa: 'deco_copa' };
+    PIEZAS.filter((p) => TROFEOS_POS[p.id] && p.tiene()).forEach((p) => {
+      const [x, y, size] = TROFEOS_POS[p.id];
+      const im = this.add.image(x, y, KEY[p.id]).setOrigin(0.5, 1).setDepth(p.id === 'globo' ? 4 : 7);
+      im.setScale(size / Math.max(im.width, im.height));
+      im.setInteractive({ useHandCursor: true }).on('pointerup', () => toast(this, `${p.nombre}: ${p.como}`, 420, 2200));
+      if (p.id === 'globo') this.tweens.add({ targets: im, y: y - 26, duration: 2200, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+      if (p.id === 'copa') {
+        const brillo = this.add.image(x, y - im.displayHeight * 0.6, 'fx_star').setDepth(7.1).setScale(0.8).setAlpha(0);
+        this.tweens.add({ targets: brillo, alpha: { from: 0, to: 0.9 }, scale: { from: 0.4, to: 1.1 }, duration: 700, yoyo: true, repeat: -1, repeatDelay: 1400 });
+      }
     });
   }
 
