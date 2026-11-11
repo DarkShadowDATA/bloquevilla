@@ -1,0 +1,32 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "Hoy mis bloques son de oro puro, y no pagué nada."
+   },
+   {
+    "at": "auto",
+    "text": "Cada día el juego te presta un tema premium gratis."
+   },
+   {
+    "at": "auto",
+    "text": "Lo eliges en el menú y juegas una partida con él."
+   },
+   {
+    "at": "auto",
+    "text": "Mañana toca otro: Cristal, Galaxia u Oro puro."
+   },
+   {
+    "at": "auto",
+    "text": "¿Cuál te gusta más? Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}

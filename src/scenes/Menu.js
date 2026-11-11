@@ -123,7 +123,7 @@ export default class Menu extends Phaser.Scene {
     if (save.muertos.tema) temas.push('muertos');
     save.tienda.temas.forEach((t) => temas.push(t));
     const prueba = pruebaDisponible();   // tema premium que hoy se presta por una partida
-    if (prueba) temas.push(prueba);
+    if (prueba) temas.splice(1, 0, prueba);   // queda a un toque del Clásico
     // Logros (izquierda) y tema de bloques (derecha)
     const hayTemas = temas.length > 1;
     const lx = hayTemas ? W / 2 - 165 : W / 2;
