@@ -6,8 +6,8 @@
 - itch.io (desde 30 oct 2026) ya no usa el zip: tiene subido `itch/bloquevilla_itch.html`, que abre la versión en línea (`?src=itch`) en un iframe. Cada push al dominio llega solo a itch; no hay que regenerar ni resubir nada.
 
 ## Contenido para redes
-- Todo contenido nuevo del juego va acompañado de videos para redes (los scripts están en `clips/`).
-- Flujo desde oct 2026: cada contenido nuevo se entrega en dos partes al mismo tiempo: (1) lo jugable, publicado en el dominio, y (2) su video, guardado en la carpeta de la computadora de Alejandro `Videos/Bloquevilla` con nombre `AAAA-MM-DD HH-MM Título.mp4` (fecha y hora de publicación, cada 12 h a las 08:00 y 20:00) y su texto agregado a `00 Textos para publicar.txt`. Metricool llegó a su límite mensual, así que él los sube a mano desde esa carpeta.
+- **Desde el 11 nov 2026 ya no se hace un video con cada actualización.** Primero se avanza el juego; los videos se hacen cuando Alejandro los pida o toque una tanda, explicando «esto funciona así» (los scripts están en `clips/`). Los devlogs de itch van cada 2 o 3 fases o por actualización grande.
+- Cuando sí se hace un video: va a la carpeta de la computadora de Alejandro `Videos/Bloquevilla` con nombre `AAAA-MM-DD HH-MM Título.mp4` (fecha y hora de publicación, cada 12 h a las 08:00 y 20:00) y su texto se agrega a `00 Textos para publicar.txt`. Él los sube a mano desde esa carpeta. Todos llevan voz (skill voz-reels).
 
 ### Reglas de los videos (la gente se iba en el segundo 1)
 - **Si el contenido nuevo necesita imágenes de ChatGPT, primero se entregan los prompts y NO se graba el video hasta que Alejandro mande las imágenes finales.** El juego puede publicarse con el arte dibujado con código, pero el video se graba una sola vez, ya con el arte final.
