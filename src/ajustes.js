@@ -5,6 +5,7 @@ import { save, persist } from './save.js';
 import { sfx, vibe } from './sfx.js';
 import { musica } from './musica.js';
 import { txt, button } from './ui.js';
+import { abrirListaGuia } from './guia.js';
 
 const PUEDE_VIBRAR = typeof navigator !== 'undefined' && !!navigator.vibrate;
 
@@ -80,7 +81,8 @@ export function abrirAjustes(scene) {
   const cerrar = () => {
     scene.tweens.add({ targets: panel, scale: 0.3, alpha: 0, duration: 180, onComplete: () => layer.destroy() });
   };
-  panel.add(button(scene, 0, 200, 600, 104, '📊 Mis estadísticas', 0x3a7ad8, () => { layer.destroy(); scene.scene.start('Estadisticas'); }, { size: 38 }));
+  panel.add(button(scene, -215, 200, 400, 104, '📘 Cómo se juega', 0x8a5ad8, () => abrirListaGuia(scene), { size: 34 }));
+  panel.add(button(scene, 215, 200, 400, 104, '📊 Estadísticas', 0x3a7ad8, () => { layer.destroy(); scene.scene.start('Estadisticas'); }, { size: 34 }));
   panel.add(button(scene, 0, 350, 420, 104, 'Listo', 0x4ab86a, cerrar, { size: 42 }));
   panel.add(txt(scene, 0, 480, `Bloquevilla v${VERSION} · DarkShadow Studios`, 26, '#8a7aa8', { weight: '700' }));
   return layer;

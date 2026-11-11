@@ -22,6 +22,7 @@ import { medalla } from './Logros.js';
 import { empezarPrueba, terminarPrueba, precioTema } from '../prueba.js';
 import { pozoNew, pozoPlay } from '../pozo-core.js';
 import { terminarPozo, usd } from '../pozo.js';
+import { mostrarGuia, guiaVista } from '../guia.js';
 import { NIVELES, JEFES, AVISO_NUEVO, textoObjetivo, iconoObjetivo, calcularEstrellas, guardarResultado } from '../aventura.js';
 
 export default class Game extends Phaser.Scene {
@@ -187,7 +188,8 @@ export default class Game extends Phaser.Scene {
     this.guardarPartida();
 
     if (save.games === 0) {
-      this.time.delayedCall(500, () => toast(this, 'Arrastra una pieza al tablero', 352, 2600));
+      if (!window.__capture && !guiaVista('basico')) this.time.delayedCall(400, () => mostrarGuia(this, 'basico', { auto: true }));
+      else this.time.delayedCall(500, () => toast(this, 'Arrastra una pieza al tablero', 352, 2600));
     }
   }
 
@@ -1017,7 +1019,7 @@ export default class Game extends Phaser.Scene {
     if (aviso && !window.__capture) {
       save.peligros[aviso[0]] = true;
       persist();
-      this.time.delayedCall(450, () => toast(this, aviso[1], 352, 3000));
+      this.time.delayedCall(450, () => { if (!this.over) mostrarGuia(this, aviso[0], { auto: true }); });
     }
   }
 
@@ -1100,11 +1102,14 @@ export default class Game extends Phaser.Scene {
     this.avPiezas = txt(this, BX + N * CELL + 6, y, '', 30, '#ffd93d', { ox: 1 }).setDepth(6);
     this.avPintar();
     this.time.delayedCall(350, () => toast(this, `${def.nombre}: ${textoObjetivo(def)}`, 1655, 2600));
-    const aviso = AVISO_NUEVO.find(([k, cond]) => cond(def) && !(save.aventura.vistos || {})[k]);
+    const tieneB = (ch) => (def.plantilla || []).some((row) => row.includes(ch));
+    const peligro = !window.__capture && ((tieneB('B') && !save.peligros.bomba && 'bomba') || (tieneB('I') && !save.peligros.hielo && 'hielo'));
+    if (peligro) { save.peligros[peligro] = true; persist(); this.time.delayedCall(900, () => mostrarGuia(this, peligro, { auto: true })); }
+    const aviso = !peligro && AVISO_NUEVO.find(([k, cond]) => cond(def) && !(save.aventura.vistos || {})[k]);
     if (aviso && !window.__capture) {
       (save.aventura.vistos || (save.aventura.vistos = {}))[aviso[0]] = true;
       persist();
-      this.time.delayedCall(3200, () => toast(this, aviso[2], 352, 3600));
+      this.time.delayedCall(aviso[0] === 'jefe' ? 1600 : 900, () => { if (!this.av.fin) mostrarGuia(this, aviso[0], { auto: true }); });
     }
     if (def.t === 'jefe') this.time.delayedCall(500, () => this.jefeAparece(0.9));
   }

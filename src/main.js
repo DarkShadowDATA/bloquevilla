@@ -10,6 +10,7 @@ import Logros from './scenes/Logros.js';
 import Coleccion from './scenes/Coleccion.js';
 import Estadisticas from './scenes/Estadisticas.js';
 import { musica } from './musica.js';
+import { mostrarGuia } from './guia.js';
 import Aventura from './scenes/Aventura.js';
 import Pozo from './scenes/Pozo.js';
 import { startNube, onNube } from './nube.js';
@@ -69,6 +70,7 @@ async function start() {
     musica.modo(k === 'Game' ? (s.av && s.av.def && s.av.def.t === 'jefe' ? 'jefe' : 'juego') : 'pueblo');
   })));
   window.__game = game;
+  if (CAPTURE) window.__guia = (s, id) => mostrarGuia(s, id);   // pruebas y videos
 }
 
 start();
