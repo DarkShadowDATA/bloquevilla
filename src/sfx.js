@@ -3,7 +3,11 @@ import { save } from './save.js';
 
 let ctx = null;
 
-function ac() {
+// Volumen por nivel (0 = apagado … 4 = fuerte); el 3 es el volumen de siempre
+export const NIVELES_VOL = [0, 0.35, 0.65, 1, 1.4];
+export const volSfx = () => (save.sound === false ? 0 : NIVELES_VOL[save.volSfx ?? 3] ?? 1);
+
+export function ac() {
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
@@ -14,7 +18,9 @@ function ac() {
 }
 
 function tone(freq, dur, { type = 'sine', vol = 0.14, when = 0, slide = 0 } = {}) {
-  if (!save.sound) return;
+  const k = volSfx();
+  if (!k) return;
+  vol *= k;
   const a = ac();
   if (!a) return;
   const t0 = a.currentTime + when;

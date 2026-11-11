@@ -437,6 +437,7 @@ export default class Game extends Phaser.Scene {
     this.snapshot();
     this.tickPendiente = true;
     if (this.av) this.av.usadas += 1;
+    if (save.stats) save.stats.piezas = (save.stats.piezas || 0) + 1;
     pc.used = true;
     this.atorado = false;
     pc.c.destroy();
@@ -611,6 +612,7 @@ export default class Game extends Phaser.Scene {
   update(time, delta) {
     // En modo grabación el reloj solo avanza con los cuadros grabados
     if (this.tiempo && (!window.__capture || window.__stepping)) this.updateTiempo(delta);
+    if (!this.over && save.stats && delta < 1000) save.stats.seg = (save.stats.seg || 0) + delta / 1000;   // tiempo jugando
     if (!this.comboFrame) return;
     this.comboFrame.clear();
     if (this.combo >= 4 && !this.over) {

@@ -34,17 +34,17 @@ export function medalla(scene, x, y, k, size, gris = false) {
 
 // Pestañas de arriba: Logros y Colección (la meta de 100 % del juego)
 export function pestanas(scene, actual) {
-  const P = [['logros', '🏅 Logros', 'Logros'], ['coleccion', '📖 Colección', 'Coleccion']];
+  const P = [['logros', '🏅 Logros', 'Logros'], ['coleccion', '📖 Colección', 'Coleccion'], ['estadisticas', '📊 Datos', 'Estadisticas']];
   P.forEach(([id, label, escena], k) => {
-    const x = W / 2 + (k ? 175 : -135);
+    const x = W / 2 + 60 + (k - 1) * 290;
     const on = id === actual;
-    const b = button(scene, x, 205, 330, 88, label, on ? 0xd8a020 : 0x3a3070, () => { if (!on) scene.scene.start(escena); }, { size: 34 });
+    const b = button(scene, x, 205, 276, 88, label, on ? 0xd8a020 : 0x3a3070, () => { if (!on) scene.scene.start(escena); }, { size: 30 });
     if (!on) b.setAlpha(0.85);
     // número rojo en la pestaña de al lado si hay algo nuevo
     const n = id === 'coleccion' ? nuevos().length + (premioListo() ? 1 : 0) : 0;
     if (n && !on) {
-      scene.add.circle(x + 150, 168, 22, 0xe83a3a).setStrokeStyle(4, 0xffffff).setDepth(6);
-      txt(scene, x + 150, 168, String(n), 26).setDepth(7);
+      scene.add.circle(x + 126, 168, 22, 0xe83a3a).setStrokeStyle(4, 0xffffff).setDepth(6);
+      txt(scene, x + 126, 168, String(n), 26).setDepth(7);
     }
   });
 }

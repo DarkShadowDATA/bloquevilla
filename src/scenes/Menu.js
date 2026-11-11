@@ -8,6 +8,7 @@ import { cobrarCofreSemanal } from '../bonos.js';
 import { save, persist, isBuilt, dailyAvailable, dailyIndex, today } from '../save.js';
 import { EVENTO, eventoActivo, diasRestantes } from '../evento.js';
 import { retoNumero } from '../reto.js';
+import { abrirAjustes } from '../ajustes.js';
 import { sfx } from '../sfx.js';
 import { txt, background, icon, button, toast, confetti } from '../ui.js';
 import { premioPendiente, cobrarPremio } from '../ranking.js';
@@ -119,7 +120,7 @@ export default class Menu extends Phaser.Scene {
     }
 
     // Ajustes
-    this.toggle(960, 120, 'ui_sonido', save.sound, (v) => { save.sound = v; persist(); });
+    this.engrane(960, 120);
     this.cuenta();
     const temas = ['clasico'];
     if (isBuilt('pozo')) temas.push('agua');
@@ -174,7 +175,7 @@ export default class Menu extends Phaser.Scene {
       confetti(this, W / 2, 700, 90);
       toast(this, `¡Quedaste #${p.lugar} en el ranking de la semana pasada! +${p.premio} ladrillos`, 700, 3500);
     }).catch(() => {});
-    txt(this, W / 2, H - 60, 'v1.9 · Colección', 24, '#ffffffaa', { weight: '500' });
+    txt(this, W / 2, H - 60, 'v1.10 · Ajustes y estadísticas', 24, '#ffffffaa', { weight: '500' });
   }
 
   bannerEvento() {
@@ -238,6 +239,17 @@ export default class Menu extends Phaser.Scene {
     }
     if (save.apoyo > 0) txt(this, 190, save.fundador ? 236 : 192, '☕ Apoyo', 26, '#ffe9c8', { stroke: '#3a1250', strokeW: 8 });
     if (save.coleccion && save.coleccion.premio) txt(this, save.apoyo > 0 ? 350 : 220, save.fundador ? 236 : 192, '📖 Coleccionista', 26, '#c8f0ff', { stroke: '#3a1250', strokeW: 8 });
+  }
+
+  engrane(x, y) {
+    const c = this.add.container(x, y);
+    const g = this.add.graphics();
+    g.fillStyle(0x0c0f30, 0.55);
+    g.fillCircle(0, 0, 58);
+    const im = icon(this, 0, 0, 'ui_ajustes', 70);
+    c.add([g, im]);
+    c.setInteractive(new Phaser.Geom.Circle(0, 0, 58), Phaser.Geom.Circle.Contains);
+    c.on('pointerdown', () => { sfx.click(); this.tweens.add({ targets: im, angle: 90, duration: 250 }); abrirAjustes(this); });
   }
 
   toggle(x, y, key, on, cb) {

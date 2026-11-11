@@ -7,7 +7,10 @@ const DEFAULT = {
   built: [],
   theme: 'clasico',
   sound: true,
+  volSfx: 3,             // sonidos 0..4 (0 = apagado)
+  volMus: 2,             // música 0..4
   vibe: true,
+  stats: { seg: 0, piezas: 0 },   // tiempo jugando y piezas colocadas (desde la v1.10)
   daily: { last: null, streak: 0 },
   pendingPower: null,
   reto: { last: null, racha: 0 },
@@ -40,7 +43,7 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const d = JSON.parse(raw);
-      return { ...JSON.parse(JSON.stringify(DEFAULT)), ...d, reto: { ...DEFAULT.reto, ...(d.reto || {}) }, muertos: { ...DEFAULT.muertos, ...(d.muertos || {}) }, tiempo: { ...DEFAULT.tiempo, ...(d.tiempo || {}) }, tienda: { ...DEFAULT.tienda, ...(d.tienda || {}) }, peligros: { ...DEFAULT.peligros, ...(d.peligros || {}) }, aventura: { ...DEFAULT.aventura, ...(d.aventura || {}) } };
+      return { ...JSON.parse(JSON.stringify(DEFAULT)), ...d, reto: { ...DEFAULT.reto, ...(d.reto || {}) }, muertos: { ...DEFAULT.muertos, ...(d.muertos || {}) }, tiempo: { ...DEFAULT.tiempo, ...(d.tiempo || {}) }, tienda: { ...DEFAULT.tienda, ...(d.tienda || {}) }, peligros: { ...DEFAULT.peligros, ...(d.peligros || {}) }, aventura: { ...DEFAULT.aventura, ...(d.aventura || {}) }, stats: { ...DEFAULT.stats, ...(d.stats || {}) } };
     }
   } catch (e) { /* navegador sin almacenamiento */ }
   return JSON.parse(JSON.stringify(DEFAULT));
@@ -95,7 +98,10 @@ export function mergeSaves(local, nube) {
   out.prueba = pa && pb && pa.dia === pb.dia ? { dia: pa.dia, usado: !!(pa.usado || pb.usado), enJuego: !!pa.enJuego }
     : (pa && (!pb || pa.dia > pb.dia) ? pa : pb ? { ...pb, enJuego: false } : null);
   out.partida = local.partida || null;   // la partida a medias es de este celular
+  const sa = local.stats || {}, sb = nube.stats || {};
+  out.stats = { seg: Math.max(sa.seg || 0, sb.seg || 0), piezas: Math.max(sa.piezas || 0, sb.piezas || 0) };
   out.sound = local.sound; out.theme = local.theme;
+  for (const k of ['volSfx', 'volMus', 'vibe']) if (local[k] !== undefined) out[k] = local[k];
   return out;
 }
 export function replaceSave(s) { for (const k of Object.keys(save)) delete save[k]; Object.assign(save, s); }

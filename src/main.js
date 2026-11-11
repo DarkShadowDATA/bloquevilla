@@ -8,6 +8,8 @@ import Shop from './scenes/Shop.js';
 import Ranking from './scenes/Ranking.js';
 import Logros from './scenes/Logros.js';
 import Coleccion from './scenes/Coleccion.js';
+import Estadisticas from './scenes/Estadisticas.js';
+import { musica } from './musica.js';
 import Aventura from './scenes/Aventura.js';
 import Pozo from './scenes/Pozo.js';
 import { startNube, onNube } from './nube.js';
@@ -55,11 +57,17 @@ async function start() {
     backgroundColor: '#161c4e',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     input: { activePointers: 1 },
-    scene: [Boot, Menu, Game, Village, Shop, Ranking, Aventura, Logros, Coleccion, Pozo],
+    scene: [Boot, Menu, Game, Village, Shop, Ranking, Aventura, Logros, Coleccion, Estadisticas, Pozo],
     render: { preserveDrawingBuffer: CAPTURE },
   });
   if (CAPTURE) setupCapture(game);
-  window.addEventListener('pointerdown', () => sfx.unlock(), { once: true });
+  window.addEventListener('pointerdown', () => { sfx.unlock(); musica.desbloquear(); }, { once: true });
+  // Música según la pantalla: partidas (o jefe) y lo demás (pueblo)
+  game.events.once('ready', () => game.scene.scenes.forEach((s) => s.events.on('create', () => {
+    const k = s.scene.key;
+    if (k === 'Boot') return;
+    musica.modo(k === 'Game' ? (s.av && s.av.def && s.av.def.t === 'jefe' ? 'jefe' : 'juego') : 'pueblo');
+  })));
   window.__game = game;
 }
 
