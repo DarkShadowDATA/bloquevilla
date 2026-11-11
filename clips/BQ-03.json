@@ -1,0 +1,32 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "¡Medalla de oro! Mi juego ya tiene logros."
+   },
+   {
+    "at": "auto",
+    "text": "Son diez logros, cada uno con medalla de bronce, plata y oro."
+   },
+   {
+    "at": "auto",
+    "text": "Se ganan jugando: limpia líneas, haz combos, rompe hielo."
+   },
+   {
+    "at": "auto",
+    "text": "Y cada medalla te regala ladrillos para tu pueblo."
+   },
+   {
+    "at": "auto",
+    "text": "¿Cuántas juntas tú? Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}

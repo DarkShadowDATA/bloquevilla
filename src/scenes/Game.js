@@ -18,6 +18,7 @@ import { enviarPuntaje } from '../ranking.js';
 import { extraLadrillos, oroChance, turnosBomba, maxPoderes } from '../bonos.js';
 import { avanzar, textoMision } from '../misiones.js';
 import { contar } from '../logros.js';
+import { medalla } from './Logros.js';
 import { pozoNew, pozoPlay } from '../pozo-core.js';
 import { terminarPozo, usd } from '../pozo.js';
 import { NIVELES, OBJ_TEXTO, OBJ_ICONO, calcularEstrellas, guardarResultado } from '../aventura.js';
@@ -1098,6 +1099,13 @@ export default class Game extends Phaser.Scene {
     contar(tipo, v).forEach((x, k) => this.time.delayedCall(1200 + k * 1900, () => {
       if (!this.sys.isActive()) return;
       toast(this, `🏅 Logro: ${x.L.nombre} · ${['Bronce', 'Plata', 'Oro'][x.medalla]}`, 268, 1800);
+      // la medalla aparece grande sobre el tablero y se va flotando
+      const md = medalla(this, W / 2, H * 0.46, x.medalla, 420).setDepth(190);
+      const sx = md.scaleX, sy = md.scaleY;
+      md.setScale(0);
+      this.tweens.add({ targets: md, scaleX: sx, scaleY: sy, duration: 380, ease: 'Back.Out' });
+      this.time.delayedCall(1500, () => this.tweens.add({ targets: md, y: H * 0.36, alpha: 0, duration: 400, onComplete: () => md.destroy() }));
+      sfx.build();
     }));
     avanzar(tipo, v).forEach((m, k) => this.time.delayedCall(300 + k * 1900, () => {
       if (!this.sys.isActive()) return;
