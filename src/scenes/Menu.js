@@ -175,7 +175,7 @@ export default class Menu extends Phaser.Scene {
       confetti(this, W / 2, 700, 90);
       toast(this, `¡Quedaste #${p.lugar} en el ranking de la semana pasada! +${p.premio} ladrillos`, 700, 3500);
     }).catch(() => {});
-    txt(this, W / 2, H - 60, 'v1.11 · Cómo se juega', 24, '#ffffffaa', { weight: '500' });
+    txt(this, W / 2, H - 60, 'v2.0 · Completo · English', 24, '#ffffffaa', { weight: '500' });
   }
 
   bannerEvento() {

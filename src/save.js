@@ -11,7 +11,8 @@ const DEFAULT = {
   volMus: 2,             // música 0..4
   vibe: true,
   stats: { seg: 0, piezas: 0 },
-  guia: { vistos: [] },   // guia.js: tarjetas de «Cómo se juega» que ya salieron solas   // tiempo jugando y piezas colocadas (desde la v1.10)
+  guia: { vistos: [] },
+  idioma: null,          // 'es' | 'en' | null = el del navegador   // guia.js: tarjetas de «Cómo se juega» que ya salieron solas   // tiempo jugando y piezas colocadas (desde la v1.10)
   daily: { last: null, streak: 0 },
   pendingPower: null,
   reto: { last: null, racha: 0 },
@@ -103,7 +104,7 @@ export function mergeSaves(local, nube) {
   const sa = local.stats || {}, sb = nube.stats || {};
   out.stats = { seg: Math.max(sa.seg || 0, sb.seg || 0), piezas: Math.max(sa.piezas || 0, sb.piezas || 0) };
   out.sound = local.sound; out.theme = local.theme;
-  for (const k of ['volSfx', 'volMus', 'vibe']) if (local[k] !== undefined) out[k] = local[k];
+  for (const k of ['volSfx', 'volMus', 'vibe', 'idioma']) if (local[k] !== undefined) out[k] = local[k];
   return out;
 }
 export function replaceSave(s) { for (const k of Object.keys(save)) delete save[k]; Object.assign(save, s); }

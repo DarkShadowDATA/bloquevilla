@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 // Retar a un amigo: link con la semilla de la partida, el puntaje a superar y tu apodo
 import { save, persist } from './save.js';
 import { toast } from './ui.js';
@@ -24,14 +25,14 @@ export function pedirApodo(titulo = '¿Cómo te llamas?', sub = 'Así te verán 
     fondo.innerHTML = `<form style="background:#fff7e8;border-radius:24px;padding:22px 20px;width:100%;max-width:340px;text-align:center;box-shadow:0 10px 0 #aa5a1e">
       <div style="font-weight:800;font-size:24px;color:#46286e"></div>
       <div style="font-weight:600;font-size:14px;color:#8c7aa0;margin:6px 0 14px"></div>
-      <input id="bv-apodo" maxlength="12" autocomplete="nickname" placeholder="Tu apodo" style="width:100%;box-sizing:border-box;font:700 20px Poppins,system-ui,sans-serif;padding:12px 14px;border-radius:14px;border:3px solid #d8c8e8;outline:none;text-align:center">
+      <input id="bv-apodo" maxlength="12" autocomplete="nickname" placeholder="${t('Tu apodo')}" style="width:100%;box-sizing:border-box;font:700 20px Poppins,system-ui,sans-serif;padding:12px 14px;border-radius:14px;border:3px solid #d8c8e8;outline:none;text-align:center">
       <div id="bv-err" style="color:#c84a4a;font-size:13px;font-weight:700;min-height:18px;margin-top:6px"></div>
-      <button type="submit" style="margin-top:6px;width:100%;font:800 20px Poppins,system-ui,sans-serif;color:#fff;background:#5ac85a;border:0;border-radius:16px;padding:12px;box-shadow:0 5px 0 #3a8a3a">Listo</button>
-      <button type="button" id="bv-cancel" style="margin-top:10px;background:none;border:0;color:#8c7aa0;font:600 15px Poppins,system-ui,sans-serif">Ahora no</button>
+      <button type="submit" style="margin-top:6px;width:100%;font:800 20px Poppins,system-ui,sans-serif;color:#fff;background:#5ac85a;border:0;border-radius:16px;padding:12px;box-shadow:0 5px 0 #3a8a3a">${t('Listo')}</button>
+      <button type="button" id="bv-cancel" style="margin-top:10px;background:none;border:0;color:#8c7aa0;font:600 15px Poppins,system-ui,sans-serif">${t('Ahora no')}</button>
     </form>`;
     const [t1, t2] = fondo.querySelectorAll('form > div');
-    t1.textContent = titulo;
-    t2.textContent = sub;
+    t1.textContent = t(titulo);
+    t2.textContent = t(sub);
     // que ningún toque atraviese la ventana hacia el juego
     ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click'].forEach((ev) => fondo.addEventListener(ev, (e) => e.stopPropagation()));
     document.body.appendChild(fondo);
@@ -43,7 +44,7 @@ export function pedirApodo(titulo = '¿Cómo te llamas?', sub = 'Así te verán 
     fondo.querySelector('form').onsubmit = (e) => {
       e.preventDefault();
       const a = apodoValido(input.value);
-      if (!a) { err.textContent = 'De 2 a 12 letras o números, sin groserías'; return; }
+      if (!a) { err.textContent = t('De 2 a 12 letras o números, sin groserías'); return; }
       save.apodo = a;
       persist();
       cerrar(a);
@@ -83,20 +84,21 @@ export async function compartirReto(scene, semilla, puntos, tiempo, revancha) {
   const msg = revancha
     ? `¡Te gané y te regreso el reto en Bloquevilla! Hice ${fmt} puntos con las mismas piezas. ¿Puedes superarme?`
     : `¡Te reto en Bloquevilla! Hice ${fmt} puntos${tiempo ? ' en 60 segundos' : ''}. Juega con mis mismas piezas, ¿me ganas?`;
+  const msgT = t(msg);
   track('compartir', { puntos, tiempo: !!tiempo, revancha: !!revancha });
   try {
     if (navigator.share) {
-      await navigator.share({ title: 'Bloquevilla', text: msg, url });
+      await navigator.share({ title: 'Bloquevilla', text: msgT, url });
       return;
     }
   } catch (e) {
     if (e && e.name === 'AbortError') return;
   }
   try {
-    await navigator.clipboard.writeText(`${msg} ${url}`);
+    await navigator.clipboard.writeText(`${msgT} ${url}`);
     toast(scene, '¡Link copiado! Pégalo en WhatsApp', 352, 2600);
   } catch (e) {
-    mostrarLink(`${msg} ${url}`);
+    mostrarLink(`${msgT} ${url}`);
   }
 }
 
@@ -104,7 +106,7 @@ export async function compartirReto(scene, semilla, puntos, tiempo, revancha) {
 function mostrarLink(texto) {
   const fondo = document.createElement('div');
   fondo.style.cssText = 'position:fixed;inset:0;background:rgba(10,8,30,.72);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;font-family:Poppins,system-ui,sans-serif';
-  fondo.innerHTML = '<div style="background:#fff7e8;border-radius:24px;padding:18px;max-width:360px;width:100%;text-align:center"><div style="font-weight:800;color:#46286e;font-size:20px">Copia y manda este mensaje</div><textarea readonly style="width:100%;box-sizing:border-box;height:120px;margin:12px 0;font:14px system-ui;border-radius:12px;padding:8px"></textarea><button style="width:100%;font:800 18px Poppins,system-ui;color:#fff;background:#6a3ab8;border:0;border-radius:14px;padding:10px">Cerrar</button></div>';
+  fondo.innerHTML = '<div style="background:#fff7e8;border-radius:24px;padding:18px;max-width:360px;width:100%;text-align:center"><div style="font-weight:800;color:#46286e;font-size:20px">' + t('Copia y manda este mensaje') + '</div><textarea readonly style="width:100%;box-sizing:border-box;height:120px;margin:12px 0;font:14px system-ui;border-radius:12px;padding:8px"></textarea><button style="width:100%;font:800 18px Poppins,system-ui;color:#fff;background:#6a3ab8;border:0;border-radius:14px;padding:10px">' + t('Cerrar') + '</button></div>';
   const ta = fondo.querySelector('textarea');
   ta.value = texto;
   fondo.querySelector('button').onclick = () => fondo.remove();

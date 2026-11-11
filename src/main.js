@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import './i18n.js';   // traduce los textos si el juego está en inglés
 import { W, H } from './config.js';
 import Boot from './scenes/Boot.js';
 import Menu from './scenes/Menu.js';

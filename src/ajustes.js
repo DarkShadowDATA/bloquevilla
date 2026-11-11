@@ -6,6 +6,7 @@ import { sfx, vibe } from './sfx.js';
 import { musica } from './musica.js';
 import { txt, button } from './ui.js';
 import { abrirListaGuia } from './guia.js';
+import { idioma, cambiarIdioma } from './i18n.js';
 
 const PUEDE_VIBRAR = typeof navigator !== 'undefined' && !!navigator.vibrate;
 
@@ -78,12 +79,23 @@ export function abrirAjustes(scene) {
   interruptor(scene, panel, 30, '📳 Vibración', save.vibe !== false, (v) => { save.vibe = v; persist(); if (v) vibe(60); sfx.click(); },
     PUEDE_VIBRAR ? null : 'Tu celular o navegador no permite vibrar');
 
+  // Idioma
+  panel.add(txt(scene, -380, 150, '🌐 Idioma', 40, '#2a1a5e').setOrigin(0, 0.5));
+  [['es', 'Español'], ['en', 'English']].forEach(([l, nom], i) => {
+    const on = idioma() === l;
+    panel.add(button(scene, 80 + i * 200, 150, 185, 76, nom, on ? 0x4ab86a : 0xb8b0d0, () => {
+      if (on) return;
+      cambiarIdioma(l); persist();
+      scene.scene.restart();
+    }, { size: 28 }));
+  });
+
   const cerrar = () => {
     scene.tweens.add({ targets: panel, scale: 0.3, alpha: 0, duration: 180, onComplete: () => layer.destroy() });
   };
-  panel.add(button(scene, -215, 200, 400, 104, '📘 Cómo se juega', 0x8a5ad8, () => abrirListaGuia(scene), { size: 34 }));
-  panel.add(button(scene, 215, 200, 400, 104, '📊 Estadísticas', 0x3a7ad8, () => { layer.destroy(); scene.scene.start('Estadisticas'); }, { size: 34 }));
-  panel.add(button(scene, 0, 350, 420, 104, 'Listo', 0x4ab86a, cerrar, { size: 42 }));
-  panel.add(txt(scene, 0, 480, `Bloquevilla v${VERSION} · DarkShadow Studios`, 26, '#8a7aa8', { weight: '700' }));
+  panel.add(button(scene, -215, 290, 400, 104, '📘 Cómo se juega', 0x8a5ad8, () => abrirListaGuia(scene), { size: 34 }));
+  panel.add(button(scene, 215, 290, 400, 104, '📊 Estadísticas', 0x3a7ad8, () => { layer.destroy(); scene.scene.start('Estadisticas'); }, { size: 34 }));
+  panel.add(button(scene, 0, 420, 420, 104, 'Listo', 0x4ab86a, cerrar, { size: 42 }));
+  panel.add(txt(scene, 0, 515, `Bloquevilla v${VERSION} · DarkShadow Studios`, 26, '#8a7aa8', { weight: '700' }));
   return layer;
 }
