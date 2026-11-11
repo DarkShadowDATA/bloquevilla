@@ -60,6 +60,7 @@ export function trackAbrir() {
     nuevo: save.games === 0 && !save.jugador,
     movil: /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent),
     ref: ref.slice(0, 40),
+    lang: (navigator.language || '').slice(0, 10),   // idioma del celular, para decidir próximas traducciones
     partidas: save.games,
     edificios: save.built.length,
   });

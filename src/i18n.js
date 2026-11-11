@@ -1,20 +1,24 @@
-// Idiomas: español (el original) e inglés. El juego se escribe en español y aquí se traduce al mostrarse:
+// Idiomas: español (el original), inglés y portugués. El juego se escribe en español y aquí se traduce al mostrarse:
 // todo texto de Phaser pasa por t() (se parcha Text.setText), así no hay que tocar cada pantalla.
-// Idioma: el que eligió el jugador en Ajustes (save.idioma) o, si no, el del navegador (español → es, otro → en).
+// Idioma: el que eligió el jugador en Ajustes (save.idioma) o, si no, el del navegador (es → es, pt → pt, otro → en).
 import Phaser from 'phaser';
 import EN from './i18n_en.js';
+import PT from './i18n_pt.js';
 import { save } from './save.js';
 
 const nav = () => { try { return (navigator.language || 'es').toLowerCase(); } catch (e) { return 'es'; } };
-const forzado = () => { try { const m = location.search.match(/[?&]lang=(es|en)/); return m && m[1]; } catch (e) { return null; } };
+const forzado = () => { try { const m = location.search.match(/[?&]lang=(es|en|pt)/); return m && m[1]; } catch (e) { return null; } };
+const delNavegador = () => (nav().startsWith('es') ? 'es' : nav().startsWith('pt') ? 'pt' : 'en');
+export const idiomaNavegador = nav;
 // En modo captura (videos y pruebas) siempre español, salvo ?lang=en
 const CAPTURA = (() => { try { return location.search.includes('capture'); } catch (e) { return false; } })();
-export const idioma = () => forzado() || (CAPTURA ? 'es' : save.idioma || (nav().startsWith('es') ? 'es' : 'en'));
-export const enIngles = () => idioma() === 'en';
+export const idioma = () => forzado() || (CAPTURA ? 'es' : save.idioma || delNavegador());
+export const enIngles = () => idioma() !== 'es';   // hay que traducir (inglés o portugués)
+const DIC = { en: EN, pt: PT };
 
 const esc = (s) => s.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
 const PLANTILLAS = Object.keys(EN).filter((k) => k.includes('{}'))
-  .map((k) => ({ re: new RegExp('^' + k.split('{}').map(esc).join('([\\s\\S]*?)') + '$'), en: EN[k], lit: k.replace(/\{\}/g, '').length }))
+  .map((k) => ({ k, re: new RegExp('^' + k.split('{}').map(esc).join('([\\s\\S]*?)') + '$'), lit: k.replace(/\{\}/g, '').length }))
   .sort((a, b) => b.lit - a.lit);
 
 function llenar(en, vals) {
@@ -25,13 +29,14 @@ function llenar(en, vals) {
 
 const cache = new Map();
 function trad(s, prof) {
+  const D = DIC[idioma()] || EN;
   if (!/[A-Za-zÁÉÍÓÚáéíóúñÑ]/.test(s)) return s;
-  if (Object.prototype.hasOwnProperty.call(EN, s)) return EN[s];
+  if (Object.prototype.hasOwnProperty.call(D, s)) return D[s];
   if (prof > 3) return s;
   for (const p of PLANTILLAS) {
     if (p.lit < 2) continue;
     const m = s.match(p.re);
-    if (m) return llenar(p.en, m.slice(1).map((v) => trad(v, prof + 1)));
+    if (m) return llenar(D[p.k] || EN[p.k], m.slice(1).map((v) => trad(v, prof + 1)));
   }
   for (const sep of ['\n', ' · ', ': ']) {
     if (s.includes(sep)) {

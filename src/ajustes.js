@@ -80,10 +80,10 @@ export function abrirAjustes(scene) {
     PUEDE_VIBRAR ? null : 'Tu celular o navegador no permite vibrar');
 
   // Idioma
-  panel.add(txt(scene, -380, 150, '🌐 Idioma', 40, '#2a1a5e').setOrigin(0, 0.5));
-  [['es', 'Español'], ['en', 'English']].forEach(([l, nom], i) => {
+  panel.add(txt(scene, -400, 150, '🌐', 44, '#2a1a5e').setOrigin(0, 0.5));
+  [['es', 'Español'], ['en', 'English'], ['pt', 'Português']].forEach(([l, nom], i) => {
     const on = idioma() === l;
-    panel.add(button(scene, 80 + i * 200, 150, 185, 76, nom, on ? 0x4ab86a : 0xb8b0d0, () => {
+    panel.add(button(scene, -60 + i * 196, 150, 184, 76, nom, on ? 0x4ab86a : 0xb8b0d0, () => {
       if (on) return;
       cambiarIdioma(l); persist();
       scene.scene.restart();

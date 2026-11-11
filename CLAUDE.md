@@ -20,5 +20,5 @@
 - En `clips/edit.py`, `render()` arma esto: `segs` pone primero el momento fuerte (cold open) y luego el resto; `subs` agrega los subtítulos.
 
 ## Idiomas (desde v2.0)
-- El juego se escribe en español y `src/i18n.js` lo traduce al mostrarse (parcha `Text.setText`). Inglés según el navegador o Ajustes → Idioma (`save.idioma`); en modo captura siempre español (`?lang=en` para probar).
-- **Cada texto nuevo que se vea en pantalla necesita su inglés en `src/i18n_en.js`** (clave = el español igual que en el código; `{}` = variable). Para revisar: `?lang=en` y buscar textos que sigan en español.
+- El juego se escribe en español y `src/i18n.js` lo traduce al mostrarse (parcha `Text.setText`). Inglés y portugués según el navegador o Ajustes → Idioma (`save.idioma`); en modo captura siempre español (`?lang=en` o `?lang=pt` para probar).
+- **Cada texto nuevo que se vea en pantalla necesita su inglés en `src/i18n_en.js` y su portugués en `src/i18n_pt.js`** (clave = el español igual que en el código; `{}` = variable). Para revisar: `?lang=en` y buscar textos que sigan en español.
