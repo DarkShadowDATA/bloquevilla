@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { W, H, BUILDINGS, DECO_POS, ZONAS, zonaDe, conArt } from '../config.js';
+import { W, H, BUILDINGS, DECO_POS, ZONAS, LLAVE_ZONA, zonaDe, conArt } from '../config.js';
 import { save, persist, isBuilt } from '../save.js';
 import { eventoActivo } from '../evento.js';
 import { sfx, vibe } from '../sfx.js';
@@ -10,20 +10,26 @@ import { track } from '../stats.js';
 const PLOTS = [[245, 750], [840, 770], [245, 1140], [840, 1160], [245, 1550], [845, 1570]];
 // Zona 2: muelle y barca en el mar; los otros 4 en los terrenos de arena de bg_muelle
 const PLOTS2 = [[250, 860], [830, 860], [225, 1270], [860, 1270], [225, 1650], [860, 1650]];
+// Zona 3: 2 terrenos abajo, 3 en medio y el Castillo arriba, en la colina (se construye de abajo hacia arriba)
+const PLOTS3 = [[300, 1650], [780, 1650], [190, 1290], [540, 1290], [890, 1290], [540, 900]];
+const PLOTS_Z = { 1: PLOTS, 2: PLOTS2, 3: PLOTS3 };
 const BSIZE = 300;
+const zonaAbierta = (n) => n === 1 || isBuilt(LLAVE_ZONA[n]);
 
 export default class Village extends Phaser.Scene {
   constructor() { super('Village'); }
 
   create(data) {
-    // Zona 2 (el Muelle) se abre al terminar la Plaza
-    const z2 = isBuilt('plaza');
+    // La zona 2 (Muelle) se abre al terminar la Plaza y la 3 (Castillo) al terminar el Mercado
+    const z2 = zonaAbierta(2);
     const sig = BUILDINGS.find((b) => !isBuilt(b.id));
-    this.zona = z2 ? (data && data.zona) || (sig ? zonaDe(sig) : 2) : 1;
+    const ultima = zonaAbierta(3) ? 3 : z2 ? 2 : 1;
+    const pedida = data && data.zona && zonaAbierta(data.zona) ? data.zona : 0;
+    this.zona = pedida || (sig ? Math.min(zonaDe(sig), ultima) : ultima);
     this.lista = BUILDINGS.filter((b) => zonaDe(b) === this.zona);
     const Z = ZONAS[this.zona - 1];
     background(this, Z.bg, 'grad_sky');
-    if (!this.textures.exists(Z.bg)) (this.zona === 2 ? this.drawMuelle() : this.drawScenery());
+    if (!this.textures.exists(Z.bg)) (this.zona === 3 ? this.drawCastillo() : this.zona === 2 ? this.drawMuelle() : this.drawScenery());
     if (this.zona === 1 && eventoActivo()) this.decorarMuertos();
 
     button(this, 120, 110, 170, 84, 'Menú', 0x2c3070, () => this.scene.start('Menu'), { size: 32 }).setDepth(50);
@@ -39,23 +45,57 @@ export default class Village extends Phaser.Scene {
     button(this, 205, 1790, 290, 130, '  Decorar', 0xd8a020, () => this.scene.start('Shop', { tab: 'deco' }), { size: 38, iconKey: 'ui_tienda' }).setDepth(50);
 
     if (save.built.length === BUILDINGS.length) {
-      toast(this, '¡Pueblo y Muelle restaurados! Pronto llegan más zonas', 420, 3000);
+      if (!save.finalVisto) this.time.delayedCall(600, () => this.final());
+      else toast(this, '¡Bloquevilla está completa! Toca el Castillo para ver el final', 420, 3000);
+    } else if (this.zona === 3 && !this.lista.some((b) => isBuilt(b.id))) {
+      toast(this, 'La colina del Castillo: el último tramo de Bloquevilla', 420, 3200);
     } else if (this.zona === 2 && !this.lista.some((b) => isBuilt(b.id))) {
       toast(this, 'El Muelle: cada edificio te da un bono para siempre', 420, 3200);
+    } else if (this.zona === 2 && zonaAbierta(3) && sig) {
+      toast(this, '¡Muelle completo! El Castillo te espera', 420, 2600);
     } else if (this.zona === 1 && z2 && sig) {
-      toast(this, '¡Pueblo completo! El Muelle te espera', 420, 2600);
+      toast(this, zonaDe(sig) === 3 ? '¡Pueblo completo! Sigue en el Castillo' : '¡Pueblo completo! El Muelle te espera', 420, 2600);
     } else if (save.built.length === 0) {
       toast(this, 'Toca la Casa para empezar a reconstruir', 420, 2600);
     }
   }
 
+  // Botones para pasar a la zona de antes (‹) y a la siguiente (›)
   botonZona() {
-    const otra = this.zona === 1 ? 2 : 1;
-    const b = button(this, W / 2, 345, 420, 76, this.zona === 1 ? 'Ir al Muelle  ›' : '‹  Volver al Pueblo', this.zona === 1 ? 0x1f8ac0 : 0x5a8a3a,
-      () => this.scene.restart({ zona: otra }), { size: 34 }).setDepth(50);
-    const nuevo = this.zona === 1 && !BUILDINGS.filter((x) => zonaDe(x) === 2).some((x) => isBuilt(x.id));
-    if (nuevo) this.tweens.add({ targets: b, scale: 1.07, duration: 550, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-    return b;
+    (this.zonaBtns || []).forEach((b) => b.destroy());
+    this.zonaBtns = [];
+    const COL = { 1: 0x5a8a3a, 2: 0x1f8ac0, 3: 0x7a5ab8 };
+    const antes = this.zona > 1 ? this.zona - 1 : 0;
+    const sigue = this.zona < ZONAS.length && zonaAbierta(this.zona + 1) ? this.zona + 1 : 0;
+    const dos = antes && sigue;
+    const mk = (n, x, w, label) => {
+      const b = button(this, x, 345, w, 76, label, COL[n], () => this.scene.restart({ zona: n }), { size: dos ? 30 : 34 }).setDepth(50);
+      const nuevo = n > this.zona && !BUILDINGS.filter((x2) => zonaDe(x2) === n).some((x2) => isBuilt(x2.id));
+      if (nuevo) this.tweens.add({ targets: b, scale: 1.07, duration: 550, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+      this.zonaBtns.push(b);
+    };
+    const nom = (n) => (n === 1 ? 'Pueblo' : ZONAS[n - 1].nombre);
+    if (antes) mk(antes, dos ? 285 : W / 2, dos ? 400 : 420, `‹  ${dos ? nom(antes) : 'Volver al ' + nom(antes)}`);
+    if (sigue) mk(sigue, dos ? 795 : W / 2, dos ? 400 : 420, `${dos ? nom(sigue) : 'Ir al ' + nom(sigue)}  ›`);
+  }
+
+  // Fondo de la Zona 3 dibujado con código (mientras no esté bg_castillo)
+  drawCastillo() {
+    const g = this.add.graphics();
+    g.fillStyle(0xfff0a0, 1); g.fillCircle(170, 430, 70);
+    g.fillStyle(0xffffff, 0.95);
+    [[620, 420, 0.9], [880, 500, 0.6]].forEach(([x, y, s]) => {
+      g.fillCircle(x, y, 50 * s); g.fillCircle(x + 55 * s, y - 20 * s, 62 * s); g.fillCircle(x + 115 * s, y, 48 * s);
+    });
+    g.fillStyle(0x9aa6c8, 1); g.fillTriangle(-80, 900, 200, 480, 480, 900); g.fillTriangle(620, 900, 900, 520, 1180, 900);
+    g.fillStyle(0xffffff, 0.9); g.fillTriangle(160, 540, 200, 480, 240, 540); g.fillTriangle(862, 575, 900, 520, 938, 575);
+    g.fillStyle(0x7dc35f, 1); g.fillEllipse(W / 2, 960, 900, 420);            // la colina del Castillo
+    g.fillStyle(0x6eb955, 1); g.fillRect(0, 960, W, H - 960);
+    g.fillStyle(0x62a84c, 1);
+    PLOTS3.forEach(([x, y], i) => g.fillEllipse(x, y - 8, i === 5 ? 520 : 320, i === 5 ? 90 : 66));
+    g.fillStyle(0xcfc6b4, 1);
+    g.fillPoints([{ x: 480, y: H }, { x: 600, y: H }, { x: 575, y: 930 }, { x: 505, y: 930 }], true);
+    g.lineStyle(3, 0xa89e8a, 1); for (let y = 960; y < H; y += 40) g.lineBetween(486 + (y % 80 ? 8 : 0), y, 594 - (y % 80 ? 8 : 0), y);
   }
 
   // Fondo de la Zona 2 dibujado con código (mientras no esté bg_muelle)
@@ -163,8 +203,8 @@ export default class Village extends Phaser.Scene {
   }
 
   makePlot(b, i) {
-    const [x, gy] = (this.zona === 2 ? PLOTS2 : PLOTS)[i];
-    const c = this.add.container(x, gy).setDepth(10 - Math.floor(i / 2));
+    const [x, gy] = PLOTS_Z[this.zona][i];
+    const c = this.add.container(x, gy).setDepth(this.zona === 3 ? (gy > 1500 ? 10 : gy > 1000 ? 9 : 8) : 10 - Math.floor(i / 2));
     c.setInteractive(new Phaser.Geom.Rectangle(-180, -BSIZE, 360, BSIZE + 80), Phaser.Geom.Rectangle.Contains);
     c.on('pointerdown', () => this.onPlot(b, i));
     this.renderPlot(c, b);
@@ -178,7 +218,9 @@ export default class Village extends Phaser.Scene {
     const built = isBuilt(b.id);
     const next = this.nextId() === b.id;
     const im = this.add.image(0, 0, built ? 'bld_' + b.id : 'bld_' + b.id + '_ruina').setOrigin(0.5, 1);
-    im.setScale(Math.min(BSIZE / im.width, this.zona === 2 ? 360 / im.height : 9));   // en el Muelle el faro no tapa lo de arriba
+    // en el Muelle el faro no tapa lo de arriba; en la zona 3 el Castillo es grande y los demás un poco más chicos
+    const ancho = b.id === 'castillo' ? 470 : this.zona === 3 ? 285 : BSIZE;
+    im.setScale(Math.min(ancho / im.width, (b.id === 'castillo' ? 450 : this.zona === 1 ? 9999 : 360) / im.height));
     if (!built && !next) im.setTint(0x9a9aa8);
     c.add(im);
     const g = this.add.graphics();
@@ -199,7 +241,10 @@ export default class Village extends Phaser.Scene {
 
   onPlot(b, i) {
     sfx.click();
-    if (isBuilt(b.id)) { toast(this, `${b.name}: ${b.unlock}`, 420); return; }
+    if (isBuilt(b.id)) {
+      if (b.id === 'castillo' && save.built.length === BUILDINGS.length) { this.final(); return; }
+      toast(this, `${b.name}: ${b.unlock}`, 420); return;
+    }
     if (this.nextId() !== b.id) {
       const nb = BUILDINGS.find((x) => x.id === this.nextId());
       toast(this, `Primero reconstruye ${conArt(nb)}`, 420);
@@ -248,7 +293,7 @@ export default class Village extends Phaser.Scene {
     track('construir', { id: b.id, n: save.built.length });
     this.brickChip.setValue(save.bricks);
     const c = this.plots[i];
-    const [x, gy] = (this.zona === 2 ? PLOTS2 : PLOTS)[i];
+    const [x, gy] = PLOTS_Z[this.zona][i];
     sfx.build();
     vibe(60);
     // ladrillos que vuelan a la obra
@@ -273,8 +318,57 @@ export default class Village extends Phaser.Scene {
         this.drawProgress();
         toast(this, `¡Desbloqueaste: ${b.unlock}!`, 420, 2400);
         this.plots.forEach((p, j) => { if (j !== i) this.renderPlot(p, this.lista[j]); });
-        if (b.id === 'plaza') this.time.delayedCall(1200, () => this.botonZona());
+        if (b.id === 'plaza' || b.id === 'mercado') this.time.delayedCall(1200, () => this.botonZona());
+        if (b.id === 'castillo') this.time.delayedCall(2600, () => this.final());
       });
     });
+  }
+
+  // Escena final: Bloquevilla completa (al terminar el Castillo; se puede volver a ver tocándolo)
+  final() {
+    if (this.finalLayer) return;
+    if (!save.finalVisto) { save.finalVisto = true; persist(); track('final', { partidas: save.games }); }
+    const layer = this.finalLayer = this.add.container(0, 0).setDepth(400);
+    layer.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0a0626, 0.78).setInteractive());
+    // fuegos artificiales
+    const cohete = () => {
+      if (!this.finalLayer) return;
+      const x = Phaser.Math.Between(140, W - 140), y = Phaser.Math.Between(260, 760);
+      const p = this.add.particles(x, y, 'fx_dot', {
+        speed: { min: 120, max: 420 }, angle: { min: 0, max: 360 }, lifespan: 1100, gravityY: 240,
+        scale: { start: 1.1, end: 0 }, tint: Phaser.Utils.Array.GetRandom([[0xffd93d, 0xff8a2b], [0xff5a8a, 0xffb0d0], [0x6ec8ff, 0xffffff], [0x9b5de5, 0xf15bb5], [0x6edc6e, 0xd8ff8a]]), emitting: false,
+      }).setDepth(401);
+      p.explode(46);
+      sfx.coin();
+      this.time.delayedCall(1300, () => p.destroy());
+    };
+    const ev = this.time.addEvent({ delay: 520, loop: true, callback: cohete });
+    cohete();
+    const panel = this.add.container(W / 2, 1080).setScale(0.3);
+    layer.add(panel);
+    const g = this.add.graphics();
+    g.fillStyle(0xaa5a1e, 1); g.fillRoundedRect(-440, -380, 880, 880, 50);
+    g.fillStyle(0xfff7e8, 1); g.fillRoundedRect(-440, -390, 880, 870, 50);
+    g.lineStyle(8, 0xe0a33a, 1); g.strokeRoundedRect(-436, -386, 872, 862, 46);
+    panel.add(g);
+    panel.add(txt(this, 0, -305, '🏰', 90));
+    panel.add(txt(this, 0, -195, '¡Bloquevilla está completa!', 54, '#46286e'));
+    panel.add(txt(this, 0, -95, 'Empezaste con una casa en ruinas y levantaste el Pueblo, el Muelle y el Castillo. La gente volvió, y todo fue bloque por bloque.', 30, '#6a5a8a', { weight: '700', wrap: 760 }));
+    const lineas = (save.logros && save.logros.c && save.logros.c.lineas) || 0;
+    const datos = [[`${BUILDINGS.length}`, 'edificios'], [`${save.games.toLocaleString('es-MX')}`, 'partidas'], [`${save.record.toLocaleString('es-MX')}`, 'récord']];
+    if (lineas) datos.splice(2, 0, [`${lineas.toLocaleString('es-MX')}`, 'líneas']);
+    datos.forEach(([n, l], k) => {
+      const x = (k - (datos.length - 1) / 2) * (760 / datos.length);
+      panel.add(txt(this, x, 40, n, 50, '#c8502a'));
+      panel.add(txt(this, x, 88, l, 26, '#8c7aa0', { weight: '700' }));
+    });
+    panel.add(txt(this, 0, 175, 'Gracias por jugar ❤', 40, '#2a9a4a'));
+    panel.add(txt(this, 0, 240, 'Un juego de DarkShadow Studios · Hecho en México', 26, '#8c7aa0', { weight: '700' }));
+    panel.add(txt(this, 0, 278, 'El pueblo es tuyo: misiones, retos, ranking y eventos siguen cada día', 24, '#8c7aa0', { weight: '600', wrap: 780 }));
+    panel.add(button(this, 0, 390, 560, 110, 'Seguir jugando', 0x5ac85a, () => {
+      ev.remove(); layer.destroy(); this.finalLayer = null;
+    }, { size: 44 }));
+    this.tweens.add({ targets: panel, scale: 1, duration: 420, ease: 'Back.Out' });
+    confetti(this, W / 2, 500, 120);
   }
 }

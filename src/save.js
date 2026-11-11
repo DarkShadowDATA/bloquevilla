@@ -27,6 +27,8 @@ const DEFAULT = {
   fundador: false,
   logros: { c: {}, cobrados: {} }, // logros.js
   logrosVistos: false,
+  cofreSemana: '',       // lunes de la última semana en que se cobró el cofre de la Tesorería
+  finalVisto: false,     // ya vio la escena final (Castillo)
   prueba: null,          // prueba.js: tema del día { dia, usado, enJuego }
   apoyo: 0,              // veces que apoyó al creador (insignia ☕)
   partida: null, // partida normal en curso, para retomarla si el navegador se cierra
@@ -81,6 +83,8 @@ export function mergeSaves(local, nube) {
   const e1 = out.aventura.estrellas || [], e2 = (otro.aventura && otro.aventura.estrellas) || [];
   out.aventura.estrellas = Array.from({ length: Math.max(e1.length, e2.length) }, (_, i) => Math.max(e1[i] || 0, e2[i] || 0));
   out.apoyo = Math.max(out.apoyo || 0, otro.apoyo || 0);
+  out.cofreSemana = [out.cofreSemana || '', otro.cofreSemana || ''].sort().pop();
+  out.finalVisto = !!(out.finalVisto || otro.finalVisto);
   // tema del día: si ya se usó hoy en cualquiera de los dos, ya se usó
   const pa = local.prueba, pb = nube.prueba;
   out.prueba = pa && pb && pa.dia === pb.dia ? { dia: pa.dia, usado: !!(pa.usado || pb.usado), enJuego: !!pa.enJuego }

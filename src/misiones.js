@@ -2,7 +2,7 @@
 // Cuentan en todos los modos. Cada una da ladrillos al cobrarla y, al cobrar las 3, se abre el cofre.
 import { save, persist, today } from './save.js';
 import { rngDe, barajar } from './rng.js';
-import { maxPoderes } from './bonos.js';
+import { maxPoderes, extraMision, multCofre } from './bonos.js';
 import { contar } from './logros.js';
 
 const fmt = (n) => n.toLocaleString('es-MX');
@@ -20,6 +20,8 @@ export const TIPOS = {
   reto: { texto: () => 'Completa el Reto del día', n: [1, 1, 1], soloMedia: true, icono: 'ui_estrella' },
 };
 export const PREMIO_MISION = [15, 25, 40];
+export const premioMision = (m) => PREMIO_MISION[m.dif] + extraMision();   // la Granja suma 5
+export const ladrillosCofre = () => COFRE.ladrillos * multCofre();          // el Molino lo dobla
 export const COFRE = { ladrillos: 30, poderes: ['martillo', 'bomba', 'rayo'], ladrillosSiLleno: 20 };
 const ESTRELLAS_MAX = 60;   // 20 niveles × 3
 
@@ -83,7 +85,7 @@ export function cobrar(i) {
   const m = misionesHoy().lista[i];
   if (!m || m.cobrada || !cumplida(m)) return 0;
   m.cobrada = true;
-  const premio = PREMIO_MISION[m.dif];
+  const premio = premioMision(m);
   save.bricks += premio;
   persist();
   return premio;
@@ -96,7 +98,7 @@ export function abrirCofre() {
   M.cofre = true;
   contar('cofres', 1);
   const rnd = rngDe('cofre-' + M.dia);
-  let ladrillos = COFRE.ladrillos, poder = null;
+  let ladrillos = ladrillosCofre(), poder = null;
   if ((save.proximos || []).length < maxPoderes()) {
     poder = COFRE.poderes[Math.floor(rnd() * COFRE.poderes.length)];
     save.proximos.push(poder);

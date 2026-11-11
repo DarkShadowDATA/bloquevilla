@@ -87,6 +87,12 @@ const BLD = {
   faro: { wall: 0xf4f0ea, roof: 0xe0443c },
   astillero: { wall: 0xc8925a, roof: 0x6a4a3a },
   mercado: { wall: 0xf3d9a8, roof: 0xe8742c },
+  granja: { wall: 0xd8483c, roof: 0x8a2a24 },
+  molino: { wall: 0xf0e6d0, roof: 0x9b5a3a },
+  biblioteca: { wall: 0xe8dcc0, roof: 0x3a6a9a },
+  mina: { wall: 0x8a8490, roof: 0x5a4a3a },
+  tesoreria: { wall: 0xf4ecd8, roof: 0xd8a020 },
+  castillo: { wall: 0xcfd2dc, roof: 0x3a5ac8 },
 };
 
 function house(g, cx, gy, w, h, wall, roof) {
@@ -235,6 +241,53 @@ function building(g, id) {
       g.fillStyle(0x3a3a48, 1); g.fillRect(cx + dx - 4, gy - 170, 8, 150);
       g.fillStyle(0xffde5f, 1); g.fillCircle(cx + dx, gy - 176, 14);
     });
+  } else if (id === 'granja') {
+    house(g, cx, gy, 230, 150, wall, roof);
+    g.fillStyle(0xffffff, 1); g.fillRect(cx - 50, gy - 100, 100, 100);
+    g.fillStyle(wall, 1); g.fillRect(cx - 42, gy - 92, 84, 92);
+    g.lineStyle(8, 0xffffff, 1); g.lineBetween(cx - 42, gy - 92, cx + 42, gy); g.lineBetween(cx + 42, gy - 92, cx - 42, gy);
+    g.fillStyle(0xe8c860, 1); g.fillEllipse(cx + 130, gy - 26, 70, 56); g.fillEllipse(cx - 135, gy - 20, 56, 44);
+  } else if (id === 'molino') {
+    g.fillStyle(shade(wall, -0.2), 1); g.fillPoints([{ x: cx - 74, y: gy }, { x: cx + 74, y: gy }, { x: cx + 46, y: gy - 220 }, { x: cx - 46, y: gy - 220 }], true);
+    g.fillStyle(wall, 1); g.fillPoints([{ x: cx - 66, y: gy }, { x: cx + 66, y: gy }, { x: cx + 40, y: gy - 216 }, { x: cx - 40, y: gy - 216 }], true);
+    g.fillStyle(roof, 1); g.fillTriangle(cx - 62, gy - 214, cx, gy - 290, cx + 62, gy - 214);
+    g.fillStyle(0x8c5834, 1); g.fillRoundedRect(cx - 20, gy - 60, 40, 60, 10);
+    [0, 1, 2, 3].forEach((k) => { g.fillStyle(0xfaf4e4, 1); g.fillPoints(rotRect(cx + Math.cos(k * Math.PI / 2 + 0.5) * 78, gy - 200 + Math.sin(k * Math.PI / 2 + 0.5) * 78, 150, 34, k * Math.PI / 2 + 0.5), true); });
+    g.fillStyle(0x6a4a30, 1); g.fillCircle(cx, gy - 200, 14);
+  } else if (id === 'biblioteca') {
+    house(g, cx, gy, 250, 160, wall, roof);
+    [-90, -30, 30, 90].forEach((dx) => { g.fillStyle(0xffffff, 1); g.fillRect(cx + dx - 12, gy - 150, 24, 150); });
+    g.fillStyle(0x8c5834, 1); g.fillRoundedRect(cx - 22, gy - 76, 44, 76, 20);
+    [[-60, 0xe04848], [60, 0x4d96ff]].forEach(([dx, c]) => { g.fillStyle(c, 1); g.fillRect(cx + dx - 16, gy - 110, 32, 40); });
+  } else if (id === 'mina') {
+    g.fillStyle(shade(wall, -0.25), 1); g.fillEllipse(cx, gy - 70, 310, 300);
+    g.fillStyle(wall, 1); g.fillEllipse(cx - 10, gy - 80, 280, 270);
+    g.fillStyle(0x6e6a68, 1); g.fillRect(cx - 160, gy - 8, 320, 10);
+    g.fillStyle(0x2a2430, 1); g.fillRoundedRect(cx - 62, gy - 130, 124, 130, 50);
+    g.fillStyle(roof, 1); g.fillRect(cx - 74, gy - 134, 14, 134); g.fillRect(cx + 60, gy - 134, 14, 134); g.fillRect(cx - 84, gy - 146, 168, 16);
+    [[-110, -150], [100, -170], [-40, -200], [120, -80], [-125, -60]].forEach(([dx, dy]) => { g.fillStyle(0xffd23f, 1); g.fillPoints(starPts(cx + dx, gy + dy, 14, 0.5, 4), true); });
+  } else if (id === 'tesoreria') {
+    house(g, cx, gy, 220, 140, wall, 0xb8862a);
+    g.fillStyle(roof, 1); g.fillCircle(cx, gy - 190, 54); g.fillStyle(0xfff0a0, 0.7); g.fillCircle(cx - 16, gy - 206, 16);
+    g.fillStyle(0x6a4a20, 1); g.fillRoundedRect(cx - 34, gy - 84, 68, 84, 12);
+    g.fillStyle(0xffd23f, 1); g.fillCircle(cx, gy - 44, 12);
+    [-80, 80].forEach((dx) => { g.fillStyle(0xffd23f, 1); g.fillCircle(cx + dx, gy - 80, 20); g.fillStyle(0xe0a020, 1); g.fillCircle(cx + dx, gy - 80, 12); });
+  } else if (id === 'castillo') {
+    const torre = (x, w, h, alm) => {
+      g.fillStyle(shade(wall, -0.2), 1); g.fillRect(x - w / 2 - 4, gy - h, w + 8, h);
+      g.fillStyle(wall, 1); g.fillRect(x - w / 2, gy - h, w, h);
+      for (let k = 0; k < alm; k++) { g.fillStyle(wall, 1); g.fillRect(x - w / 2 - 4 + k * ((w + 8) / alm), gy - h - 20, (w + 8) / alm - 8, 22); }
+    };
+    torre(cx, 190, 170, 5);
+    torre(cx - 110, 70, 240, 2); torre(cx + 110, 70, 240, 2);
+    [-110, 110].forEach((dx) => { g.fillStyle(roof, 1); g.fillTriangle(cx + dx - 46, gy - 258, cx + dx, gy - 322, cx + dx + 46, gy - 258); });
+    torre(cx, 84, 250, 3);
+    g.fillStyle(roof, 1); g.fillTriangle(cx - 54, gy - 268, cx, gy - 336, cx + 54, gy - 268);
+    g.lineStyle(5, 0x5a4030, 1); g.lineBetween(cx, gy - 336, cx, gy - 340);
+    g.fillStyle(0xe63c46, 1); g.fillTriangle(cx, gy - 340, cx + 40, gy - 330, cx, gy - 318);
+    g.fillStyle(0x6a4a30, 1); g.fillRoundedRect(cx - 34, gy - 90, 68, 90, 30);
+    g.fillStyle(0xffde5f, 1); g.fillRoundedRect(cx - 14, gy - 200, 28, 46, 14);
+    [-110, 110].forEach((dx) => { g.fillStyle(0xffde5f, 1); g.fillRoundedRect(cx + dx - 11, gy - 190, 22, 38, 11); });
   }
 }
 

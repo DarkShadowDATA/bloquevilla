@@ -15,7 +15,7 @@ import { dsTrack } from '../dsev.js';
 import { rngDe, barajar } from '../rng.js';
 import { compartirReto, pedirApodo } from '../share.js';
 import { enviarPuntaje } from '../ranking.js';
-import { extraLadrillos, oroChance, turnosBomba, maxPoderes } from '../bonos.js';
+import { extraLadrillos, oroChance, turnosBomba, maxPoderes, oroLadrillos, martilloGratis } from '../bonos.js';
 import { avanzar, textoMision } from '../misiones.js';
 import { contar } from '../logros.js';
 import { medalla } from './Logros.js';
@@ -166,6 +166,8 @@ export default class Game extends Phaser.Scene {
       persist();
       if (this.powers.length > n0) this.time.delayedCall(500, () => toast(this, `Traes ${this.powers.length - n0 === 1 ? 'un poder' : 'dos poderes'} de la tienda`, 352, 2200));
     }
+    // Biblioteca (zona 3): un Martillo gratis en cada partida normal, si queda espacio
+    if (!this.reto && !this.tiempo && !this.vs && this.nivel == null && !this.pozo && martilloGratis() && this.powers.length < maxPoderes()) this.powers.push('martillo');
     if (this.reto) {
       this.iniciarReto();
       return;
@@ -348,9 +350,9 @@ export default class Game extends Phaser.Scene {
     });
     const { x, y } = this.cellXY(oros[0][0], oros[0][1]);
     this.addScore(ORO.puntos * n);
-    this.addBricks(ORO.ladrillos * n, x, y);
+    this.addBricks(oroLadrillos() * n, x, y);
     this.time.delayedCall(260, () => {
-      floatText(this, W / 2, BY + 120, `¡ORO! +${ORO.ladrillos * n}`, 90, '#ffe14a', '#7a3d00');
+      floatText(this, W / 2, BY + 120, `¡ORO! +${oroLadrillos() * n}`, 90, '#ffe14a', '#7a3d00');
       this.cameras.main.flash(140, 255, 220, 90);
       sfx.coin();
       this.time.delayedCall(120, () => sfx.coin());

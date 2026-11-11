@@ -3,6 +3,7 @@ import { W, H, COLORS, HEX, BUILDINGS, DAILY, NOMBRE_TEMA } from '../config.js';
 import { nube, loginUrl } from '../nube.js';
 import { porCobrarLogros, porcentaje } from '../logros.js';
 import { pruebaDisponible } from '../prueba.js';
+import { cobrarCofreSemanal } from '../bonos.js';
 import { save, persist, isBuilt, dailyAvailable, dailyIndex, today } from '../save.js';
 import { EVENTO, eventoActivo, diasRestantes } from '../evento.js';
 import { retoNumero } from '../reto.js';
@@ -10,7 +11,7 @@ import { sfx } from '../sfx.js';
 import { txt, background, icon, button, toast, confetti } from '../ui.js';
 import { premioPendiente, cobrarPremio } from '../ranking.js';
 import { multRegalo } from '../bonos.js';
-import { misionesHoy, porCobrar, cobrar, abrirCofre, cofreListo, cumplida, textoMision, iconoMision, PREMIO_MISION, COFRE, faltaParaNuevas } from '../misiones.js';
+import { misionesHoy, porCobrar, cobrar, abrirCofre, cofreListo, cumplida, textoMision, iconoMision, premioMision, ladrillosCofre, faltaParaNuevas } from '../misiones.js';
 import { POWERS } from '../powers.js';
 
 export default class Menu extends Phaser.Scene {
@@ -41,6 +42,7 @@ export default class Menu extends Phaser.Scene {
     txt(this, W / 2, 545, 'Puzzle de bloques · reconstruye tu pueblo', 36, '#ffffff', { weight: '700', stroke: '#1e144688', strokeW: 6 });
 
     // Estadísticas
+    const cofreSem = cobrarCofreSemanal();   // antes de pintar los ladrillos
     const built = save.built.length;
     if (eventoActivo()) this.bannerEvento();
     else {
@@ -153,6 +155,14 @@ export default class Menu extends Phaser.Scene {
         this.tweens.add({ targets: tg, scale: 1.12, duration: 500, yoyo: true, repeat: -1 });
       }
     }
+    // Cofre semanal de la Tesorería (zona 3): se cobra solo, una vez por semana
+    if (cofreSem) {
+      this.time.delayedCall(700, () => {
+        if (!this.sys.isActive()) return;
+        sfx.build(); confetti(this, W / 2, 620, 70);
+        toast(this, `🎁 Cofre de la Tesorería: +${cofreSem} ladrillos`, 620, 3200);
+      });
+    }
     premioPendiente().then((p) => {
       if (!p || !this.sys.isActive()) return;
       cobrarPremio(p);
@@ -160,7 +170,7 @@ export default class Menu extends Phaser.Scene {
       confetti(this, W / 2, 700, 90);
       toast(this, `¡Quedaste #${p.lugar} en el ranking de la semana pasada! +${p.premio} ladrillos`, 700, 3500);
     }).catch(() => {});
-    txt(this, W / 2, H - 60, 'v1.6 · Tema del día', 24, '#ffffffaa', { weight: '500' });
+    txt(this, W / 2, H - 60, 'v1.7 · El Castillo', 24, '#ffffffaa', { weight: '500' });
   }
 
   bannerEvento() {
@@ -275,7 +285,7 @@ export default class Menu extends Phaser.Scene {
       bar.fillStyle(ok ? 0x4ab86a : 0x3a7ad8, 1); bar.fillRoundedRect(-260, y + 38, Math.max(26, 380 * Math.min(1, m.p / m.n)), 26, 13);
       panel.add(bar);
       panel.add(txt(this, -70, y + 51, `${Math.min(m.p, m.n).toLocaleString('es-MX')} / ${m.n.toLocaleString('es-MX')}`, 22, '#163a6e', { weight: '800' }));
-      const premio = PREMIO_MISION[m.dif];
+      const premio = premioMision(m);
       if (m.cobrada) {
         panel.add(txt(this, 300, y, '✓ Cobrada', 34, '#4a8a5a', { weight: '800' }));
       } else if (ok) {
@@ -302,7 +312,7 @@ export default class Menu extends Phaser.Scene {
     panel.add(cg);
     panel.add(txt(this, -330, yc, '🎁', 72));
     panel.add(txt(this, -260, yc - 24, 'Cofre de las 3 misiones', 32, '#6a4a08', { weight: '800' }).setOrigin(0, 0.5));
-    panel.add(txt(this, -260, yc + 22, `+${COFRE.ladrillos} ladrillos y un poder gratis`, 26, '#8a6a28', { weight: '700' }).setOrigin(0, 0.5));
+    panel.add(txt(this, -260, yc + 22, `+${ladrillosCofre()} ladrillos y un poder gratis`, 26, '#8a6a28', { weight: '700' }).setOrigin(0, 0.5));
     if (M.cofre) {
       panel.add(txt(this, 300, yc, '✓ Abierto', 34, '#4a8a5a', { weight: '800' }));
     } else if (cofreListo()) {

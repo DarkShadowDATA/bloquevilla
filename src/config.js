@@ -48,12 +48,22 @@ export const BUILDINGS = [
   { id: 'faro', art: 'el', zona: 2, name: 'Faro', cost: 450, unlock: 'Las bombas tardan 2 turnos más' },
   { id: 'astillero', art: 'el', zona: 2, name: 'Astillero', cost: 520, unlock: 'Un 3er espacio de poder' },
   { id: 'mercado', art: 'el', zona: 2, name: 'Mercado', cost: 600, unlock: '20% de descuento en la Tienda' },
+  // Zona 3, el Castillo: 4,700 ladrillos; más bonos permanentes y, con el Castillo, el final de la historia
+  { id: 'granja', zona: 3, name: 'Granja', cost: 500, unlock: '+5 ladrillos en cada misión diaria' },
+  { id: 'molino', art: 'el', zona: 3, name: 'Molino', cost: 600, unlock: 'El cofre de misiones da el doble de ladrillos' },
+  { id: 'biblioteca', zona: 3, name: 'Biblioteca', cost: 700, unlock: 'Un Martillo gratis en cada partida normal' },
+  { id: 'mina', zona: 3, name: 'Mina', cost: 800, unlock: 'Cada bloque dorado da 5 ladrillos' },
+  { id: 'tesoreria', zona: 3, name: 'Tesorería', cost: 900, unlock: 'Cofre semanal de 150 ladrillos' },
+  { id: 'castillo', art: 'el', zona: 3, name: 'Castillo', cost: 1200, unlock: '+10% de ladrillos y el final de la historia' },
 ];
 
 export const ZONAS = [
   { n: 1, nombre: 'Pueblo', bg: 'bg_village' },
   { n: 2, nombre: 'Muelle', bg: 'bg_muelle' },
+  { n: 3, nombre: 'Castillo', bg: 'bg_castillo' },
 ];
+// Edificio que abre cada zona (la 1 siempre está abierta)
+export const LLAVE_ZONA = { 2: 'plaza', 3: 'mercado' };
 export const zonaDe = (b) => b.zona || 1;
 export const conArt = (b) => `${b.art || 'la'} ${b.name}`;   // "la Casa", "el Faro"
 
@@ -95,7 +105,7 @@ export const DECO_POS = {
   fuente: [[548, 1335, 210]],
 };
 
-export const VERSION = '1.6';
+export const VERSION = '1.7';
 export const APOYO_SHADOW = 10;   // «Invítame un café» (Tienda Shadow); el precio que vale es el del servidor
 
 // Temas con imágenes (src/assets/img/<tema>_<color>.webp). Los premium se compran con Shadow (nube.js); el Fundador va en su paquete.
