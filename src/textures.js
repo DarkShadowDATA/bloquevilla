@@ -720,6 +720,46 @@ export function makeTextures(scene) {
   gen2('blk_hielo', (gg, s) => hielo(gg, s, false));
   gen2('blk_hielo2', (gg, s) => hielo(gg, s, true));
   gen2('blk_bomba', (gg, s) => bombaTile(gg, s));
+  // Aventura (mundos 2 y 3): hueco del tablero, bloques encadenados, tierra del jefe y jefe genérico
+  gen2('blk_hueco', (gg, s) => {
+    gg.fillStyle(0x05040e, 1); gg.fillRoundedRect(3, 3, s - 6, s - 6, s * 0.16);
+    gg.fillStyle(0x1a1430, 1); gg.fillRoundedRect(s * 0.12, s * 0.16, s * 0.76, s * 0.72, s * 0.14);
+    gg.fillStyle(0x000000, 1); gg.fillEllipse(s / 2, s * 0.56, s * 0.62, s * 0.5);
+    gg.lineStyle(4, 0x4a4470, 1); gg.strokeRoundedRect(3, 3, s - 6, s - 6, s * 0.16);
+  });
+  const cadena = (gg, s, vertical) => {
+    gg.fillStyle(0x4a4e68, 1); gg.fillRoundedRect(2, 2, s - 4, s - 4, s * 0.18);
+    gg.fillStyle(0x7a80a0, 1); gg.fillRoundedRect(6, 6, s - 12, s - 16, s * 0.16);
+    gg.fillStyle(0xa8aecc, 1); gg.fillRoundedRect(12, 10, s - 24, s * 0.2, s * 0.1);
+    // eslabones en la dirección en que se rompe y flechas en las puntas
+    gg.lineStyle(s * 0.07, 0x2a2c40, 1);
+    for (let k = 0; k < 3; k++) {
+      const t = s * (0.3 + k * 0.2);
+      if (vertical) gg.strokeEllipse(s / 2, t, s * 0.2, s * 0.26); else gg.strokeEllipse(t, s / 2, s * 0.26, s * 0.2);
+    }
+    gg.fillStyle(0xffd93d, 1);
+    if (vertical) { gg.fillTriangle(s / 2, s * 0.04, s * 0.36, s * 0.2, s * 0.64, s * 0.2); gg.fillTriangle(s / 2, s * 0.96, s * 0.36, s * 0.8, s * 0.64, s * 0.8); }
+    else { gg.fillTriangle(s * 0.04, s / 2, s * 0.2, s * 0.36, s * 0.2, s * 0.64); gg.fillTriangle(s * 0.96, s / 2, s * 0.8, s * 0.36, s * 0.8, s * 0.64); }
+  };
+  gen2('blk_cadv', (gg, s) => cadena(gg, s, true));
+  gen2('blk_cadh', (gg, s) => cadena(gg, s, false));
+  gen2('blk_tierra', (gg, s) => {
+    gg.fillStyle(0x5a3a22, 1); gg.fillRoundedRect(2, 2, s - 4, s - 4, s * 0.18);
+    gg.fillStyle(0x8a5a34, 1); gg.fillRoundedRect(6, 6, s - 12, s - 16, s * 0.16);
+    gg.fillStyle(0xa87848, 1); gg.fillRoundedRect(12, 10, s - 24, s * 0.2, s * 0.1);
+    [[0.3, 0.5, 0.08], [0.62, 0.42, 0.06], [0.5, 0.7, 0.07], [0.74, 0.68, 0.05]].forEach(([x, y, r]) => { gg.fillStyle(0x4a2e1a, 1); gg.fillCircle(s * x, s * y, s * r); });
+    gg.fillStyle(0x6ab04a, 1); gg.fillRoundedRect(8, 4, s - 16, s * 0.1, s * 0.05);
+  });
+  gen2('jefe_generico', (gg, s) => {
+    gg.fillStyle(0x3a1a50, 1); gg.fillCircle(s / 2, s / 2, s * 0.46);
+    gg.fillStyle(0x7a3ab8, 1); gg.fillCircle(s / 2, s * 0.48, s * 0.42);
+    gg.fillStyle(0x7a3ab8, 1); gg.fillTriangle(s * 0.18, s * 0.3, s * 0.1, s * 0.02, s * 0.38, s * 0.16); gg.fillTriangle(s * 0.82, s * 0.3, s * 0.9, s * 0.02, s * 0.62, s * 0.16);
+    gg.fillStyle(0xffffff, 1); gg.fillEllipse(s * 0.34, s * 0.44, s * 0.2, s * 0.24); gg.fillEllipse(s * 0.66, s * 0.44, s * 0.2, s * 0.24);
+    gg.fillStyle(0xe83a3a, 1); gg.fillCircle(s * 0.36, s * 0.46, s * 0.07); gg.fillCircle(s * 0.64, s * 0.46, s * 0.07);
+    gg.fillStyle(0x2a0a3a, 1); gg.fillTriangle(s * 0.22, s * 0.3, s * 0.46, s * 0.36, s * 0.24, s * 0.38); gg.fillTriangle(s * 0.78, s * 0.3, s * 0.54, s * 0.36, s * 0.76, s * 0.38);
+    gg.fillStyle(0x2a0a3a, 1); gg.fillRoundedRect(s * 0.3, s * 0.64, s * 0.4, s * 0.14, s * 0.06);
+    gg.fillStyle(0xffffff, 1); [0.34, 0.44, 0.54, 0.64].forEach((x) => gg.fillTriangle(s * x - s * 0.04, s * 0.64, s * x + s * 0.04, s * 0.64, s * x, s * 0.72));
+  });
   g2.destroy();
   gradient(scene, 'grad_game', '#161c4e', '#3e2680');
   gradient(scene, 'grad_menu', '#22184e', '#e0785a');

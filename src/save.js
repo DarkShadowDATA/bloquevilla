@@ -82,6 +82,8 @@ export function mergeSaves(local, nube) {
   for (const [k, v] of Object.entries(LB.cobrados || {})) out.logros.cobrados[k] = Math.max(out.logros.cobrados[k] || 0, v || 0);
   const e1 = out.aventura.estrellas || [], e2 = (otro.aventura && otro.aventura.estrellas) || [];
   out.aventura.estrellas = Array.from({ length: Math.max(e1.length, e2.length) }, (_, i) => Math.max(e1[i] || 0, e2[i] || 0));
+  out.aventura.meta150 = !!(out.aventura.meta150 || (otro.aventura && otro.aventura.meta150));
+  out.aventura.vistos = { ...((otro.aventura && otro.aventura.vistos) || {}), ...(out.aventura.vistos || {}) };
   out.apoyo = Math.max(out.apoyo || 0, otro.apoyo || 0);
   out.cofreSemana = [out.cofreSemana || '', otro.cofreSemana || ''].sort().pop();
   out.finalVisto = !!(out.finalVisto || otro.finalVisto);

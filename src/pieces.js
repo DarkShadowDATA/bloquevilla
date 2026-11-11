@@ -50,7 +50,23 @@ export function size(cells) {
   };
 }
 
-export function randomPiece(rnd = Math.random) {
+// Piezas raras (solo en algunos niveles de la Aventura): cruz, U, esquina grande, diagonales y rectángulo
+const RARAS = [];
+[
+  { c: [[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]], g: 1 },           // cruz
+  { c: [[0, 0], [0, 2], [1, 0], [1, 1], [1, 2]], g: 4 },           // U
+  { c: [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]], g: 4 },           // esquina grande
+  { c: [[0, 0], [1, 1]], g: 2 },                                   // diagonal de 2
+  { c: [[0, 0], [1, 1], [2, 2]], g: 2 },                           // diagonal de 3
+  { c: [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]], g: 2 },   // rectángulo 2×3
+].forEach((s) => { let cur = s.c; for (let k = 0; k < s.g; k++) { RARAS.push(cur); cur = rotate(cur); } });
+const RARA_CHANCE = 0.35;
+
+export function randomPiece(rnd = Math.random, raras = false) {
+  if (raras && rnd() < RARA_CHANCE) {
+    const c = RARAS[Math.floor(rnd() * RARAS.length)];
+    return { cells: c.map((p) => [...p]), color: COLORS[Math.floor(rnd() * COLORS.length)] };
+  }
   let x = rnd() * TOTAL;
   for (const s of SHAPES) {
     x -= s.w;
@@ -73,10 +89,15 @@ export function anyFit(board, cells) {
 }
 
 // Generador justo: al menos una pieza de la bandeja cabe (si existe alguna forma posible)
-export function makeTray(board, rnd = Math.random) {
+// base (opcional) = tablero solo con los huecos fijos del nivel: no salen piezas que ahí no caben nunca (p. ej. el 3×3)
+export function makeTray(board, rnd = Math.random, raras = false, base = null) {
   let best = null;
+  const una = () => {
+    for (let k = 0; k < 30; k++) { const p = randomPiece(rnd, raras); if (!base || anyFit(base, p.cells)) return p; }
+    return { cells: [[0, 0]], color: COLORS[0] };
+  };
   for (let i = 0; i < 40; i++) {
-    const tray = [randomPiece(rnd), randomPiece(rnd), randomPiece(rnd)];
+    const tray = [una(), una(), una()];
     if (tray.some((p) => anyFit(board, p.cells))) return tray;
     best = tray;
   }

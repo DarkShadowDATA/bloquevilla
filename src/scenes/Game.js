@@ -22,7 +22,7 @@ import { medalla } from './Logros.js';
 import { empezarPrueba, terminarPrueba, precioTema } from '../prueba.js';
 import { pozoNew, pozoPlay } from '../pozo-core.js';
 import { terminarPozo, usd } from '../pozo.js';
-import { NIVELES, OBJ_TEXTO, OBJ_ICONO, calcularEstrellas, guardarResultado } from '../aventura.js';
+import { NIVELES, JEFES, AVISO_NUEVO, textoObjetivo, iconoObjetivo, calcularEstrellas, guardarResultado } from '../aventura.js';
 
 export default class Game extends Phaser.Scene {
   constructor() { super('Game'); }
@@ -259,7 +259,7 @@ export default class Game extends Phaser.Scene {
 
   blockTex(color) {
     if (color === 'gold') return 'block_gold';
-    if (color === 'hielo' || color === 'hielo2' || color === 'bomba') return 'blk_' + color;
+    if (['hielo', 'hielo2', 'bomba', 'hueco', 'cadv', 'cadh', 'tierra'].includes(color)) return 'blk_' + color;
     const tema = this.tema || (this.tema = this.pruebaTema || temaBloques(isBuilt('pozo')));
     if (tema === 'agua') return 'water_' + ((COLORS.indexOf(color) % 3) + 1);
     if (tema === 'muertos') return 'muertos_' + ((COLORS.indexOf(color) % 4) + 1);
@@ -316,7 +316,7 @@ export default class Game extends Phaser.Scene {
     // Cada tanda sale de la semilla de la partida: un amigo con el mismo link recibe las mismas piezas
     const rnd = rngDe(`${this.semilla}:t${this.trayN++}`);
     this.spawnPeligros(rnd);
-    const defs = makeTray(this.board, rnd);
+    const defs = makeTray(this.board, rnd, !!(this.av && this.av.def.raras), this.av ? this.av.base : null);
     if (rnd() < (this.av && this.av.def.oro != null ? this.av.def.oro : oroChance())) {
       const d = defs[Math.floor(rnd() * defs.length)];
       d.gold = Math.floor(rnd() * d.cells.length);
@@ -489,8 +489,9 @@ export default class Game extends Phaser.Scene {
     const { x, y } = this.cellXY(cy, cx);
 
     const oros = cells.filter(([r, c]) => this.board[r][c] === 'gold');
-    this.clearCells(cells, 14, true);
+    this.clearCells(cells, 14, true, { rows, cols });
     this.addScore(pts);
+    if (this.av && this.av.def.t === 'jefe') this.golpeJefe(n + (this.combo >= 2 ? this.combo - 1 : 0), x, y);
     if (oros.length) this.premioOro(oros);
     if (this.av) { this.avSumar('oro', oros.length); this.avSumar('lineas', n); if (this.combo >= 2) this.avMax('combo', this.combo); }
     this.mision('lineas', n); this.mision('oro', oros.length); if (this.combo >= 2) this.mision('combo', this.combo);
@@ -519,7 +520,7 @@ export default class Game extends Phaser.Scene {
       this.nextOffer += LINES_PER_OFFER;
     }
 
-    if (this.board.every((row) => row.every((v) => !v))) {
+    if (this.board.every((row) => row.every((v) => !v || v === 'hueco'))) {
       this.time.delayedCall(350, () => {
         floatText(this, W / 2, 860, '¡TABLERO LIMPIO!', 90, '#7ef0ff');
         this.cameras.main.flash(220, 200, 255, 255);
@@ -536,11 +537,19 @@ export default class Game extends Phaser.Scene {
     return 430;
   }
 
-  clearCells(cells, stagger = 14, porLinea = false) {
+  // lin = { rows, cols } de las líneas que se limpian (para los bloques encadenados)
+  clearCells(cells, stagger = 14, porLinea = false, lin = null) {
     const desactivadas = [];
     cells.forEach(([r, c], i) => {
       const color = this.board[r][c];
       const im = this.sprites[r][c];
+      if (color === 'hueco') return;   // los huecos del tablero no se quitan con nada
+      // Bloque encadenado: ↕ solo se rompe al completar su columna y ↔ solo al completar su fila (los poderes sí lo rompen)
+      if (porLinea && lin && ((color === 'cadv' && !lin.cols.includes(c)) || (color === 'cadh' && !lin.rows.includes(r)))) {
+        if (im) this.tweens.add({ targets: im, angle: { from: -8, to: 8 }, duration: 70, yoyo: true, repeat: 2, delay: 80 + i * stagger, onComplete: () => im.setAngle(0) });
+        return;
+      }
+      if (color === 'cadv' || color === 'cadh') { if (this.av) this.avSumar('cadenas', 1); sfx.crack(); }
       // El hielo entero solo se agrieta con una línea; los poderes lo rompen de una vez
       if (porLinea && color === 'hielo') {
         this.board[r][c] = 'hielo2';
@@ -569,7 +578,7 @@ export default class Game extends Phaser.Scene {
       im.setDepth(12);
       this.tweens.add({
         targets: im, scaleX: 0, scaleY: 0, angle: 25, delay: 80 + i * stagger, duration: 220, ease: 'Back.In',
-        onStart: () => { const fc = { gold: 'yellow', hielo: 'blue', hielo2: 'blue', bomba: 'red' }[color] || color; if (fc && this.fx[fc]) this.fx[fc].explode(9, im.x, im.y); },
+        onStart: () => { const fc = { gold: 'yellow', hielo: 'blue', hielo2: 'blue', bomba: 'red', cadv: 'purple', cadh: 'purple', tierra: 'orange' }[color] || color; if (fc && this.fx[fc]) this.fx[fc].explode(9, im.x, im.y); },
         onComplete: () => im.destroy(),
       });
     });
@@ -675,6 +684,7 @@ export default class Game extends Phaser.Scene {
       if (this.tickBombas()) return;
     }
     if (this.av && this.avRevisar()) return;
+    if (this.av && this.av.def.t === 'jefe') this.ataqueJefe();
     this.guardarPartida();
     if (this.offerPending) {
       this.offerPending = false;
@@ -1066,7 +1076,7 @@ export default class Game extends Phaser.Scene {
     this.linesTotal = ['bombas', 'hielo'].includes(def.t) ? PELIGRO.desdeLineas : 0;
     this.nextOffer = this.linesTotal + 6;
     // tablero inicial del nivel
-    const COL = { r: 'red', o: 'orange', y: 'yellow', g: 'green', b: 'blue', p: 'purple', k: 'pink', B: 'bomba', I: 'hielo', G: 'gold' };
+    const COL = { r: 'red', o: 'orange', y: 'yellow', g: 'green', b: 'blue', p: 'purple', k: 'pink', B: 'bomba', I: 'hielo', G: 'gold', '#': 'hueco', V: 'cadv', H: 'cadh', T: 'tierra' };
     // las bombas del nivel tienen cuentas escalonadas por fila, para desactivarlas una tras otra
     const filasBomba = (def.plantilla || []).map((row, r) => (row.includes('B') ? r : -1)).filter((r) => r >= 0);
     (def.plantilla || []).forEach((row, r) => [...row].forEach((ch, c) => {
@@ -1076,16 +1086,103 @@ export default class Game extends Phaser.Scene {
       this.addBlock(r, c, COL[ch], false);
       if (ch === 'B') this.pintarBomba(r * N + c);
     }));
+    // tablero solo con los huecos, para no dar piezas que nunca caben en este nivel
+    this.av.base = this.board.some((row) => row.includes('hueco')) ? this.board.map((row) => row.map((v) => (v === 'hueco' ? v : null))) : null;
     this.recordText.setText(`AVENTURA · NIVEL ${this.nivel + 1}`).setColor('#ffd93d');
     // barra del objetivo
     const y = 362;
     const g = this.add.graphics().setDepth(5);
     g.fillStyle(0x0c0f30, 0.85); g.fillRoundedRect(BX - 22, y - 28, N * CELL + 44, 56, 28);
-    this.avIcon = icon(this, BX + 18, y, OBJ_ICONO[def.t], 44).setDepth(6);
+    this.avIcon = icon(this, BX + 18, y, iconoObjetivo(def, this), 44).setDepth(6);
     this.avTxt = txt(this, BX + 52, y, '', 30, '#ffffff', { weight: '800', ox: 0 }).setDepth(6);
     this.avPiezas = txt(this, BX + N * CELL + 6, y, '', 30, '#ffd93d', { ox: 1 }).setDepth(6);
     this.avPintar();
-    this.time.delayedCall(350, () => toast(this, `${def.nombre}: ${OBJ_TEXTO[def.t](def.n)}`, 1655, 2600));
+    this.time.delayedCall(350, () => toast(this, `${def.nombre}: ${textoObjetivo(def)}`, 1655, 2600));
+    const aviso = AVISO_NUEVO.find(([k, cond]) => cond(def) && !(save.aventura.vistos || {})[k]);
+    if (aviso && !window.__capture) {
+      (save.aventura.vistos || (save.aventura.vistos = {}))[aviso[0]] = true;
+      persist();
+      this.time.delayedCall(3200, () => toast(this, aviso[2], 352, 3600));
+    }
+    if (def.t === 'jefe') this.time.delayedCall(500, () => this.jefeAparece(0.9));
+  }
+
+  // ---------- Jefes de la Aventura ----------
+  // El jefe sale grande sobre el tablero un momento (al empezar, al atacar y al caer) y se va
+  jefeAparece(seg) {
+    const J = JEFES[this.av.def.jefe.id];
+    const key = this.textures.exists('jefe_' + this.av.def.jefe.id) ? 'jefe_' + this.av.def.jefe.id : 'jefe_generico';
+    const im = this.add.image(W / 2, BY + 250, key).setDepth(180);
+    im.setScale(Math.min(430 / im.width, 430 / im.height));
+    const s = im.scaleX;
+    im.setScale(0);
+    this.tweens.add({ targets: im, scaleX: s, scaleY: s, duration: 260, ease: 'Back.Out' });
+    this.tweens.add({ targets: im, angle: { from: -5, to: 5 }, duration: 110, yoyo: true, repeat: -1 });
+    const nom = txt(this, W / 2, BY + 500, J.nombre, 54, '#ffffff', { stroke: '#3a0a50', strokeW: 12 }).setDepth(181);
+    this.time.delayedCall(seg * 1000, () => {
+      nom.destroy();
+      this.tweens.add({ targets: im, y: BY - 200, alpha: 0, duration: 260 });
+      this.time.delayedCall(280, () => im.destroy());
+    });
+    return im;
+  }
+
+  golpeJefe(d, x, y) {
+    if (this.av.fin || d <= 0) return;
+    this.avSumar('jefe', d);
+    floatText(this, Phaser.Math.Clamp(x, 220, 860), y - 130, `-${d} ❤`, 72, '#ff6a7a', '#4a0a14');
+    if (this.avIcon) this.tweens.add({ targets: this.avIcon, angle: { from: -25, to: 25 }, duration: 60, yoyo: true, repeat: 3, onComplete: () => this.avIcon.setAngle(0) });
+  }
+
+  // Cada «cada» piezas el jefe lanza bloques al tablero
+  ataqueJefe() {
+    const { def, usadas } = this.av;
+    const J = def.jefe;
+    if (this.av.fin || this.over || !usadas || usadas % J.cada !== 0 || this.av.ultAtaque === usadas) return;
+    this.av.ultAtaque = usadas;
+    this.av.ataques = (this.av.ataques || 0) + 1;
+    const rnd = rngDe(`${this.semilla}:jefe${this.av.ataques}`);
+    const libres = [];
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      if (this.board[r][c]) continue;
+      const enFila = this.board[r].filter(Boolean).length;
+      const enCol = this.board.filter((row) => row[c]).length;
+      if (enFila < N - 2 && enCol < N - 2) libres.push([r, c]);
+    }
+    barajar(libres, rnd);
+    // qué lanza: tierra, cadenas, hielo o (dragón) una bomba si no hay otra en el tablero
+    let tipo = JEFES[J.id].lanza, cant = J.cant;
+    if (tipo === 'fuego') {
+      if (!Object.keys(this.bombas).length && this.av.ataques % 3 === 0) { tipo = 'bomba'; cant = 1; } else tipo = 'tierra';
+    }
+    const celdas = libres.slice(0, cant);
+    if (!celdas.length) return;
+    this.busy = true;
+    this.jefeAparece(0.75);
+    sfx.alarma();
+    this.cameras.main.shake(260, 0.006);
+    this.time.delayedCall(420, () => {
+      celdas.forEach(([r, c], i) => {
+        const color = tipo === 'cadena' ? (rnd() < 0.5 ? 'cadv' : 'cadh') : tipo;
+        const { x, y } = this.cellXY(r, c);
+        const vuela = this.add.image(W / 2, BY + 250, this.blockTex(color)).setDisplaySize(CELL, CELL).setDepth(185);
+        this.tweens.add({ targets: vuela, x, y, duration: 300, delay: i * 90, ease: 'Cubic.In' });
+        // el bloque cae con el reloj de la partida (no depende de la animación)
+        this.time.delayedCall(310 + i * 90, () => {
+          vuela.destroy();
+          if (this.board[r][c] || this.over) return;
+          this.board[r][c] = color;
+          this.addBlock(r, c, color, true);
+          if (color === 'bomba') { this.bombas[r * N + c] = PELIGRO.bomba.turnos + 3; this.bombasNuevas.add(r * N + c); this.pintarBomba(r * N + c); }
+          sfx.place();
+        });
+      });
+      this.time.delayedCall(420 + celdas.length * 90, () => {
+        this.busy = false;
+        // si con lo que lanzó ya no cabe ninguna pieza, la partida termina como siempre
+        this.checkStuck();
+      });
+    });
   }
 
   avPintar() {
@@ -1094,7 +1191,7 @@ export default class Game extends Phaser.Scene {
     const val = def.t === 'puntos' ? this.score : progreso;
     const meta = def.t === 'puntos' ? def.n.toLocaleString('es-MX') : def.n;
     const ahora = def.t === 'puntos' ? Math.min(val, def.n).toLocaleString('es-MX') : Math.min(val, def.n);
-    this.avTxt.setText(`${OBJ_TEXTO[def.t](def.n)}  ${ahora}/${meta}`);
+    this.avTxt.setText(def.t === 'jefe' ? `${JEFES[def.jefe.id].nombre}  ❤ ${Math.max(0, def.n - progreso)}/${def.n}` : `${textoObjetivo(def)}  ${ahora}/${meta}`);
     const quedan = def.p - usadas;
     this.avPiezas.setText(`${quedan} piezas`).setColor(quedan <= 3 ? '#ff7a7a' : '#ffd93d');
   }
@@ -1191,7 +1288,7 @@ export default class Game extends Phaser.Scene {
         panel.add(icon(this, 45 - bt.width / 2 - 55, 50, 'ui_ladrillo', 80));
       } else panel.add(txt(this, 0, 50, estrellas < 3 ? 'Sobran más piezas = más estrellas' : '¡Ya tenías las 3 estrellas!', 30, '#8c7aa0', { weight: '700' }));
     } else {
-      panel.add(txt(this, 0, -10, OBJ_TEXTO[NIVELES[this.nivel].t](NIVELES[this.nivel].n), 38, '#c84a4a', { weight: '700' }));
+      panel.add(txt(this, 0, -10, textoObjetivo(NIVELES[this.nivel]), 38, '#c84a4a', { weight: '700' }));
       panel.add(txt(this, 0, 50, '¡Inténtalo de nuevo!', 32, '#8c7aa0', { weight: '700' }));
     }
     const siguiente = this.nivel + 1 < NIVELES.length;

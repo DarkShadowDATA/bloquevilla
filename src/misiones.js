@@ -23,7 +23,7 @@ export const PREMIO_MISION = [15, 25, 40];
 export const premioMision = (m) => PREMIO_MISION[m.dif] + extraMision();   // la Granja suma 5
 export const ladrillosCofre = () => COFRE.ladrillos * multCofre();          // el Molino lo dobla
 export const COFRE = { ladrillos: 30, poderes: ['martillo', 'bomba', 'rayo'], ladrillosSiLleno: 20 };
-const ESTRELLAS_MAX = 60;   // 20 niveles × 3
+const ESTRELLAS_MAX = 180;  // 60 niveles × 3
 
 // Misiones de hoy (las crea la primera vez que se piden en el día)
 export function misionesHoy() {
