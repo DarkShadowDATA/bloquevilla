@@ -37,6 +37,8 @@ export function aplicarCompras() {
     if (it.tema && !save.tienda.temas.includes(it.tema)) { save.tienda.temas.push(it.tema); cambio = true; }
     if (it.id === 'fundador' && !save.fundador) { save.fundador = true; cambio = true; }
   }
+  const ap = nube.compras.apoyo || 0;
+  if (ap > (save.apoyo || 0)) { save.apoyo = ap; cambio = true; }
   const falta = (nube.ladrillos || 0) - (save.ladrillosCobrados || 0);
   if (falta > 0) { save.bricks += falta; save.ladrillosCobrados = nube.ladrillos; cambio = true; }
   if (cambio) persist();

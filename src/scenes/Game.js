@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import {
-  W, H, N, CELL, BX, BY, TRAY_Y, SLOTS, TRAY_CELL, COLORS, HEX, SCORE, BRICKS,
+  W, H, N, CELL, BX, BY, TRAY_Y, SLOTS, TRAY_CELL, COLORS, HEX, SCORE, BRICKS, NOMBRE_TEMA,
   COMBO_GRACE, LINES_PER_OFFER, conArt, BUILDINGS, TEMAS_IMG, TIEMPO, ORO, PELIGRO,
 } from '../config.js';
 import { size, canPlace, anyFit, makeTray, findLines, rotate } from '../pieces.js';
@@ -19,6 +19,7 @@ import { extraLadrillos, oroChance, turnosBomba, maxPoderes } from '../bonos.js'
 import { avanzar, textoMision } from '../misiones.js';
 import { contar } from '../logros.js';
 import { medalla } from './Logros.js';
+import { empezarPrueba, terminarPrueba, precioTema } from '../prueba.js';
 import { pozoNew, pozoPlay } from '../pozo-core.js';
 import { terminarPozo, usd } from '../pozo.js';
 import { NIVELES, OBJ_TEXTO, OBJ_ICONO, calcularEstrellas, guardarResultado } from '../aventura.js';
@@ -144,10 +145,14 @@ export default class Game extends Phaser.Scene {
     // ¿Hay una partida a medias? Se retoma tal cual
     const p = save.partida;
     if (!this.reto && !this.tiempo && !this.vs && this.nivel == null && !this.pozo && !window.__capture && p && p.v === 1 && !(data && data.nueva)) {
+      this.pruebaTema = empezarPrueba(false, true);
       this.reanudar(p);
       return;
     }
     if (!this.reto && !this.tiempo && !this.vs && this.nivel == null && !this.pozo && save.partida) { save.partida = null; persist(); }
+    // Tema del día (prestado por una partida): normal, Contrarreloj y retos de amigos
+    this.pruebaTema = empezarPrueba(!this.reto && this.nivel == null && !this.pozo, false);
+    if (this.pruebaTema) track('prueba', { tema: this.pruebaTema });
 
     if (save.pendingPower && !this.reto && !this.tiempo && !this.vs && this.nivel == null && !this.pozo) {
       this.powers.push(save.pendingPower);
@@ -253,7 +258,7 @@ export default class Game extends Phaser.Scene {
   blockTex(color) {
     if (color === 'gold') return 'block_gold';
     if (color === 'hielo' || color === 'hielo2' || color === 'bomba') return 'blk_' + color;
-    const tema = this.tema || (this.tema = temaBloques(isBuilt('pozo')));
+    const tema = this.tema || (this.tema = this.pruebaTema || temaBloques(isBuilt('pozo')));
     if (tema === 'agua') return 'water_' + ((COLORS.indexOf(color) % 3) + 1);
     if (tema === 'muertos') return 'muertos_' + ((COLORS.indexOf(color) % 4) + 1);
     if (TEMAS_IMG.includes(tema)) return tema + '_' + color;
@@ -1438,6 +1443,7 @@ export default class Game extends Phaser.Scene {
     } else if (newRecord) save.record = this.score;
     save.games += 1;
     save.partida = null;
+    terminarPrueba();
     this.mision('partidas', 1); this.mision('puntos', this.score); if (this.tiempo) this.mision('tiempo', 1);
     persist();
     sfx.over();
@@ -1516,6 +1522,15 @@ export default class Game extends Phaser.Scene {
       panel.add(button(this, 0, 465, 600, 100, 'Ir al pueblo', 0xff8c2b, () => this.scene.start('Village'), { size: 38 }));
     }
     if (vs) panel.add(button(this, 0, 465, 600, 100, 'Ir al pueblo', 0x8a6a3a, () => this.scene.start('Village'), { size: 38 }));
+    // Jugó con el tema del día (prestado): se ofrece quedárselo, sin insistir
+    if (this.pruebaTema) {
+      const t = this.pruebaTema;
+      panel.add(txt(this, 0, 640, `¿Te gustó el tema ${NOMBRE_TEMA[t]}?`, 30, '#ffffff', { weight: '700', stroke: '#2a1450', strokeW: 6 }));
+      panel.add(button(this, 0, 716, 480, 80, `Quedármelo · ${precioTema(t)}`, 0x4a2a8a, () => {
+        track('prueba_oferta', { tema: t });
+        this.scene.start('Shop', { tab: 'shadow' });
+      }, { size: 32, iconKey: 'ui_shadow' }));
+    }
     this.tweens.add({ targets: panel, scale: 1, duration: 380, ease: 'Back.Out' });
     if (newRecord || gano) confetti(this, W / 2, 600, 80);
   }

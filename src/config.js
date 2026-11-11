@@ -95,7 +95,8 @@ export const DECO_POS = {
   fuente: [[548, 1335, 210]],
 };
 
-export const VERSION = '1.5';
+export const VERSION = '1.6';
+export const APOYO_SHADOW = 10;   // «Invítame un café» (Tienda Shadow); el precio que vale es el del servidor
 
 // Temas con imágenes (src/assets/img/<tema>_<color>.webp). Los premium se compran con Shadow (nube.js); el Fundador va en su paquete.
 export const TEMAS_IMG = ['neon', 'caramelo', 'cristal', 'galaxia', 'oropuro', 'fundador'];

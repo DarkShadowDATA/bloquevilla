@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { W, H, TIENDA, COLORS, TIENDA_SHADOW, NOMBRE_TEMA } from '../config.js';
+import { W, H, TIENDA, COLORS, TIENDA_SHADOW, NOMBRE_TEMA, APOYO_SHADOW } from '../config.js';
 import { nube, comprar, loginUrl, shadowUrl } from '../nube.js';
 import { maxPoderes, precioTienda } from '../bonos.js';
 import { save, persist } from '../save.js';
@@ -158,7 +158,7 @@ export default class Shop extends Phaser.Scene {
 
   // Tienda Shadow (opcional): temas exclusivos y ladrillos. Nada de aquí da ventaja en el ranking ni en los retos.
   showShadow() {
-    const lista = nube.on && nube.tienda.length ? nube.tienda : TIENDA_SHADOW;
+    const lista = (nube.on && nube.tienda.length ? nube.tienda : TIENDA_SHADOW).slice(0, 6);
     const top = this.add.container(W / 2, 352);
     if (nube.on) {
       top.add(icon(this, -150, 0, 'ui_shadow', 50));
@@ -205,9 +205,43 @@ export default class Shop extends Phaser.Scene {
       c.add(b);
     });
     const pie = nube.on
-      ? button(this, W / 2, 1755, 520, 100, 'Conseguir Shadow', 0x4a2a8a, () => { location.href = shadowUrl(); }, { size: 38, iconKey: 'ui_shadow' })
-      : button(this, W / 2, 1755, 520, 100, nube.can ? 'Iniciar sesión' : 'Ir a la página del juego', 0x6a3ab8, () => this.pedirSesion(), { size: 38 });
+      ? button(this, 700, 1755, 560, 100, 'Conseguir Shadow', 0x4a2a8a, () => { location.href = shadowUrl(); }, { size: 36, iconKey: 'ui_shadow' })
+      : button(this, 700, 1755, 560, 100, nube.can ? 'Iniciar sesión' : 'Ir a la página del juego', 0x6a3ab8, () => this.pedirSesion(), { size: 36 });
     this.layer.add(pie);
+    // Apoyar al creador: opcional, sin ventaja; solo da la insignia ☕
+    this.layer.add(button(this, 215, 1755, 350, 100, '☕ Apoyar', 0x8a5a2a, () => this.abrirApoyo(), { size: 36 }));
+  }
+
+  abrirApoyo() {
+    track('apoyo_ver', {});
+    const ov = this.add.container(0, 0).setDepth(400);
+    ov.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.65).setInteractive());
+    const p = this.add.container(W / 2, 900);
+    ov.add(p);
+    const g = this.add.graphics();
+    g.fillStyle(0xaa5a1e, 1); g.fillRoundedRect(-430, -330, 860, 690, 50);
+    g.fillStyle(0xfff7e8, 1); g.fillRoundedRect(-430, -340, 860, 680, 50);
+    p.add(g);
+    p.add(txt(this, 0, -255, '☕ Invítame un café', 58, '#46286e'));
+    p.add(txt(this, 0, -120, 'Bloquevilla lo hago yo solo. Si te gusta el juego, puedes apoyarme para que siga creciendo.', 32, '#6a5a8a', { weight: '700', wrap: 740 }));
+    p.add(txt(this, 0, 10, 'No da ninguna ventaja: solo la insignia ☕ en tu menú.', 28, '#8c7aa0', { weight: '600', wrap: 740 }));
+    if (save.apoyo > 0) p.add(txt(this, 0, 62, `¡Gracias! Ya me invitaste ${save.apoyo} ${save.apoyo === 1 ? 'café' : 'cafés'}`, 28, '#2a9a4a', { weight: '800' }));
+    const cerrar = () => ov.destroy();
+    const b = button(this, 0, 150, 520, 100, `${APOYO_SHADOW}`, 0x7a4ad8, () => {
+      if (!nube.on) { this.pedirSesion(); return; }
+      if (nube.shadow < APOYO_SHADOW) { toast(this, `Te faltan ${APOYO_SHADOW - nube.shadow} Shadow`, 1850, 1800); return; }
+      b.setEnabled(false); b.label.setText('…');
+      comprar('apoyo').then(() => {
+        sfx.build(); vibe(40); confetti(this, W / 2, 800, 80);
+        cerrar();
+        toast(this, '¡Muchas gracias por tu apoyo! ☕', 1850, 2600);
+        this.show('shadow');
+      }).catch((e) => { cerrar(); toast(this, e.message, 1850, 2400); });
+    }, { size: 44, iconKey: 'ui_shadow' });
+    p.add(b);
+    p.add(button(this, 0, 265, 360, 80, 'Ahora no', 0x8a7ab0, cerrar, { size: 32 }));
+    p.setScale(0.4);
+    this.tweens.add({ targets: p, scale: 1, duration: 260, ease: 'Back.Out' });
   }
 
   pedirSesion() {

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { W, H, COLORS, HEX, BUILDINGS, DAILY, NOMBRE_TEMA } from '../config.js';
 import { nube, loginUrl } from '../nube.js';
 import { porCobrarLogros, porcentaje } from '../logros.js';
+import { pruebaDisponible } from '../prueba.js';
 import { save, persist, isBuilt, dailyAvailable, dailyIndex, today } from '../save.js';
 import { EVENTO, eventoActivo, diasRestantes } from '../evento.js';
 import { retoNumero } from '../reto.js';
@@ -121,6 +122,8 @@ export default class Menu extends Phaser.Scene {
     if (isBuilt('pozo')) temas.push('agua');
     if (save.muertos.tema) temas.push('muertos');
     save.tienda.temas.forEach((t) => temas.push(t));
+    const prueba = pruebaDisponible();   // tema premium que hoy se presta por una partida
+    if (prueba) temas.push(prueba);
     // Logros (izquierda) y tema de bloques (derecha)
     const hayTemas = temas.length > 1;
     const lx = hayTemas ? W / 2 - 165 : W / 2;
@@ -138,12 +141,17 @@ export default class Menu extends Phaser.Scene {
     if (hayTemas) {
       if (!temas.includes(save.theme)) save.theme = 'clasico';
       const nombre = { clasico: eventoActivo() ? 'Evento' : 'Clásico', agua: 'Agua', muertos: 'Día de Muertos', ...NOMBRE_TEMA };
-      const label = () => `🎨 ${nombre[save.theme]}`;
+      const label = () => (save.theme === prueba ? `🎁 ${nombre[save.theme]}` : `🎨 ${nombre[save.theme]}`);
       const tb = button(this, W / 2 + 165, 1668, 310, 90, label(), 0x2c6ab0, () => {
         save.theme = temas[(temas.indexOf(save.theme) + 1) % temas.length];
         persist();
         tb.label.setText(label());
+        if (save.theme === prueba) toast(this, `Tema ${nombre[prueba]} gratis en tu próxima partida`, 1560, 2200);
       }, { size: 34 });
+      if (prueba) {
+        const tg = txt(this, W / 2 + 215, 1622, '¡GRATIS HOY!', 24, '#ffffff', { stroke: '#7a2ad8', strokeW: 8 }).setAngle(-8).setDepth(5);
+        this.tweens.add({ targets: tg, scale: 1.12, duration: 500, yoyo: true, repeat: -1 });
+      }
     }
     premioPendiente().then((p) => {
       if (!p || !this.sys.isActive()) return;
@@ -152,7 +160,7 @@ export default class Menu extends Phaser.Scene {
       confetti(this, W / 2, 700, 90);
       toast(this, `¡Quedaste #${p.lugar} en el ranking de la semana pasada! +${p.premio} ladrillos`, 700, 3500);
     }).catch(() => {});
-    txt(this, W / 2, H - 60, 'v1.5 · Logros', 24, '#ffffffaa', { weight: '500' });
+    txt(this, W / 2, H - 60, 'v1.6 · Tema del día', 24, '#ffffffaa', { weight: '500' });
   }
 
   bannerEvento() {
@@ -214,6 +222,7 @@ export default class Menu extends Phaser.Scene {
       const f = txt(this, 190, 192, '👑 Fundador', 28, '#ffd93d', { stroke: '#3a1250', strokeW: 8 });
       this.tweens.add({ targets: f, scale: 1.06, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
     }
+    if (save.apoyo > 0) txt(this, 190, save.fundador ? 236 : 192, '☕ Apoyo', 26, '#ffe9c8', { stroke: '#3a1250', strokeW: 8 });
   }
 
   toggle(x, y, key, on, cb) {
