@@ -39,15 +39,15 @@ drag(rec, f, 1, 6, 2, approach=0.35, travel=0.5, after=1.2)
 M['m3'] = len(rec.frames)
 drag(rec, f, 2, 1, 2, approach=0.35, travel=0.6, after=0.2)
 M['gana'] = len(rec.frames)
-f.wait(rec, 4.5, visible=False)
+f.wait(rec, 6.0, visible=False)
 print('estado', rec.ev(f"() => {{ const g = {G}; return JSON.stringify([g.av.progreso, g.av.usadas, g.av.fin]); }}"))
 print('frames', len(rec.frames), 'marcas', M, 'errores', rec.errors)
 
-segs = [(M['m1'] + 22, M['m2'] - 4),                  # cold open: la fila se limpia y la cadena se queda
-        (M['m1'] - 10, M['m1'] + 30),                 # la misma jugada, desde antes
-        (M['m2'], M['m3'] - 4),                       # completo la columna: se rompe
-        (M['m3'], M['gana'] + 25),                    # la acostada con su fila
-        (M['gana'] + 25, M['gana'] + 130)]            # nivel superado
+segs = [(M['m1'] + 11, M['m2'] + 14),                 # cold open: la fila se limpia y la cadena se queda
+        (M['m1'] - 10, M['m1'] + 65),                 # la misma jugada, desde antes
+        (M['m2'], M['m2'] + 57),                      # completo la columna: se rompe
+        (M['m3'], M['m3'] + 66),                      # la acostada con su fila
+        (M['m3'] + 66, M['gana'] + 165)]              # nivel superado
 render(rec, OUT, [[('LLENÉ LA FILA…', (255, 255, 255))], [('¿Y NO SE ROMPIÓ?', (255, 217, 61))]], segs=segs, subs=None)
 rec.close()
 print('listo', OUT)
