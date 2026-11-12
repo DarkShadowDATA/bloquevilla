@@ -1,0 +1,36 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "Llené la fila completa… y este bloque no se rompió."
+   },
+   {
+    "at": "auto",
+    "text": "Es un bloque encadenado, y su cadena va parada."
+   },
+   {
+    "at": "auto",
+    "text": "Solo se rompe si completas su columna."
+   },
+   {
+    "at": "auto",
+    "text": "Y la cadena acostada, solo con su fila."
+   },
+   {
+    "at": "auto",
+    "text": "Así se pasan los niveles de cadenas de la Aventura."
+   },
+   {
+    "at": "auto",
+    "text": "¿Lo sabías? Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}

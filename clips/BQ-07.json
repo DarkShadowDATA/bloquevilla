@@ -1,0 +1,36 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "Vencí al dragón de mi juego, y me dio sus escamas."
+   },
+   {
+    "at": "auto",
+    "text": "Todo lo que gano se guarda en este álbum."
+   },
+   {
+    "at": "auto",
+    "text": "Este tema solo lo tiene quien vence al jefe final."
+   },
+   {
+    "at": "auto",
+    "text": "Con estrellas y medallas salen trofeos junto a mi castillo."
+   },
+   {
+    "at": "auto",
+    "text": "Y si completas el álbum, te regala trescientos ladrillos."
+   },
+   {
+    "at": "auto",
+    "text": "¿Qué te falta a ti? Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}

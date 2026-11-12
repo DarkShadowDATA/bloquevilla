@@ -1,0 +1,40 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "Terminé de reconstruir mi pueblo, bloque por bloque."
+   },
+   {
+    "at": "auto",
+    "text": "Empecé con una casa en ruinas."
+   },
+   {
+    "at": "auto",
+    "text": "Luego abrí el muelle…"
+   },
+   {
+    "at": "auto",
+    "text": "y al final, la colina del castillo."
+   },
+   {
+    "at": "auto",
+    "text": "Cada línea que limpias te da ladrillos para construir."
+   },
+   {
+    "at": "auto",
+    "text": "Y el castillo cierra la historia."
+   },
+   {
+    "at": "auto",
+    "text": "¿Cuánto tardas tú? Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}

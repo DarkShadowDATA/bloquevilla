@@ -1,0 +1,40 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "Este dragón es el último jefe de mi juego de bloques."
+   },
+   {
+    "at": "auto",
+    "text": "Tiene sesenta vidas, y aquí le quedan nueve."
+   },
+   {
+    "at": "auto",
+    "text": "Cada línea que limpio le quita una."
+   },
+   {
+    "at": "auto",
+    "text": "Pero cada cuatro piezas me avienta bloques."
+   },
+   {
+    "at": "auto",
+    "text": "Si hago combo, le quito más."
+   },
+   {
+    "at": "auto",
+    "text": "¡Combo por tres, y cae!"
+   },
+   {
+    "at": "auto",
+    "text": "¿Tú llegas al nivel sesenta? Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}
