@@ -7,7 +7,7 @@
 
 ## Contenido para redes
 - **Desde el 11 nov 2026 ya no se hace un video con cada actualización.** Primero se avanza el juego; los videos se hacen cuando Alejandro los pida o toque una tanda, explicando «esto funciona así» (los scripts están en `clips/`). Los devlogs de itch van cada 2 o 3 fases o por actualización grande.
-- Cuando sí se hace un video: va a la carpeta de la computadora de Alejandro `Videos/Bloquevilla` con nombre `AAAA-MM-DD HH-MM Título.mp4` (fecha y hora de publicación, cada 12 h a las 08:00 y 20:00) y su texto se agrega a `00 Textos para publicar.txt`. Él los sube a mano desde esa carpeta. Todos llevan voz (skill voz-reels).
+- Cuando sí se hace un video: va a la carpeta de la computadora de Alejandro `Videos/Bloquevilla` con nombre `AAAA-MM-DD HH-MM Título.mp4` (fecha y hora de publicación, cada 12 h a las 08:00 y 20:00) y su texto va en un `.txt` con el mismo nombre del video (y también se agrega a `00 Textos para publicar.txt`). Él los sube a mano desde esa carpeta. Todos llevan voz (skill voz-reels).
 
 ### Reglas de los videos (la gente se iba en el segundo 1)
 - **Si el contenido nuevo necesita imágenes de ChatGPT, primero se entregan los prompts y NO se graba el video hasta que Alejandro mande las imágenes finales.** El juego puede publicarse con el arte dibujado con código, pero el video se graba una sola vez, ya con el arte final.
