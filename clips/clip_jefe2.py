@@ -58,7 +58,7 @@ if QUE == 'topo':   # voz: 2.40 | 2.44 | 1.85 | 2.51 | 2.05 | 2.08
             (M['m2'] + 4, M['m2'] + 4 + d(2.05)),              # la tierra se limpia
             (M['m3'] + 6, M['m3'] + 6 + d(2.08))]              # golpe final y gana
 else:               # voz: 1.69 | 2.56 | 2.20 | 2.36 | 2.01 | 2.16
-    segs = [(M['ataque'] + 6, M['ataque'] + 6 + d(1.69)),     # avienta hielo
+    segs = [(M['ataque'] - 2, M['ataque'] - 2 + d(1.69)),     # avienta hielo
             (M['intro'], M['intro'] + d(2.56)),                # aparece en la montaña
             (M['m1'] + 14, M['m1'] + 14 + d(2.20)),            # línea + ataque de hielo
             (M['m2'] + 4, M['m2'] + 4 + d(2.36)),              # el hielo se agrieta
