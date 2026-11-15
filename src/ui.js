@@ -34,6 +34,19 @@ export function icon(scene, x, y, key, size) {
 }
 
 // Botón redondeado con sombra y animación al tocar
+// Cantidad de Shadow: el número y a su lado la imagen de la moneda (nunca emoji), del alto del texto.
+export function shadowAmount(scene, x, y, n, size = 34, color = '#ffd93d') {
+  const c = scene.add.container(x, y);
+  const t = txt(scene, 0, 0, String(n), size, color);
+  const ic = scene.add.image(0, 0, 'ui_shadow');
+  ic.setScale((size * 1.05) / ic.height);
+  const gap = size * 0.18, ancho = t.width + gap + ic.displayWidth;
+  t.setX(-ancho / 2 + t.width / 2);
+  ic.setX(ancho / 2 - ic.displayWidth / 2);
+  c.add([t, ic]);
+  return c;
+}
+
 export function button(scene, x, y, w, h, label, color, onClick, opts = {}) {
   const c = scene.add.container(x, y);
   const g = scene.add.graphics();

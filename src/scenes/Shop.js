@@ -161,8 +161,8 @@ export default class Shop extends Phaser.Scene {
     const lista = (nube.on && nube.tienda.length ? nube.tienda : TIENDA_SHADOW).slice(0, 6);
     const top = this.add.container(W / 2, 352);
     if (nube.on) {
-      top.add(icon(this, -150, 0, 'ui_shadow', 50));
-      top.add(txt(this, 30, 0, `Tienes ${nube.shadow} Shadow`, 34, '#ffffff', { weight: '800' }));
+      const t = txt(this, -30, 0, `Tienes ${nube.shadow}`, 34, '#ffffff', { weight: '800' });   // el saldo y a su lado la moneda
+      top.add([t, icon(this, -30 + t.width / 2 + 34, 0, 'ui_shadow', 40)]);
     } else top.add(txt(this, 0, 0, 'Opcional: todo el juego se puede jugar gratis', 28, '#c8c0e8', { weight: '700' }));
     this.layer.add(top);
     lista.forEach((it, i) => {
@@ -186,7 +186,7 @@ export default class Shop extends Phaser.Scene {
         return;
       }
       if (!nube.on) {
-        this.stateBtn(c, `${it.shadow} Shadow`, 0x6a5a8a, () => this.pedirSesion());
+        c.add(button(this, 0, 150, 300, 84, `${it.shadow}`, 0x6a5a8a, () => this.pedirSesion(), { size: 36, iconKey: 'ui_shadow' }));
         return;
       }
       let armado = false;

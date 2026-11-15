@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { W, H } from '../config.js';
 import { save } from '../save.js';
 import { nube, loginUrl } from '../nube.js';
-import { txt, background, button, toast } from '../ui.js';
+import { txt, background, button, toast, shadowAmount } from '../ui.js';
 import { verPozo, empezarPozo, usd } from '../pozo.js';
 
 // Pozo de la semana: premios en Shadow retirable (USDT/USDC) para el top 5. Misma regla para todos: modo clásico sin poderes,
@@ -41,7 +41,7 @@ export default class Pozo extends Phaser.Scene {
     ['🥇', '🥈', '🥉', '4º', '5º'].forEach((m, i) => {
       const x = 180 + i * 180, s = d.prizes[i] || 0;
       txt(this, x, 410, m, 40, '#ffffff');
-      txt(this, x, 458, `${s} 💠`, 34, '#ffd93d');
+      shadowAmount(this, x, 458, s, 34, '#ffd93d');
       txt(this, x, 496, `${usd(s)} USD`, 22, '#b8b0d8', { weight: '700' });
     });
     const horas = Math.max(0, Math.round((new Date(d.endsAt).getTime() - Date.now()) / 3600e3));

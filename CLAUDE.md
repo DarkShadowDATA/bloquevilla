@@ -22,3 +22,6 @@
 ## Idiomas (desde v2.0)
 - El juego se escribe en español y `src/i18n.js` lo traduce al mostrarse (parcha `Text.setText`). Inglés y portugués según el navegador o Ajustes → Idioma (`save.idioma`); en modo captura siempre español (`?lang=en` o `?lang=pt` para probar).
 - **Cada texto nuevo que se vea en pantalla necesita su inglés en `src/i18n_en.js` y su portugués en `src/i18n_pt.js`** (clave = el español igual que en el código; `{}` = variable). Para revisar: `?lang=en` y buscar textos que sigan en español.
+
+## Moneda Shadow (regla desde el 15 nov 2026)
+- La Shadow se muestra **siempre con su imagen** (`src/assets/img/ui_shadow.webp`, la misma moneda de Noche de Leyendas), **nunca con emoji**. Junto a un número usa `shadowAmount(scene, x, y, n, size)` de `src/ui.js` (moneda del alto del texto); en botones `iconKey: 'ui_shadow'`. El 🔷 de «Piezas raras» no es Shadow y se queda.
