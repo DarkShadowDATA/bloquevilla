@@ -1,0 +1,36 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "Este edificio me regala un martillo en cada partida."
+   },
+   {
+    "at": "auto",
+    "text": "Es la biblioteca, en la colina del castillo."
+   },
+   {
+    "at": "auto",
+    "text": "El martillo rompe el bloque que tú quieras."
+   },
+   {
+    "at": "auto",
+    "text": "Y la mina hace que cada bloque dorado valga cinco ladrillos."
+   },
+   {
+    "at": "auto",
+    "text": "Cada edificio te da un bono para siempre."
+   },
+   {
+    "at": "auto",
+    "text": "¿Cuál construyes primero? Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}

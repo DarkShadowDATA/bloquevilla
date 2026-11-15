@@ -1,0 +1,36 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "Esta fila tiene un hoyo… ¿se puede limpiar?"
+   },
+   {
+    "at": "auto",
+    "text": "En la Aventura hay tableros con huecos."
+   },
+   {
+    "at": "auto",
+    "text": "Ahí no cabe ninguna pieza."
+   },
+   {
+    "at": "auto",
+    "text": "Pero si llenas lo demás, la línea cuenta completa."
+   },
+   {
+    "at": "auto",
+    "text": "Y el hueco se queda ahí todo el nivel."
+   },
+   {
+    "at": "auto",
+    "text": "¿Lo sabías? Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}

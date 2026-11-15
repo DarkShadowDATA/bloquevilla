@@ -1,0 +1,36 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "Este yeti me congela el tablero."
+   },
+   {
+    "at": "auto",
+    "text": "Es el jefe del nivel cincuenta, en la montaña."
+   },
+   {
+    "at": "auto",
+    "text": "Cada pocas piezas me avienta bloques de hielo."
+   },
+   {
+    "at": "auto",
+    "text": "El hielo aguanta dos líneas antes de romperse."
+   },
+   {
+    "at": "auto",
+    "text": "Y cada línea que limpio le quita vida."
+   },
+   {
+    "at": "auto",
+    "text": "¿Llegas a la montaña? Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}

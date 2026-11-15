@@ -1,0 +1,36 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "Mi juego de bloques tiene sesenta niveles."
+   },
+   {
+    "at": "auto",
+    "text": "Empiezas en la pradera…"
+   },
+   {
+    "at": "auto",
+    "text": "luego el puerto…"
+   },
+   {
+    "at": "auto",
+    "text": "y al final, la montaña."
+   },
+   {
+    "at": "auto",
+    "text": "Cada nivel tiene un reto distinto y hasta tres estrellas."
+   },
+   {
+    "at": "auto",
+    "text": "¿Hasta qué nivel llegas? Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}

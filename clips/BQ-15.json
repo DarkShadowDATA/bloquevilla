@@ -1,0 +1,36 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "¿No sabes qué hace este bloque? El juego te lo enseña."
+   },
+   {
+    "at": "auto",
+    "text": "La primera vez que sale algo nuevo, aparece una mini demostración."
+   },
+   {
+    "at": "auto",
+    "text": "Aquí la bomba: limpia su fila antes de que llegue a cero."
+   },
+   {
+    "at": "auto",
+    "text": "Y aquí el jefe: cada línea le quita vida."
+   },
+   {
+    "at": "auto",
+    "text": "Puedes verlas todas cuando quieras en Ajustes."
+   },
+   {
+    "at": "auto",
+    "text": "Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}

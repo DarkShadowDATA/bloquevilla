@@ -1,0 +1,36 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "Me salió esta pieza en diagonal… ¿dónde la pongo?"
+   },
+   {
+    "at": "auto",
+    "text": "En algunos niveles salen piezas raras."
+   },
+   {
+    "at": "auto",
+    "text": "Cruces, U y esquinas grandes."
+   },
+   {
+    "at": "auto",
+    "text": "Las diagonales dejan espacios entre sus bloques."
+   },
+   {
+    "at": "auto",
+    "text": "Pero bien puestas, ¡limpian dos líneas de golpe!"
+   },
+   {
+    "at": "auto",
+    "text": "¿Tú dónde la ponías? Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}

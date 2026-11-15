@@ -1,0 +1,36 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "Limpié la fila… y el hielo sigue ahí."
+   },
+   {
+    "at": "auto",
+    "text": "Los bloques de hielo aguantan dos líneas."
+   },
+   {
+    "at": "auto",
+    "text": "La primera solo los agrieta."
+   },
+   {
+    "at": "auto",
+    "text": "Y con la segunda, se rompen."
+   },
+   {
+    "at": "auto",
+    "text": "Romper hielo también te da medallas."
+   },
+   {
+    "at": "auto",
+    "text": "¿Ya lo sabías? Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}

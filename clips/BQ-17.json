@@ -1,0 +1,36 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "¿Cuántas horas le he metido a mi propio juego?"
+   },
+   {
+    "at": "auto",
+    "text": "Ahora el juego guarda tus estadísticas."
+   },
+   {
+    "at": "auto",
+    "text": "Partidas, récords, líneas, mejor combo…"
+   },
+   {
+    "at": "auto",
+    "text": "Bombas desactivadas y jefes vencidos."
+   },
+   {
+    "at": "auto",
+    "text": "Están junto a tus logros y tu colección."
+   },
+   {
+    "at": "auto",
+    "text": "¿Cuál es tu récord? Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}

@@ -12,7 +12,7 @@ const delNavegador = () => (nav().startsWith('es') ? 'es' : nav().startsWith('pt
 export const idiomaNavegador = nav;
 // En modo captura (videos y pruebas) siempre español, salvo ?lang=en
 const CAPTURA = (() => { try { return location.search.includes('capture'); } catch (e) { return false; } })();
-export const idioma = () => forzado() || (CAPTURA ? 'es' : save.idioma || delNavegador());
+export const idioma = () => forzado() || (CAPTURA ? save.idioma || 'es' : save.idioma || delNavegador());
 export const enIngles = () => idioma() !== 'es';   // hay que traducir (inglés o portugués)
 const DIC = { en: EN, pt: PT };
 

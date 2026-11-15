@@ -1,0 +1,36 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "El primer jefe de mi juego es un topo gigante."
+   },
+   {
+    "at": "auto",
+    "text": "Sale en el nivel diez, y tiene doce vidas."
+   },
+   {
+    "at": "auto",
+    "text": "Cada línea que limpio le quita una."
+   },
+   {
+    "at": "auto",
+    "text": "Pero cada pocas piezas me llena el tablero de tierra."
+   },
+   {
+    "at": "auto",
+    "text": "La tierra se limpia como cualquier bloque."
+   },
+   {
+    "at": "auto",
+    "text": "¿Le ganas al topo? Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}

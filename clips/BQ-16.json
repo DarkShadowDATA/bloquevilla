@@ -1,0 +1,36 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {
+    "at": 0,
+    "text": "Mi juego de bloques ahora habla tres idiomas."
+   },
+   {
+    "at": "auto",
+    "text": "Español, inglés y portugués."
+   },
+   {
+    "at": "auto",
+    "text": "Se pone solo según el idioma de tu celular."
+   },
+   {
+    "at": "auto",
+    "text": "Y lo cambias cuando quieras en Ajustes."
+   },
+   {
+    "at": "auto",
+    "text": "Así puedes retar a tus amigos de otros países."
+   },
+   {
+    "at": "auto",
+    "text": "¿Desde qué país juegas? Juega gratis, link en mi perfil."
+   }
+  ]
+ },
+ "subs": {
+  "font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+  "y": 0.86
+ }
+}
