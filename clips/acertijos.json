@@ -1,0 +1,180 @@
+{
+ "BQ-20": {
+  "tipo": "primero",
+  "board": [
+   "rkb.....",
+   "b.r.....",
+   "gok...oo",
+   "rk......",
+   ".o.rbpop",
+   "bkr.....",
+   "ypk.....",
+   "ooo....."
+  ],
+  "piezas": [
+   "Tu",
+   "I3h",
+   "Lh2"
+  ],
+  "plan": [
+   [
+    "I3h",
+    2,
+    3
+   ],
+   [
+    "Tu",
+    1,
+    0
+   ],
+   [
+    "Lh2",
+    3,
+    0
+   ]
+  ],
+  "resp": "2",
+  "sols": [
+   [
+    1,
+    0,
+    2
+   ]
+  ]
+ },
+ "BQ-21": {
+  "tipo": "donde",
+  "board": [
+   "r...kokg",
+   "r...bobp",
+   "...g.opg",
+   "......bo",
+   "yrog.gby",
+   "kbryy...",
+   "r..gb..o",
+   "opyg..pk"
+  ],
+  "pieza": "T",
+  "otras": [
+   "I2v",
+   "l3b"
+  ],
+  "lugares": [
+   [
+    3,
+    3
+   ],
+   [
+    5,
+    5
+   ],
+   [
+    0,
+    1
+   ]
+  ],
+  "resp": "B"
+ },
+ "BQ-22": {
+  "tipo": "cual",
+  "board": [
+   "p...kbb.",
+   "..o.kp..",
+   "..yrpk.r",
+   "..y.por.",
+   ".pykbo.b",
+   "..o.rbk.",
+   "oyb...rp",
+   ".rbgoo.y"
+  ],
+  "piezas": [
+   "O",
+   "I4v",
+   "I3h"
+  ],
+  "plan": [
+   [
+    "I3h",
+    6,
+    3
+   ]
+  ],
+  "resp": "3"
+ },
+ "BQ-23": {
+  "tipo": "primero",
+  "board": [
+   "...or...",
+   "...bk...",
+   "gyb.opky",
+   "oobkb.pk",
+   "...o....",
+   "bkr...rk",
+   "...o....",
+   "...rr..."
+  ],
+  "piezas": [
+   "T",
+   "l3c",
+   "Z"
+  ],
+  "plan": [
+   [
+    "T",
+    5,
+    3
+   ],
+   [
+    "l3c",
+    4,
+    3
+   ],
+   [
+    "Z",
+    2,
+    3
+   ]
+  ],
+  "resp": "1",
+  "sols": [
+   [
+    0,
+    1,
+    2
+   ]
+  ]
+ },
+ "BQ-24": {
+  "tipo": "donde",
+  "board": [
+   "oyy.....",
+   ".gg.....",
+   "pokg.oby",
+   ".gk..gky",
+   "...orgyp",
+   ".pykpprg",
+   "rgpo...p",
+   ".obb..p."
+  ],
+  "pieza": "Lh",
+  "otras": [
+   "O",
+   "I3v"
+  ],
+  "lugares": [
+   [
+    1,
+    4
+   ],
+   [
+    6,
+    4
+   ],
+   [
+    4,
+    0
+   ]
+  ],
+  "resp": "C"
+ }
+}
