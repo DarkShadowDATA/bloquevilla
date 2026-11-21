@@ -6,6 +6,7 @@ import {
 import { size, canPlace, anyFit, makeTray, makeTrayChica, findLines, rotate } from '../pieces.js';
 import { save, persist, isBuilt, today, ayer } from '../save.js';
 import { generarReto, RETO_PREMIO } from '../reto.js';
+import { generarAcertijo, ACERTIJO_PREMIO } from '../acertijo.js';
 import { EVENTO, eventoActivo, sumarFlores, temaBloques } from '../evento.js';
 import { sfx, vibe } from '../sfx.js';
 import { POWERS, RARITY, rollOffer } from '../powers.js';
@@ -30,7 +31,8 @@ export default class Game extends Phaser.Scene {
 
   create(data) {
     dsTrack('game_started', 'bloquevilla');   // analítica anónima del estudio: empezó una partida (cualquier modo)
-    this.reto = data && data.reto === true ? generarReto(today()) : null;
+    this.reto = data && data.reto === true ? generarReto(today()) : data && data.acertijo === true ? generarAcertijo(today()) : null;   // Reto o Acertijo del día
+    this.acertijo = !!(this.reto && this.reto.tipo === 'acertijo');
     this.vs = !this.reto && data && data.vs ? data.vs : null;   // reto de un amigo: {s, p, n, m}
     this.nivel = !this.reto && !this.vs && data && Number.isInteger(data.nivel) ? data.nivel : null;   // Modo Aventura
     this.pozo = !this.reto && !this.vs && this.nivel == null && data && data.pozo ? data.pozo : null;   // Pozo de la semana: {attemptId, seed}
@@ -524,7 +526,7 @@ export default class Game extends Phaser.Scene {
     this.linesTotal += n;
     if (this.tiempo && this.tiempoOn) this.sumarTiempo(n * TIEMPO.porLinea, x, y);
     if (this.evento) this.ganarFlores(n, x, y);
-    if (this.reto && this.retoText) this.retoText.setText(`Líneas: ${Math.min(this.linesTotal, this.reto.meta)} / ${this.reto.meta}`);
+    if (this.reto && this.retoText && !this.acertijo) this.retoText.setText(`Líneas: ${Math.min(this.linesTotal, this.reto.meta)} / ${this.reto.meta}`);
     while (this.linesTotal >= this.nextOffer) {
       this.offerPending = true;
       this.nextOffer += LINES_PER_OFFER;
@@ -690,6 +692,11 @@ export default class Game extends Phaser.Scene {
 
   afterMove() {
     this.busy = false;
+    if (this.acertijo && !this.over) {
+      const q = this.bloquesEnTablero();
+      if (this.retoText) this.retoText.setText(q === 1 ? 'Queda 1 bloque' : `Quedan ${q} bloques`);
+      if (q === 0) { this.time.delayedCall(500, () => this.finReto()); return; }
+    }
     if (this.tickPendiente) {
       this.tickPendiente = false;
       if (this.tickBombas()) return;
@@ -1443,6 +1450,7 @@ export default class Game extends Phaser.Scene {
   iniciarReto() {
     const R = this.reto;
     this.nextOffer = 9999;
+    if (this.acertijo) { this.iniciarAcertijo(); return; }
     this.recordText.setText(`RETO DEL DÍA #${R.numero}`).setColor('#ffd93d');
     this.retoText = txt(this, W / 2, 345, `Líneas: 0 / ${R.meta}`, 34, '#ffffff', { weight: '800' }).setDepth(50);
     R.board.forEach((row, r) => row.forEach((col, c) => {
@@ -1456,10 +1464,83 @@ export default class Game extends Phaser.Scene {
     this.time.delayedCall(450, () => toast(this, `Reto #${R.numero}: limpia ${R.meta} líneas con 3 piezas`, 352, 2400));
   }
 
+  // ---------- Acertijo del día: deja el tablero vacío con 3 piezas (el orden importa) ----------
+  bloquesEnTablero() {
+    let n = 0;
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (this.board[r][c]) n++;
+    return n;
+  }
+
+  iniciarAcertijo() {
+    const R = this.reto;
+    this.recordText.setText(`ACERTIJO DEL DÍA #${R.numero}`).setColor('#ffd93d');
+    R.board.forEach((row, r) => row.forEach((col, c) => {
+      if (col) { this.board[r][c] = col; this.addBlock(r, c, col, false); }
+    }));
+    this.retoText = txt(this, W / 2, 345, `Quedan ${this.bloquesEnTablero()} bloques`, 34, '#ffffff', { weight: '800' }).setDepth(50);
+    this.pieces = R.piezas.map((d, i) => this.makePiece({ cells: d.cells.map((x) => [...x]), color: d.color }, i, true));
+    txt(this, W / 2, 1690, 'Deja el tablero VACÍO con estas 3 piezas', 38, '#ffffff', { weight: '800' });
+    txt(this, W / 2, 1750, 'El orden importa: piensa cuál va primero', 28, '#b8b8e0', { weight: '600' });
+    const hecho = save.acertijo.last === today();
+    txt(this, W / 2, 1820, hecho ? 'Ya ganaste el premio de hoy: juega por diversión' : `Premio: ${ACERTIJO_PREMIO} ladrillos`, 30, hecho ? '#9ad09a' : '#ffd93d', { weight: '700' });
+    this.time.delayedCall(450, () => toast(this, `Acertijo #${R.numero}: deja el tablero vacío`, 352, 2400));
+  }
+
+  finAcertijo() {
+    const R = this.reto;
+    const quedan = this.bloquesEnTablero();
+    const ok = quedan === 0;
+    this.mision('partidas', 1); this.mision('puntos', this.score);
+    let premio = 0;
+    if (ok && save.acertijo.last !== today()) {
+      save.acertijo.racha = save.acertijo.last === ayer() ? save.acertijo.racha + 1 : 1;
+      save.acertijo.last = today();
+      premio = ACERTIJO_PREMIO;
+      persist();
+      this.addBricks(premio, W / 2, 900, true);
+    }
+    track('reto', { tipo: 'acertijo', numero: R.numero, ok, quedan, premio: premio > 0 });   // la tabla solo acepta ciertos eventos: va como reto con tipo
+    if (ok) { sfx.build(); confetti(this, W / 2, 600, 90); } else sfx.over();
+    this.time.delayedCall(ok ? 900 : 600, () => this.resumenAcertijo(ok, premio, quedan));
+  }
+
+  resumenAcertijo(ok, premio, quedan) {
+    const R = this.reto;
+    const layer = this.add.container(0, 0).setDepth(300);
+    layer.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6).setInteractive());
+    const panel = this.add.container(W / 2, 930).setScale(0.3);
+    layer.add(panel);
+    const g = this.add.graphics();
+    g.fillStyle(0x6a3ab8, 1); g.fillRoundedRect(-420, -400, 840, 820, 50);
+    g.fillStyle(0xfff7e8, 1); g.fillRoundedRect(-420, -410, 840, 810, 50);
+    panel.add(g);
+    panel.add(txt(this, 0, -330, ok ? `¡Acertijo #${R.numero} resuelto!` : '¡Casi!', 58, '#46286e'));
+    panel.add(txt(this, 0, -235, ok ? 'Dejaste el tablero vacío' : (quedan === 1 ? 'Quedó 1 bloque' : `Quedaron ${quedan} bloques`), 40, ok ? '#2a9a4a' : '#c84a4a'));
+    if (premio) {
+      const bt = txt(this, 45, -140, `+${premio} ladrillos`, 50, '#c8502a');
+      panel.add(bt);
+      panel.add(icon(this, 45 - bt.width / 2 - 55, -140, 'ui_ladrillo', 80));
+      panel.add(txt(this, 0, -55, `Racha: ${save.acertijo.racha} ${save.acertijo.racha === 1 ? 'día' : 'días'} seguidos`, 38, '#e0901a'));
+    } else if (ok) {
+      panel.add(txt(this, 0, -120, 'Ya habías ganado el premio de hoy', 34, '#8c7aa0', { weight: '700' }));
+    } else {
+      panel.add(txt(this, 0, -120, 'Sí se puede: prueba otro orden', 32, '#8c7aa0', { weight: '700', wrap: 700 }));
+    }
+    panel.add(txt(this, 0, 30, 'Mañana hay otro acertijo', 32, '#8c7aa0', { weight: '600' }));
+    if (ok) {
+      panel.add(button(this, 0, 170, 600, 120, 'Jugar partida', 0x5ac85a, () => this.scene.start('Game', { reto: false, modo: null })));
+    } else {
+      panel.add(button(this, 0, 170, 600, 120, 'Reintentar', 0x5ac85a, () => this.scene.restart({ acertijo: true })));
+    }
+    panel.add(button(this, 0, 310, 600, 110, 'Menú', 0x6a3ab8, () => this.scene.start('Menu'), { size: 42 }));
+    this.tweens.add({ targets: panel, scale: 1, duration: 380, ease: 'Back.Out' });
+  }
+
   finReto() {
     if (this.over) return;
     this.over = true;
     this.busy = true;
+    if (this.acertijo) { this.finAcertijo(); return; }
     const R = this.reto;
     const ok = this.linesTotal >= R.meta;
     this.mision('partidas', 1); this.mision('puntos', this.score);

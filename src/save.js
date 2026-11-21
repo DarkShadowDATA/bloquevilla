@@ -16,6 +16,7 @@ const DEFAULT = {
   daily: { last: null, streak: 0 },
   pendingPower: null,
   reto: { last: null, racha: 0 },
+  acertijo: { last: null, racha: 0 },
   muertos: { flores: 0, tema: false },
   tiempo: { record: 0, partidas: 0 },
   oroVisto: false,
@@ -45,7 +46,7 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const d = JSON.parse(raw);
-      return { ...JSON.parse(JSON.stringify(DEFAULT)), ...d, reto: { ...DEFAULT.reto, ...(d.reto || {}) }, muertos: { ...DEFAULT.muertos, ...(d.muertos || {}) }, tiempo: { ...DEFAULT.tiempo, ...(d.tiempo || {}) }, tienda: { ...DEFAULT.tienda, ...(d.tienda || {}) }, peligros: { ...DEFAULT.peligros, ...(d.peligros || {}) }, aventura: { ...DEFAULT.aventura, ...(d.aventura || {}) }, stats: { ...DEFAULT.stats, ...(d.stats || {}) } };
+      return { ...JSON.parse(JSON.stringify(DEFAULT)), ...d, reto: { ...DEFAULT.reto, ...(d.reto || {}) }, acertijo: { ...DEFAULT.acertijo, ...(d.acertijo || {}) }, muertos: { ...DEFAULT.muertos, ...(d.muertos || {}) }, tiempo: { ...DEFAULT.tiempo, ...(d.tiempo || {}) }, tienda: { ...DEFAULT.tienda, ...(d.tienda || {}) }, peligros: { ...DEFAULT.peligros, ...(d.peligros || {}) }, aventura: { ...DEFAULT.aventura, ...(d.aventura || {}) }, stats: { ...DEFAULT.stats, ...(d.stats || {}) } };
     }
   } catch (e) { /* navegador sin almacenamiento */ }
   return JSON.parse(JSON.stringify(DEFAULT));

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { W, H, COLORS, HEX, BUILDINGS, DAILY, NOMBRE_TEMA } from '../config.js';
+import { W, H, COLORS, HEX, BUILDINGS, DAILY, NOMBRE_TEMA, VERSION } from '../config.js';
 import { nube, loginUrl } from '../nube.js';
 import { porCobrarLogros, porcentaje } from '../logros.js';
 import { pruebaDisponible } from '../prueba.js';
@@ -8,6 +8,7 @@ import { cobrarCofreSemanal } from '../bonos.js';
 import { save, persist, isBuilt, dailyAvailable, dailyIndex, today } from '../save.js';
 import { EVENTO, eventoActivo, diasRestantes } from '../evento.js';
 import { retoNumero } from '../reto.js';
+import { acertijoNumero } from '../acertijo.js';
 import { abrirAjustes } from '../ajustes.js';
 import { sfx } from '../sfx.js';
 import { txt, background, icon, button, toast, confetti } from '../ui.js';
@@ -72,9 +73,15 @@ export default class Menu extends Phaser.Scene {
     } else {
       button(this, W / 2, 1040, 640, 150, 'Jugar', 0x5ac85a, () => this.scene.start('Game', { reto: false, modo: null }), { size: 72 });
     }
-    const hecho = save.reto.last === today();
-    const rb = button(this, W / 2 - 165, 1182, 310, 104, hecho ? `Reto #${retoNumero(today())} ✓` : `Reto del día`,
-      hecho ? 0x5a4a8a : 0x7a4ad8, () => this.scene.start('Game', { reto: true }), { size: 38 });
+    // Retos del día: el Reto (limpia N líneas) y el Acertijo (deja el tablero vacío)
+    const nHechos = (save.reto.last === today() ? 1 : 0) + (save.acertijo.last === today() ? 1 : 0);
+    const hecho = nHechos === 2;
+    const rb = button(this, W / 2 - 165, 1182, 310, 104, `Retos ${nHechos}/2`,
+      hecho ? 0x5a4a8a : 0x7a4ad8, () => this.openRetos(), { size: 38 });
+    if (!save.acertijo.last && !save.acertijoVisto) {
+      const na = txt(this, W / 2 - 40, 1138, '¡NUEVO!', 26, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12).setDepth(5);
+      this.tweens.add({ targets: na, scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
+    }
     const av = button(this, W / 2 + 165, 1182, 310, 104, 'Aventura', 0x2e9a5a, () => this.scene.start('Aventura'), { size: 40 });
     if (!(save.aventura.estrellas || []).some((e) => e > 0)) {
       const nva = txt(this, W / 2 + 290, 1138, '¡NUEVO!', 26, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12).setDepth(5);
@@ -175,7 +182,7 @@ export default class Menu extends Phaser.Scene {
       confetti(this, W / 2, 700, 90);
       toast(this, `¡Quedaste #${p.lugar} en el ranking de la semana pasada! +${p.premio} ladrillos`, 700, 3500);
     }).catch(() => {});
-    txt(this, W / 2, H - 60, 'v2.1 · Español · English · Português', 24, '#ffffffaa', { weight: '500' });
+    txt(this, W / 2, H - 60, `v${VERSION} · Español · English · Português`, 24, '#ffffffaa', { weight: '500' });
   }
 
   bannerEvento() {
@@ -265,6 +272,39 @@ export default class Menu extends Phaser.Scene {
     c.setInteractive(new Phaser.Geom.Circle(0, 0, 58), Phaser.Geom.Circle.Contains);
     let v = on;
     c.on('pointerdown', () => { v = !v; im.setAlpha(v ? 1 : 0.35); drawSlash(v); cb(v); sfx.click(); });
+  }
+
+  openRetos() {
+    if (!save.acertijoVisto) { save.acertijoVisto = true; persist(); }
+    const layer = this.add.container(0, 0).setDepth(300);
+    layer.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.65).setInteractive());
+    const panel = this.add.container(W / 2, 960).setScale(0.3);
+    layer.add(panel);
+    this.tweens.add({ targets: panel, scale: 1, duration: 320, ease: 'Back.Out' });
+    const g = this.add.graphics();
+    g.fillStyle(0x4a2a8a, 1); g.fillRoundedRect(-460, -430, 920, 870, 50);
+    g.fillStyle(0xf6f2ff, 1); g.fillRoundedRect(-460, -440, 920, 860, 50);
+    panel.add(g);
+    panel.add(txt(this, 0, -360, 'Retos del día', 64, '#2a1a5e'));
+    panel.add(txt(this, 0, -292, 'Iguales para todos · cambian a medianoche', 28, '#6a5a8a', { weight: '700' }));
+    const cards = [
+      { y: -140, titulo: `Reto #${retoNumero(today())}`, sub: 'Limpia las líneas que te pide con 3 piezas', hecho: save.reto.last === today(), color: 0x7a4ad8, ir: () => this.scene.start('Game', { reto: true }) },
+      { y: 110, titulo: `Acertijo #${acertijoNumero(today())}`, sub: 'Deja el tablero VACÍO: el orden importa', hecho: save.acertijo.last === today(), color: 0xd8602a, ir: () => this.scene.start('Game', { acertijo: true }), nuevo: !save.acertijo.last },
+    ];
+    cards.forEach((k) => {
+      const card = this.add.graphics();
+      card.fillStyle(0xffffff, 1); card.fillRoundedRect(-420, k.y - 105, 840, 210, 30);
+      card.lineStyle(5, k.hecho ? 0x4ab86a : 0xd6d0ea, 1); card.strokeRoundedRect(-420, k.y - 105, 840, 210, 30);
+      panel.add(card);
+      panel.add(txt(this, -380, k.y - 45, k.titulo + (k.hecho ? ' ✓' : ''), 42, '#2a1a5e').setOrigin(0, 0.5));
+      const st = txt(this, -380, k.y + 10, k.sub, 28, '#6a5a8a', { weight: '700' }).setOrigin(0, 0.5);
+      if (st.width > 500) st.setScale(500 / st.width);
+      panel.add(st);
+      panel.add(txt(this, -380, k.y + 58, k.hecho ? 'Premio cobrado: juega por diversión' : 'Premio de hoy sin cobrar', 26, k.hecho ? '#4a9a5a' : '#c87a1a', { weight: '700' }).setOrigin(0, 0.5));
+      panel.add(button(this, 270, k.y, 220, 110, k.hecho ? 'Otra vez' : 'Jugar', k.hecho ? 0x8a7aa8 : k.color, k.ir, { size: 36 }));
+      if (k.nuevo) panel.add(txt(this, 330, k.y - 80, '¡NUEVO!', 26, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12));
+    });
+    panel.add(button(this, 0, 340, 420, 100, 'Cerrar', 0x3a7ad8, () => layer.destroy(), { size: 40 }));
   }
 
   openMisiones() {
