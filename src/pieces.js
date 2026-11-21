@@ -88,6 +88,15 @@ export function anyFit(board, cells) {
   return false;
 }
 
+// Bandeja de novato: solo piezas de 1 a 3 cuadritos (el tablero está vacío, todas caben)
+export function makeTrayChica(rnd = Math.random) {
+  const una = () => {
+    for (let k = 0; k < 60; k++) { const p = randomPiece(rnd); if (p.cells.length <= 3) return p; }
+    return { cells: [[0, 0], [0, 1]], color: COLORS[0] };
+  };
+  return [una(), una(), una()];
+}
+
 // Generador justo: al menos una pieza de la bandeja cabe (si existe alguna forma posible)
 // base (opcional) = tablero solo con los huecos fijos del nivel: no salen piezas que ahí no caben nunca (p. ej. el 3×3)
 export function makeTray(board, rnd = Math.random, raras = false, base = null) {

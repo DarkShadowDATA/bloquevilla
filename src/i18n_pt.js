@@ -140,7 +140,7 @@ export default {
   'Cofres de misiones': 'Baús de missões', 'Medallas': 'Medalhas', 'Colección': 'Coleção', 'Las piezas y el tiempo se cuentan desde noviembre de 2026.': 'Peças e tempo são contados desde novembro de 2026.',
   // Partida
   'un poder': 'um poder', 'dos poderes': 'dois poderes', 'Traes {} de la tienda': 'Você traz {} da loja', '💰 Pozo de la semana · sin poderes': '💰 Pote da semana · sem poderes',
-  'Arrastra una pieza al tablero': 'Arraste uma peça para o tabuleiro', 'Récord 60 s: {}': 'Recorde 60 s: {}', 'Récord {}': 'Recorde {}', 'Reto de {}: {}': 'Desafio de {}: {}',
+  'Llena una fila o columna completa para borrarla': 'Complete uma linha ou coluna inteira para apagá-la', 'Arrastra una pieza al tablero': 'Arraste uma peça para o tabuleiro', 'Récord 60 s: {}': 'Recorde 60 s: {}', 'Récord {}': 'Recorde {}', 'Reto de {}: {}': 'Desafio de {}: {}',
   'PODERES · duran esta partida': 'PODERES · duram esta partida', '¡Bloque DORADO! Limpia su línea para ganar ladrillos extra': 'Bloco DOURADO! Limpe a linha dele para ganhar tijolos extras',
   '¡ORO! +{}': 'OURO! +{}', '¡x{} LÍNEAS!': 'x{} LINHAS!', '¡DOBLE!': 'DUPLA!', '¡Línea!': 'Linha!', 'Líneas: {} / {}': 'Linhas: {} / {}', '¡TABLERO LIMPIO!': 'TABULEIRO LIMPO!',
   '¡COMBO x{}!': 'COMBO x{}!', '¡IMPARABLE x{}!': 'IMPARÁVEL x{}!', '¡EN LLAMAS x{}!': 'PEGANDO FOGO x{}!', 'Combo x{} activo': 'Combo x{} ativo',

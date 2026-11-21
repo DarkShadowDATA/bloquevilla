@@ -142,7 +142,7 @@ export default {
   'Cofres de misiones': 'Mission chests', 'Medallas': 'Medals', 'Colección': 'Collection', 'Las piezas y el tiempo se cuentan desde noviembre de 2026.': 'Pieces and time are counted since November 2026.',
   // Partida
   'un poder': 'one power', 'dos poderes': 'two powers', 'Traes {} de la tienda': 'You bring {} from the shop', '💰 Pozo de la semana · sin poderes': '💰 Weekly Pot · no powers',
-  'Arrastra una pieza al tablero': 'Drag a piece onto the board', 'Récord 60 s: {}': '60 s record: {}', 'Récord {}': 'Record {}', 'Reto de {}: {}': "{}'s challenge: {}",
+  'Llena una fila o columna completa para borrarla': 'Fill a whole row or column to clear it', 'Arrastra una pieza al tablero': 'Drag a piece onto the board', 'Récord 60 s: {}': '60 s record: {}', 'Récord {}': 'Record {}', 'Reto de {}: {}': "{}'s challenge: {}",
   'PODERES · duran esta partida': 'POWERS · last this game', '¡Bloque DORADO! Limpia su línea para ganar ladrillos extra': 'GOLD block! Clear its line for extra bricks',
   '¡ORO! +{}': 'GOLD! +{}', '¡x{} LÍNEAS!': 'x{} LINES!', '¡DOBLE!': 'DOUBLE!', '¡Línea!': 'Line!', 'Líneas: {} / {}': 'Lines: {} / {}', '¡TABLERO LIMPIO!': 'CLEAN BOARD!',
   '¡COMBO x{}!': 'COMBO x{}!', '¡IMPARABLE x{}!': 'UNSTOPPABLE x{}!', '¡EN LLAMAS x{}!': 'ON FIRE x{}!', 'Combo x{} activo': 'Combo x{} active',

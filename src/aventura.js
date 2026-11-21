@@ -31,7 +31,7 @@ export const NIVELES = [
   { t: 'lineas', n: 3, p: 15, nombre: 'Primeros pasos' },
   { t: 'puntos', n: 400, p: 15, nombre: 'Calentando' },
   { t: 'hielo', n: 2, p: 18, nombre: 'Hielo fino', plantilla: ['........', '........', '.rr..bb.', 'rrI..Ibb', '........', '........', '........', '........'] },
-  { t: 'lineas', n: 6, p: 18, nombre: 'Seis de seis' },
+  { t: 'lineas', n: 6, p: 20, nombre: 'Seis de seis' },
   { t: 'oro', n: 2, p: 18, nombre: 'Fiebre del oro', plantilla: ['........', '........', 'gG.yy...', '........', '........', '...ppG..', '........', '........'], oro: 0.5 },
   { t: 'bombas', n: 1, p: 15, nombre: 'Primera bomba', plantilla: ['........', '........', '........', 'ooo.Booo', '........', '........', '........', '........'] },
   { t: 'combo', n: 3, p: 20, nombre: 'En racha' },
@@ -39,7 +39,7 @@ export const NIVELES = [
   { t: 'puntos', n: 1200, p: 26, nombre: 'Mil y algo' },
   { t: 'jefe', n: 12, p: 26, nombre: 'El Topo Gigante', jefe: { id: 'topo', cada: 4, cant: 2 } },
   { t: 'oro', n: 4, p: 24, nombre: 'Mina dorada', plantilla: ['G......G', '........', '..rrrr..', '........', '........', '..bbbb..', '........', 'G......G'], oro: 0.45 },
-  { t: 'lineas', n: 12, p: 30, nombre: 'Doce líneas' },
+  { t: 'lineas', n: 12, p: 36, nombre: 'Doce líneas' },
   { t: 'combo', n: 4, p: 24, nombre: 'En llamas' },
   { t: 'hielo', n: 5, p: 30, nombre: 'Era de hielo', plantilla: ['I......I', '........', '..I..I..', '.yyyyyy.', '........', '..I..I..', '........', '........'] },
   { t: 'bombas', n: 3, p: 28, nombre: 'Campo minado', plantilla: ['Bkk..kkk', '........', '........', '........', 'ooo.Boo.', '........', '........', '.gg..ggB'] },
@@ -146,10 +146,14 @@ export function cobrarMeta() {
 }
 
 // Estrellas según cuántas piezas sobraron
-export function calcularEstrellas(piezasUsadas, total) {
+// Niveles de líneas: con piezas de ~3.5 cuadritos el 35 % sobrante casi nunca se alcanzaba (probador, 20 nov 2026),
+// así que ahí piden 20 % y 8 %. Los demás tipos siguen con 35 % y 15 %.
+export const UMBRAL_ESTRELLAS = { lineas: [0.20, 0.08], otros: [0.35, 0.15] };
+export function calcularEstrellas(piezasUsadas, total, tipo) {
+  const [tres, dos] = UMBRAL_ESTRELLAS[tipo === 'lineas' ? 'lineas' : 'otros'];
   const sobran = total - piezasUsadas;
-  if (sobran >= Math.ceil(total * 0.35)) return 3;
-  if (sobran >= Math.ceil(total * 0.15)) return 2;
+  if (sobran >= Math.ceil(total * tres)) return 3;
+  if (sobran >= Math.ceil(total * dos)) return 2;
   return 1;
 }
 

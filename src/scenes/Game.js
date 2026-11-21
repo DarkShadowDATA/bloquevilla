@@ -3,7 +3,7 @@ import {
   W, H, N, CELL, BX, BY, TRAY_Y, SLOTS, TRAY_CELL, COLORS, HEX, SCORE, BRICKS, NOMBRE_TEMA,
   COMBO_GRACE, LINES_PER_OFFER, conArt, BUILDINGS, TEMAS_IMG, TIEMPO, ORO, PELIGRO,
 } from '../config.js';
-import { size, canPlace, anyFit, makeTray, findLines, rotate } from '../pieces.js';
+import { size, canPlace, anyFit, makeTray, makeTrayChica, findLines, rotate } from '../pieces.js';
 import { save, persist, isBuilt, today, ayer } from '../save.js';
 import { generarReto, RETO_PREMIO } from '../reto.js';
 import { EVENTO, eventoActivo, sumarFlores, temaBloques } from '../evento.js';
@@ -318,7 +318,10 @@ export default class Game extends Phaser.Scene {
     // Cada tanda sale de la semilla de la partida: un amigo con el mismo link recibe las mismas piezas
     const rnd = rngDe(`${this.semilla}:t${this.trayN++}`);
     this.spawnPeligros(rnd);
-    const defs = makeTray(this.board, rnd, !!(this.av && this.av.def.raras), this.av ? this.av.base : null);
+    // Ayuda al novato: en sus 3 primeras partidas clásicas, la primera bandeja trae solo piezas chicas (1 a 3 cuadritos)
+    const novato = this.trayN === 1 && save.games < 3 && !this.tiempo && !this.vs && !this.av;
+    if (novato) this.avisoFila = true;
+    const defs = novato ? makeTrayChica(rnd) : makeTray(this.board, rnd, !!(this.av && this.av.def.raras), this.av ? this.av.base : null);
     if (rnd() < (this.av && this.av.def.oro != null ? this.av.def.oro : oroChance())) {
       const d = defs[Math.floor(rnd() * defs.length)];
       d.gold = Math.floor(rnd() * d.cells.length);
@@ -450,6 +453,10 @@ export default class Game extends Phaser.Scene {
       this.addBlock(r + dr, c + dc, col, true);
     });
     this.addScore(pc.cells.length * SCORE.perCell);
+    if (this.avisoFila) {
+      this.avisoFila = false;
+      if (!window.__capture) this.time.delayedCall(300, () => toast(this, 'Llena una fila o columna completa para borrarla', 352, 3000));
+    }
     sfx.place();
     vibe(12);
 
@@ -1254,7 +1261,7 @@ export default class Game extends Phaser.Scene {
     this.cancelDrag();
     const { def, usadas } = this.av;
     this.av.fin = true;
-    const estrellas = gano ? calcularEstrellas(usadas, def.p) : 0;
+    const estrellas = gano ? calcularEstrellas(usadas, def.p, def.t) : 0;
     const antes = (save.aventura.estrellas || [])[this.nivel] || 0;
     const premio = gano ? guardarResultado(this.nivel, estrellas) : 0;
     this.mision('estrellas', Math.max(0, estrellas - antes)); this.mision('partidas', 1); this.mision('puntos', this.score);
