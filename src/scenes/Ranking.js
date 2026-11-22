@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { W, H } from '../config.js';
 import { save } from '../save.js';
-import { txt, background, icon, button } from '../ui.js';
+import { txt, background, icon, button, backBtn, topBar } from '../ui.js';
 import { verTop, PREMIO_RANKING } from '../ranking.js';
 import { pedirApodo } from '../share.js';
 
@@ -11,9 +11,10 @@ export default class Ranking extends Phaser.Scene {
   create() {
     background(this, 'bg_menu', 'grad_menu');
     this.add.rectangle(W / 2, H / 2, W, H, 0x120c30, 0.75);
-    button(this, 120, 110, 170, 84, 'Menú', 0x2c3070, () => this.scene.start('Menu'), { size: 32 });
-    txt(this, W / 2, 230, 'Ranking semanal', 72, '#ffd93d', { stroke: '#3a1250', strokeW: 10 });
-    txt(this, W / 2, 315, 'Contrarreloj 60 s · se reinicia cada lunes', 32, '#d8d0f0', { weight: '700' });
+    backBtn(this, () => this.scene.start('Menu'));
+    topBar(this, 'Ranking semanal');
+    icon(this, 905, 110, 'ui_trofeo', 80).setDepth(45);
+    txt(this, W / 2, 272, 'Contrarreloj 60 s · se reinicia cada lunes', 32, '#d8d0f0', { weight: '700' });
     // premios
     const g = this.add.graphics();
     g.fillStyle(0x0c0f30, 0.6); g.fillRoundedRect(120, 365, 840, 100, 50);

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { W, H } from '../config.js';
 import { save } from '../save.js';
-import { confetti } from '../ui.js';
+import { confetti, marco, backBtn, UI } from '../ui.js';
 import { sfx } from '../sfx.js';
 import { txt, background, icon, button, toast } from '../ui.js';
 import { NIVELES, MUNDOS, JEFES, META_ESTRELLAS, PREMIO_META, mundoDe, textoObjetivo, iconoObjetivo, desbloqueado, estrellasTotales, metaLista, cobrarMeta } from '../aventura.js';
@@ -98,9 +98,10 @@ export default class Aventura extends Phaser.Scene {
     this.input.on('wheel', (p, o, dx, dy) => { this.mapa.y = Phaser.Math.Clamp(this.mapa.y - dy, this.minY, this.maxY); });
     // barra superior
     const top = this.add.graphics().setDepth(50);
-    top.fillStyle(0x120c30, 0.85); top.fillRect(0, 0, W, 250);
-    button(this, 120, 110, 170, 84, 'Menú', 0x2c3070, () => this.scene.start('Menu'), { size: 32 }).setDepth(51);
-    txt(this, W / 2, 105, 'Aventura', 70, '#ffd93d', { stroke: '#3a1250', strokeW: 10 }).setDepth(51);
+    top.fillStyle(UI.tinta, 0.9); top.fillRect(0, 0, W, 250);
+    top.fillStyle(0x000000, 0.18); top.fillRect(0, 250, W, 6);
+    backBtn(this, () => this.scene.start('Menu')).setDepth(51);
+    txt(this, W / 2, 105, 'Aventura', 52, '#ffffff').setDepth(51);
     const totalEst = estrellasTotales();
     icon(this, 822, 110, 'ui_estrella', 56).setDepth(51);
     txt(this, 940, 110, `${totalEst}/${n * 3}`, 34, '#ffffff').setDepth(51);
@@ -139,8 +140,7 @@ export default class Aventura extends Phaser.Scene {
     const panel = this.add.container(W / 2, 960).setScale(0.3);
     layer.add(panel);
     const g = this.add.graphics();
-    g.fillStyle(0x6a3ab8, 1); g.fillRoundedRect(-400, -360, 800, 720, 50);
-    g.fillStyle(0xfff7e8, 1); g.fillRoundedRect(-400, -370, 800, 710, 50);
+    marco(g, -400, -370, 800, 710, 0x6a3ab8);
     panel.add(g);
     panel.add(this.add.rectangle(0, 0, 800, 710).setInteractive());
     panel.add(txt(this, 0, -300, `Nivel ${i + 1}`, 70, '#46286e'));

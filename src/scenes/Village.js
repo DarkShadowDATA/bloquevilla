@@ -4,7 +4,7 @@ import { PIEZAS, TROFEOS_POS } from '../coleccion.js';
 import { save, persist, isBuilt } from '../save.js';
 import { eventoActivo } from '../evento.js';
 import { sfx, vibe } from '../sfx.js';
-import { txt, background, icon, button, toast, chip, confetti } from '../ui.js';
+import { txt, background, icon, button, toast, chip, confetti, marco, backBtn, topBar } from '../ui.js';
 import { track } from '../stats.js';
 
 // Posiciones alineadas con los 6 terrenos del fondo bg_village (suelo = parte baja del edificio)
@@ -35,7 +35,8 @@ export default class Village extends Phaser.Scene {
     if (!this.textures.exists(Z.bg)) (this.zona === 3 ? this.drawCastillo() : this.zona === 2 ? this.drawMuelle() : this.drawScenery());
     if (this.zona === 1 && eventoActivo()) this.decorarMuertos();
 
-    button(this, 120, 110, 170, 84, 'Menú', 0x2c3070, () => this.scene.start('Menu'), { size: 32 }).setDepth(50);
+    topBar(this, null, { h: 300, depth: 44, alpha: 0.72 });
+    backBtn(this, () => this.scene.start('Menu')).setDepth(50);
     this.brickChip = chip(this, 905, 110, 230, 'ui_ladrillo', save.bricks).setDepth(50);
     this.progress = this.add.graphics().setDepth(50);
     this.progressText = txt(this, W / 2, 215, '', 38, '#ffffff', { stroke: '#1e3a5a', strokeW: 8 }).setDepth(50);
@@ -265,8 +266,7 @@ export default class Village extends Phaser.Scene {
     const panel = this.add.container(W / 2, 980).setScale(0.3);
     layer.add(panel);
     const g = this.add.graphics();
-    g.fillStyle(0xaa5a1e, 1); g.fillRoundedRect(-420, -480, 840, 960, 50);
-    g.fillStyle(0xfff7e8, 1); g.fillRoundedRect(-420, -490, 840, 950, 50);
+    marco(g, -420, -490, 840, 950, 0xaa5a1e);
     panel.add(g);
     panel.add(this.add.rectangle(0, 0, 840, 950).setInteractive());
     panel.add(txt(this, 0, -420, b.name, 70, '#46286e'));
@@ -367,8 +367,7 @@ export default class Village extends Phaser.Scene {
     const panel = this.add.container(W / 2, 1080).setScale(0.3);
     layer.add(panel);
     const g = this.add.graphics();
-    g.fillStyle(0xaa5a1e, 1); g.fillRoundedRect(-440, -380, 880, 880, 50);
-    g.fillStyle(0xfff7e8, 1); g.fillRoundedRect(-440, -390, 880, 870, 50);
+    marco(g, -440, -390, 880, 870, 0xaa5a1e);
     g.lineStyle(8, 0xe0a33a, 1); g.strokeRoundedRect(-436, -386, 872, 862, 46);
     panel.add(g);
     panel.add(txt(this, 0, -305, '🏰', 90));

@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { W, H } from '../config.js';
 import { save } from '../save.js';
 import { nube, loginUrl } from '../nube.js';
-import { txt, background, button, toast, shadowAmount } from '../ui.js';
+import { txt, background, button, toast, shadowAmount, backBtn, topBar, icon } from '../ui.js';
 import { verPozo, empezarPozo, usd } from '../pozo.js';
 
 // Pozo de la semana: premios en Shadow retirable (USDT/USDC) para el top 5. Misma regla para todos: modo clásico sin poderes,
@@ -13,9 +13,10 @@ export default class Pozo extends Phaser.Scene {
   create() {
     background(this, 'bg_menu', 'grad_menu');
     this.add.rectangle(W / 2, H / 2, W, H, 0x120c30, 0.78);
-    button(this, 120, 110, 170, 84, 'Menú', 0x2c3070, () => this.scene.start('Menu'), { size: 32 });
-    txt(this, W / 2, 230, '💰 Pozo de la semana', 70, '#ffd93d', { stroke: '#3a1250', strokeW: 10 });
-    txt(this, W / 2, 312, 'Premios en Shadow que puedes cambiar a USDT o USDC', 32, '#d8d0f0', { weight: '700' });
+    backBtn(this, () => this.scene.start('Menu'));
+    topBar(this, 'Pozo de la semana');
+    icon(this, 905, 110, 'ui_shadow', 84).setDepth(45);
+    txt(this, W / 2, 272, 'Premios en Shadow que puedes cambiar a USDT o USDC', 32, '#d8d0f0', { weight: '700' });
     this.estado = txt(this, W / 2, 860, 'Cargando…', 40, '#ffffff', { weight: '700' });
     if (!nube.on) {
       this.estado.setText(nube.can ? 'Para jugar el Pozo inicia sesión\ncon tu cuenta DarkShadow' : 'El Pozo se juega en\nbloquevilla.darkshadow-studios.com');

@@ -11,7 +11,7 @@ import { retoNumero } from '../reto.js';
 import { acertijoNumero } from '../acertijo.js';
 import { abrirAjustes } from '../ajustes.js';
 import { sfx } from '../sfx.js';
-import { txt, background, icon, button, toast, confetti } from '../ui.js';
+import { txt, background, icon, button, toast, confetti, marco, chip, tile, badge, navBar, dibujo, UI } from '../ui.js';
 import { premioPendiente, cobrarPremio } from '../ranking.js';
 import { multRegalo } from '../bonos.js';
 import { misionesHoy, porCobrar, cobrar, abrirCofre, cofreListo, cumplida, textoMision, iconoMision, premioMision, ladrillosCofre, faltaParaNuevas } from '../misiones.js';
@@ -23,112 +23,64 @@ export default class Menu extends Phaser.Scene {
   create() {
     background(this, 'bg_menu', 'grad_menu');
     this.floatingBlocks();
+    // velo oscuro arriba y abajo para que todo se lea parejo sobre el fondo
+    const velo = this.add.graphics();
+    for (let i = 0; i < 26; i++) {
+      velo.fillStyle(UI.tinta, 0.5 * (1 - i / 26)); velo.fillRect(0, i * 20, W, 20);
+      velo.fillStyle(UI.tinta, 0.6 * (i / 26)); velo.fillRect(0, 1400 + i * 20, W, 20);
+    }
 
-    // Logo: imagen si existe, si no letras de colores
+    // Logo
     if (this.textures.exists('logo')) {
-      const lg = icon(this, W / 2, 390, 'logo', 860).setScale(0);
-      const s = 860 / this.textures.get('logo').getSourceImage().width;
+      const lg = icon(this, W / 2, 330, 'logo', 780).setScale(0);
+      const s = 780 / this.textures.get('logo').getSourceImage().width;
       this.tweens.add({ targets: lg, scale: s, duration: 600, ease: 'Back.Out' });
     } else {
-      const word = 'Bloquevilla';
-      const sizeL = 132;
-      const widths = [...word].map((ch) => this.measure(ch, sizeL));
-      let x = W / 2 - widths.reduce((a, b) => a + b, 0) / 2;
-      [...word].forEach((ch, i) => {
-        const col = '#' + HEX[COLORS[i % COLORS.length]].toString(16).padStart(6, '0');
-        const t = txt(this, x + widths[i] / 2, 390, ch, sizeL, col, { stroke: '#1e1446', strokeW: 16 }).setScale(0);
-        this.tweens.add({ targets: t, scale: 1, duration: 420, delay: i * 55, ease: 'Back.Out' });
-        this.tweens.add({ targets: t, y: 375, duration: 900, delay: 800 + i * 90, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-        x += widths[i];
-      });
+      txt(this, W / 2, 330, 'Bloquevilla', 120, '#ffffff', { stroke: UI.texto, strokeW: 14 });
     }
-    txt(this, W / 2, 545, 'Puzzle de bloques · reconstruye tu pueblo', 36, '#ffffff', { weight: '700', stroke: '#1e144688', strokeW: 6 });
+    txt(this, W / 2, 468, 'Puzzle de bloques · reconstruye tu pueblo', 32, '#ffffff', { weight: '700', stroke: '#1c154288', strokeW: 6 });
 
-    // Estadísticas
     const cofreSem = cobrarCofreSemanal();   // antes de pintar los ladrillos
     const built = save.built.length;
+    // Fila de datos: récord, ladrillos y pueblo
+    [['ui_trofeo', save.record.toLocaleString('es-MX')], ['ui_ladrillo', String(save.bricks)], ['ui_estrella', `${built}/${BUILDINGS.length}`]]
+      .forEach(([k, v], i) => chip(this, W / 2 + (i - 1) * 320, 578, 290, k, v));
+
     if (eventoActivo()) this.bannerEvento();
-    else {
-      // Pozo de la semana: premios en Shadow retirable
-      const pb = button(this, W / 2, 720, 640, 110, '💰 Pozo de la semana', 0xd8a020, () => this.scene.start('Pozo'), { size: 44 });
-      this.tweens.add({ targets: pb, scale: 1.04, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-    }
+    else this.bannerPozo(712);
 
-    this.statRow(890, [
-      ['ui_trofeo', save.record.toLocaleString('es-MX')],
-      ['ui_ladrillo', String(save.bricks)],
-      ['ui_estrella', `${built}/${BUILDINGS.length}`],
-    ]);
-
+    // Jugar (o Continuar + Nueva)
     if (save.partida) {
       const pts = (save.partida.score || 0).toLocaleString('es-MX');
-      const cb = button(this, W / 2 - 110, 1040, 420, 150, 'Continuar', 0x5ac85a, () => this.scene.start('Game', { reto: false, modo: null }), { size: 60 });
-      txt(this, W / 2 - 110, 1100, `Tu partida: ${pts} pts`, 24, '#ffffff', { weight: '700' });
-      this.tweens.add({ targets: cb, scale: 1.04, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-      button(this, W / 2 + 215, 1040, 200, 150, 'Nueva', 0x3c8a4a, () => {
+      const cb = button(this, W / 2 - 130, 880, 640, 170, 'Continuar', UI.verde, () => this.scene.start('Game', { reto: false, modo: null }), { size: 66 });
+      cb.label.setY(-20);
+      cb.add(txt(this, 0, 40, `Tu partida: ${pts} pts`, 28, '#ffffffdd', { weight: '700' }));
+      this.tweens.add({ targets: cb, scale: 1.025, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+      button(this, W / 2 + 330, 880, 240, 170, 'Nueva', 0x23955a, () => {
         save.partida = null;
         persist();
         this.scene.start('Game', { reto: false, modo: null, nueva: true });
-      }, { size: 40 });
+      }, { size: 42 });
     } else {
-      button(this, W / 2, 1040, 640, 150, 'Jugar', 0x5ac85a, () => this.scene.start('Game', { reto: false, modo: null }), { size: 72 });
+      const jb = button(this, W / 2, 880, 900, 170, 'Jugar', UI.verde, () => this.scene.start('Game', { reto: false, modo: null }), { size: 80 });
+      this.tweens.add({ targets: jb, scale: 1.025, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
     }
-    // Retos del día: el Reto (limpia N líneas) y el Acertijo (deja el tablero vacío)
+
+    // Modos de juego: 2 × 2 tarjetas
+    const TW = 440, TH = 170, X1 = W / 2 - 230, X2 = W / 2 + 230, Y1 = 1100, Y2 = 1295;
+    const estrellas = (save.aventura.estrellas || []).reduce((a, b) => a + (b || 0), 0);
+    const avNuevo = !(save.aventura.estrellas || []).some((e) => e > 0);
+    tile(this, X1, Y1, TW, TH, { title: 'Aventura', sub: avNuevo ? '60 niveles y jefes' : `${estrellas}/180 estrellas`, color: UI.verde, dibujo: (sc, x, y) => dibujo(sc, 'mapa', x, y, 1.1), onClick: () => this.scene.start('Aventura') });
+    if (avNuevo) badge(this, X1 + TW / 2 - 40, Y1 - TH / 2 + 6, 'NUEVO');
     const nHechos = (save.reto.last === today() ? 1 : 0) + (save.acertijo.last === today() ? 1 : 0);
-    const hecho = nHechos === 2;
-    const rb = button(this, W / 2 - 165, 1182, 310, 104, `Retos ${nHechos}/2`,
-      hecho ? 0x5a4a8a : 0x7a4ad8, () => this.openRetos(), { size: 38 });
-    if (!save.acertijo.last && !save.acertijoVisto) {
-      const na = txt(this, W / 2 - 40, 1138, '¡NUEVO!', 26, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12).setDepth(5);
-      this.tweens.add({ targets: na, scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
-    }
-    const av = button(this, W / 2 + 165, 1182, 310, 104, 'Aventura', 0x2e9a5a, () => this.scene.start('Aventura'), { size: 40 });
-    if (!(save.aventura.estrellas || []).some((e) => e > 0)) {
-      const nva = txt(this, W / 2 + 290, 1138, '¡NUEVO!', 26, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12).setDepth(5);
-      this.tweens.add({ targets: [nva, av], scale: 1.08, duration: 500, yoyo: true, repeat: -1 });
-    }
-    if (!hecho) this.tweens.add({ targets: rb, scale: 1.04, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-    const tb60 = button(this, W / 2 - 75, 1300, 490, 104, 'Contrarreloj 60 s', 0x1f9aa8, () => this.scene.start('Game', { reto: false, modo: 'tiempo' }), { size: 42 });
-    if (!save.tiempo.partidas) {
-      const nuevo = txt(this, W / 2 + 140, 1258, '¡NUEVO!', 28, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12).setDepth(5);
-      this.tweens.add({ targets: nuevo, scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
-    } else if (save.tiempo.record) {
-      tb60.label.setText(`60 s · récord ${save.tiempo.record.toLocaleString('es-MX')}`).setFontSize(36);
-    }
-    button(this, W / 2 - 165, 1418, 310, 104, 'Mi pueblo', 0xff8c2b, () => this.scene.start('Village'), { size: 40 });
-    button(this, W / 2 + 245, 1300, 150, 104, '🏆', 0xd8a020, () => this.scene.start('Ranking'), { size: 52 });
-    button(this, W / 2 + 165, 1418, 310, 104, '  Tienda', 0xd8a020, () => this.scene.start('Shop'), { size: 40, iconKey: 'ui_tienda' });
-    if (!save.tienda.visto) {
-      const nv = txt(this, W / 2 + 290, 1372, '¡NUEVO!', 26, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12).setDepth(5);
-      this.tweens.add({ targets: nv, scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
-    }
+    tile(this, X2, Y1, TW, TH, { title: 'Retos del día', sub: nHechos === 2 ? 'Hechos hoy ✓' : `${nHechos}/2 hechos hoy`, color: UI.morado, dibujo: (sc, x, y) => dibujo(sc, 'calendario', x, y, 1.1), onClick: () => this.openRetos() });
+    if (nHechos < 2) badge(this, X2 + TW / 2 - 30, Y1 - TH / 2 + 6, !save.acertijo.last && !save.acertijoVisto ? 'NUEVO' : String(2 - nHechos));
+    const subT = !save.tiempo.partidas ? 'Limpia todo lo que puedas' : `Récord ${(save.tiempo.record || 0).toLocaleString('es-MX')}`;
+    tile(this, X1, Y2, TW, TH, { title: 'Contrarreloj 60 s', sub: subT, color: UI.turquesa, dibujo: (sc, x, y) => dibujo(sc, 'reloj', x, y, 1.1), onClick: () => this.scene.start('Game', { reto: false, modo: 'tiempo' }) });
+    if (!save.tiempo.partidas) badge(this, X1 + TW / 2 - 40, Y2 - TH / 2 + 6, 'NUEVO');
+    tile(this, X2, Y2, TW, TH, { title: 'Ranking', sub: 'Premios cada lunes', color: UI.oro, iconKey: 'ui_trofeo', iconSize: 76, onClick: () => this.scene.start('Ranking') });
 
-    // Misiones diarias (izquierda) y Regalo diario (derecha)
-    const M = misionesHoy();
-    const hechas = M.lista.filter(cumplida).length;
-    const pend = porCobrar();
-    const mb = button(this, W / 2 - 165, 1540, 310, 104, `Misiones ${hechas}/3`, 0x3a7ad8, () => this.openMisiones(), { size: 38 });
-    if (pend) {
-      this.tweens.add({ targets: mb, scale: 1.05, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-      const bc = this.add.circle(W / 2 - 22, 1494, 26, 0xe83a3a).setStrokeStyle(5, 0xffffff).setDepth(6);
-      const bt = txt(this, W / 2 - 22, 1494, String(pend), 30).setDepth(7);
-      this.tweens.add({ targets: [bc, bt], scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
-    } else if (!save.misionesVistas) {
-      const nv = txt(this, W / 2 - 40, 1494, '¡NUEVO!', 26, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12).setDepth(5);
-      this.tweens.add({ targets: nv, scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
-    }
-    if (dailyAvailable()) {
-      const b = button(this, W / 2 + 165, 1540, 310, 104, ' Regalo', 0xd84a8a, () => this.openDaily(), { size: 40, iconKey: 'ui_regalo' });
-      this.tweens.add({ targets: b, scale: 1.05, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-    } else if (!isBuilt('panaderia')) {
-      button(this, W / 2 + 165, 1540, 310, 104, 'Regalo 🔒', 0x6a5a7a, () => toast(this, 'Construye la Panadería para recibir regalos diarios', 1400, 2200), { size: 36 });
-    } else {
-      button(this, W / 2 + 165, 1540, 310, 104, 'Regalo ✓', 0x6a5a7a, () => toast(this, 'Vuelve mañana por tu regalo diario', 1400, 2000), { size: 36 });
-    }
-
-    // Ajustes
-    this.engrane(960, 120);
-    this.cuenta();
+    // Tema de bloques (si hay más de uno)
     const temas = ['clasico'];
     if (isBuilt('pozo')) temas.push('agua');
     if (save.muertos.tema) temas.push('muertos');
@@ -136,37 +88,38 @@ export default class Menu extends Phaser.Scene {
     save.tienda.temas.forEach((t) => temas.push(t));
     const prueba = pruebaDisponible();   // tema premium que hoy se presta por una partida
     if (prueba) temas.splice(1, 0, prueba);   // queda a un toque del Clásico
-    // Logros (izquierda) y tema de bloques (derecha)
-    const hayTemas = temas.length > 1;
-    const lx = hayTemas ? W / 2 - 165 : W / 2;
-    const lb = button(this, lx, 1668, 310, 90, `🏅 Logros ${porcentaje()}%`, 0x8a5a1a, () => this.scene.start('Logros'), { size: 32 });
-    const nuevosCol = nuevos();
-    const lp = porCobrarLogros() + nuevosCol.length + (premioListo() ? 1 : 0);
-    if (nuevosCol.length) this.time.delayedCall(900, () => this.sys.isActive() && toast(this, `📖 Nueva pieza en tu colección: ${nuevosCol[0].nombre}`, 1560, 2800));
-    if (lp) {
-      this.tweens.add({ targets: lb, scale: 1.05, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-      const bc = this.add.circle(lx + 140, 1626, 26, 0xe83a3a).setStrokeStyle(5, 0xffffff).setDepth(6);
-      const bt = txt(this, lx + 140, 1626, String(lp), 30).setDepth(7);
-      this.tweens.add({ targets: [bc, bt], scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
-    } else if (!save.logrosVistos) {
-      const nv = txt(this, lx + 110, 1626, '¡NUEVO!', 26, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12).setDepth(5);
-      this.tweens.add({ targets: nv, scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
-    }
-    if (hayTemas) {
+    if (temas.length > 1) {
       if (!temas.includes(save.theme)) save.theme = 'clasico';
       const nombre = { clasico: eventoActivo() ? 'Evento' : 'Clásico', agua: 'Agua', muertos: 'Día de Muertos', ...NOMBRE_TEMA };
-      const label = () => (save.theme === prueba ? `🎁 ${nombre[save.theme]}` : `🎨 ${nombre[save.theme]}`);
-      const tb = button(this, W / 2 + 165, 1668, 310, 90, label(), 0x2c6ab0, () => {
+      const label = () => (save.theme === prueba ? `🎁 Tema: ${nombre[save.theme]}` : `🎨 Tema: ${nombre[save.theme]}`);
+      const tb = button(this, W / 2, 1478, 520, 88, label(), UI.tinta2, () => {
         save.theme = temas[(temas.indexOf(save.theme) + 1) % temas.length];
         persist();
         tb.label.setText(label());
-        if (save.theme === prueba) toast(this, `Tema ${nombre[prueba]} gratis en tu próxima partida`, 1560, 2200);
-      }, { size: 34 });
-      if (prueba) {
-        const tg = txt(this, W / 2 + 215, 1622, '¡GRATIS HOY!', 24, '#ffffff', { stroke: '#7a2ad8', strokeW: 8 }).setAngle(-8).setDepth(5);
-        this.tweens.add({ targets: tg, scale: 1.12, duration: 500, yoyo: true, repeat: -1 });
-      }
+        if (save.theme === prueba) toast(this, `Tema ${nombre[prueba]} gratis en tu próxima partida`, 1380, 2200);
+      }, { size: 32 });
+      if (prueba) badge(this, W / 2 + 250, 1428, '¡GRATIS HOY!', UI.morado);
     }
+
+    // Barra de abajo: pueblo, tienda, misiones, regalo y logros
+    const M = misionesHoy();
+    const pend = porCobrar();
+    const nuevosCol = nuevos();
+    const lp = porCobrarLogros() + nuevosCol.length + (premioListo() ? 1 : 0);
+    const regaloHoy = dailyAvailable();
+    navBar(this, [
+      { label: 'Mi pueblo', iconKey: 'bld_casa', iconSize: 84, onClick: () => this.scene.start('Village') },
+      { label: 'Tienda', iconKey: 'ui_tienda', iconSize: 84, badge: !save.tienda.visto ? 'NUEVO' : null, onClick: () => this.scene.start('Shop') },
+      { label: `Misiones ${M.lista.filter(cumplida).length}/3`, dibujo: 'lista', badge: pend || (!save.misionesVistas ? 'NUEVO' : null), onClick: () => this.openMisiones() },
+      { label: 'Regalo', iconKey: 'ui_regalo', iconSize: 74, apagado: !regaloHoy, badge: regaloHoy ? '!' : null,
+        onClick: () => (regaloHoy ? this.openDaily() : toast(this, isBuilt('panaderia') ? 'Vuelve mañana por tu regalo diario' : 'Construye la Panadería para recibir regalos diarios', 1560, 2200)) },
+      { label: `Logros ${porcentaje()}%`, iconKey: 'medalla_oro', iconSize: 74, badge: lp || (!save.logrosVistos ? 'NUEVO' : null), onClick: () => this.scene.start('Logros') },
+    ]);
+    if (nuevosCol.length) this.time.delayedCall(900, () => this.sys.isActive() && toast(this, `📖 Nueva pieza en tu colección: ${nuevosCol[0].nombre}`, 1580, 2800));
+
+    // Cuenta (arriba a la izquierda) y ajustes (arriba a la derecha)
+    this.engrane(990, 100);
+    this.cuenta();
     // Cofre semanal de la Tesorería (zona 3): se cobra solo, una vez por semana
     if (cofreSem) {
       this.time.delayedCall(700, () => {
@@ -182,7 +135,28 @@ export default class Menu extends Phaser.Scene {
       confetti(this, W / 2, 700, 90);
       toast(this, `¡Quedaste #${p.lugar} en el ranking de la semana pasada! +${p.premio} ladrillos`, 700, 3500);
     }).catch(() => {});
-    txt(this, W / 2, H - 60, `v${VERSION} · Español · English · Português`, 24, '#ffffffaa', { weight: '500' });
+  }
+
+  // Tarjeta del Pozo de la semana (premios en Shadow)
+  bannerPozo(y) {
+    const c = this.add.container(W / 2, y);
+    const w = 900, h = 120;
+    const g = this.add.graphics();
+    g.fillStyle(0x000000, 0.25); g.fillRoundedRect(-w / 2 + 3, -h / 2 + 9, w - 6, h, 34);
+    g.fillGradientStyle(0xffc93c, 0xffc93c, 0xe08a12, 0xe08a12, 1);
+    g.fillRoundedRect(-w / 2, -h / 2, w, h, 34);
+    g.lineStyle(4, 0xfff0b8, 0.8); g.strokeRoundedRect(-w / 2, -h / 2, w, h, 34);
+    c.add(g);
+    c.add(icon(this, -w / 2 + 70, 0, 'ui_shadow', 84));
+    const t1 = txt(this, -w / 2 + 130, -20, 'Pozo de la semana', 40, '#3a2200').setOrigin(0, 0.5);
+    const t2 = txt(this, -w / 2 + 130, 24, 'Premios en Shadow para los mejores', 26, '#5a3a08', { weight: '700' }).setOrigin(0, 0.5);
+    [t1, t2].forEach((t) => { if (t.width > w - 230) t.setScale((w - 230) / t.width); });
+    c.add([t1, t2]);
+    const fl = this.add.graphics();
+    fl.lineStyle(9, 0x3a2200, 0.85); fl.beginPath(); fl.moveTo(w / 2 - 62, -18); fl.lineTo(w / 2 - 44, 0); fl.lineTo(w / 2 - 62, 18); fl.strokePath();
+    c.add(fl);
+    c.setInteractive(new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h), Phaser.Geom.Rectangle.Contains);
+    c.on('pointerdown', () => { sfx.click(); this.tweens.add({ targets: c, scale: 0.97, duration: 70, yoyo: true, onComplete: () => this.scene.start('Pozo') }); });
   }
 
   bannerEvento() {
@@ -191,15 +165,15 @@ export default class Menu extends Phaser.Scene {
     this.tweens.add({ targets: pp, angle: { from: -0.6, to: 0.6 }, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
     const m = this.add.image(W / 2, 710, 'evento_marco');
     const ratio = m.height / m.width;
-    const h = Math.min(820 * ratio, 230);
+    const h = Math.min(820 * ratio, 150);
     m.setDisplaySize(h / ratio, h);
     const dias = diasRestantes();
-    txt(this, W / 2, 680, 'DÍA DE MUERTOS', 50, '#ffd23f', { stroke: '#3a1240', strokeW: 8 });
+    txt(this, W / 2, 690, 'DÍA DE MUERTOS', 44, '#ffd23f', { stroke: '#3a1240', strokeW: 8 });
     const f = save.muertos.tema ? '¡Tema desbloqueado!' : `${save.muertos.flores}/${EVENTO.meta} flores`;
-    txt(this, W / 2 + 26, 740, `${f} · ${dias === 1 ? 'último día' : `quedan ${dias} días`}`, 30, '#ffffff', { weight: '700', stroke: '#3a1240', strokeW: 6 });
+    txt(this, W / 2 + 26, 738, `${f} · ${dias === 1 ? 'último día' : `quedan ${dias} días`}`, 30, '#ffffff', { weight: '700', stroke: '#3a1240', strokeW: 6 });
     const t = txt(this, 0, 0, `${f} · ${dias === 1 ? 'último día' : `quedan ${dias} días`}`, 30, '#ffffff', { weight: '700' });
     const w = t.width; t.destroy();
-    const fl = icon(this, W / 2 + 26 - w / 2 - 30, 740, 'ui_flor', 44);
+    const fl = icon(this, W / 2 + 26 - w / 2 - 30, 738, 'ui_flor', 44);
     this.tweens.add({ targets: fl, angle: 360, duration: 6000, repeat: -1 });
   }
 
@@ -235,25 +209,26 @@ export default class Menu extends Phaser.Scene {
   cuenta() {
     if (!nube.on && !nube.can) return;
     const label = nube.on ? `☁️ ${nube.name}`.slice(0, 18) : '👤 Iniciar sesión';
-    const b = button(this, 190, 120, 320, 84, label, nube.on ? 0x2c3070 : 0x6a3ab8, () => {
+    const b = button(this, 200, 100, 340, 84, label, nube.on ? UI.tinta2 : UI.morado, () => {
       if (nube.on) toast(this, 'Tu partida se guarda en tu cuenta DarkShadow', 900, 2200);
       else location.href = loginUrl();
     }, { size: nube.on ? 30 : 32 });
     b.label.setFontSize(Math.min(32, Math.floor(30 * 280 / Math.max(280, b.label.width))));
     if (save.fundador) {
-      const f = txt(this, 190, 192, '👑 Fundador', 28, '#ffd93d', { stroke: '#3a1250', strokeW: 8 });
+      const f = txt(this, 200, 172, '👑 Fundador', 28, '#ffd93d', { stroke: '#3a1250', strokeW: 8 });
       this.tweens.add({ targets: f, scale: 1.06, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
     }
-    if (save.apoyo > 0) txt(this, 190, save.fundador ? 236 : 192, '☕ Apoyo', 26, '#ffe9c8', { stroke: '#3a1250', strokeW: 8 });
-    if (save.coleccion && save.coleccion.premio) txt(this, save.apoyo > 0 ? 350 : 220, save.fundador ? 236 : 192, '📖 Coleccionista', 26, '#c8f0ff', { stroke: '#3a1250', strokeW: 8 });
+    if (save.apoyo > 0) txt(this, 200, save.fundador ? 214 : 172, '☕ Apoyo', 26, '#ffe9c8', { stroke: '#3a1250', strokeW: 8 });
+    if (save.coleccion && save.coleccion.premio) txt(this, save.apoyo > 0 ? 360 : 230, save.fundador ? 214 : 172, '📖 Coleccionista', 26, '#c8f0ff', { stroke: '#3a1250', strokeW: 8 });
   }
 
   engrane(x, y) {
     const c = this.add.container(x, y);
     const g = this.add.graphics();
-    g.fillStyle(0x0c0f30, 0.55);
-    g.fillCircle(0, 0, 58);
-    const im = icon(this, 0, 0, 'ui_ajustes', 70);
+    g.fillStyle(0x000000, 0.25); g.fillCircle(0, 5, 52);
+    g.fillStyle(UI.tinta, 0.92); g.fillCircle(0, 0, 52);
+    g.lineStyle(3, 0xffffff, 0.16); g.strokeCircle(0, 0, 52);
+    const im = icon(this, 0, 0, 'ui_ajustes', 64);
     c.add([g, im]);
     c.setInteractive(new Phaser.Geom.Circle(0, 0, 58), Phaser.Geom.Circle.Contains);
     c.on('pointerdown', () => { sfx.click(); this.tweens.add({ targets: im, angle: 90, duration: 250 }); abrirAjustes(this); });
@@ -282,8 +257,7 @@ export default class Menu extends Phaser.Scene {
     layer.add(panel);
     this.tweens.add({ targets: panel, scale: 1, duration: 320, ease: 'Back.Out' });
     const g = this.add.graphics();
-    g.fillStyle(0x4a2a8a, 1); g.fillRoundedRect(-460, -430, 920, 870, 50);
-    g.fillStyle(0xf6f2ff, 1); g.fillRoundedRect(-460, -440, 920, 860, 50);
+    marco(g, -460, -440, 920, 860, 0x4a2a8a);
     panel.add(g);
     panel.add(txt(this, 0, -360, 'Retos del día', 64, '#2a1a5e'));
     panel.add(txt(this, 0, -292, 'Iguales para todos · cambian a medianoche', 28, '#6a5a8a', { weight: '700' }));
@@ -302,7 +276,7 @@ export default class Menu extends Phaser.Scene {
       panel.add(st);
       panel.add(txt(this, -380, k.y + 58, k.hecho ? 'Premio cobrado: juega por diversión' : 'Premio de hoy sin cobrar', 26, k.hecho ? '#4a9a5a' : '#c87a1a', { weight: '700' }).setOrigin(0, 0.5));
       panel.add(button(this, 270, k.y, 220, 110, k.hecho ? 'Otra vez' : 'Jugar', k.hecho ? 0x8a7aa8 : k.color, k.ir, { size: 36 }));
-      if (k.nuevo) panel.add(txt(this, 330, k.y - 80, '¡NUEVO!', 26, '#ffffff', { stroke: '#c8282a', strokeW: 8 }).setAngle(12));
+      if (k.nuevo) panel.add(badge(this, 360, k.y - 100, 'NUEVO'));
     });
     panel.add(button(this, 0, 340, 420, 100, 'Cerrar', 0x3a7ad8, () => layer.destroy(), { size: 40 }));
   }
@@ -316,8 +290,7 @@ export default class Menu extends Phaser.Scene {
     layer.add(panel);
     this.tweens.add({ targets: panel, scale: 1, duration: 320, ease: 'Back.Out' });
     const g = this.add.graphics();
-    g.fillStyle(0x1e4a8a, 1); g.fillRoundedRect(-460, -560, 920, 1130, 50);
-    g.fillStyle(0xf2f7ff, 1); g.fillRoundedRect(-460, -570, 920, 1120, 50);
+    marco(g, -460, -570, 920, 1120, 0x1e4a8a);
     panel.add(g);
     panel.add(txt(this, 0, -490, 'Misiones del día', 64, '#163a6e'));
     panel.add(txt(this, 0, -420, `Nuevas en ${faltaParaNuevas()}`, 30, '#5a7aa8', { weight: '700' }));
@@ -396,8 +369,7 @@ export default class Menu extends Phaser.Scene {
     const panel = this.add.container(W / 2, 960).setScale(0.3);
     layer.add(panel);
     const g = this.add.graphics();
-    g.fillStyle(0xa03a6a, 1); g.fillRoundedRect(-450, -420, 900, 850, 50);
-    g.fillStyle(0xfff4fa, 1); g.fillRoundedRect(-450, -430, 900, 840, 50);
+    marco(g, -450, -430, 900, 840, 0xa03a6a);
     panel.add(g);
     panel.add(txt(this, 0, -350, 'Regalo diario', 66, '#6a1e4a'));
     panel.add(txt(this, 0, -280, 'Entra cada día para que el regalo crezca', 30, '#9a6a88', { weight: '700' }));

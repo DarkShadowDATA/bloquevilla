@@ -249,4 +249,18 @@ export default {
   "Quedaron {} bloques": "Sobraram {} blocos",
   "Sí se puede: prueba otro orden": "Dá para fazer: tente outra ordem",
   "Mañana hay otro acertijo": "Amanhã tem outra charada",
+  // Menús v3
+  "NUEVO": "NOVO",
+  "Tema: {}": "Tema: {}",
+  "Hechos hoy ✓": "Feitos hoje ✓",
+  "{}/2 hechos hoy": "{}/2 feitos hoje",
+  "60 niveles y jefes": "60 níveis e chefes",
+  "{}/180 estrellas": "{}/180 estrelas",
+  "Limpia todo lo que puedas": "Limpe o máximo que puder",
+  "Premios cada lunes": "Prêmios toda segunda",
+  "Premios en Shadow para los mejores": "Prêmios em Shadow para os melhores",
+  "Regalo": "Presente",
+  "Logros {}%": "Conquistas {}%",
+  "Pozo de la semana": "Pote da semana",
+  "Tema": "Tema",
 };

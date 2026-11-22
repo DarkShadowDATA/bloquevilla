@@ -5,7 +5,7 @@ import { maxPoderes, precioTienda } from '../bonos.js';
 import { save, persist } from '../save.js';
 import { POWERS, RARITY } from '../powers.js';
 import { sfx, vibe } from '../sfx.js';
-import { txt, background, icon, button, toast, chip, confetti } from '../ui.js';
+import { txt, background, icon, button, toast, chip, confetti, marco, backBtn, topBar, UI, pestanasUI } from '../ui.js';
 import { track } from '../stats.js';
 
 const TABS = [['poderes', 'Poderes'], ['temas', 'Temas'], ['deco', 'Pueblo'], ['shadow', 'Shadow']];
@@ -19,28 +19,21 @@ export default class Shop extends Phaser.Scene {
   create(data) {
     background(this, 'bg_menu', 'grad_menu');
     this.add.rectangle(W / 2, H / 2, W, H, 0x120c30, 0.72);
-    button(this, 120, 110, 170, 84, 'Menú', 0x2c3070, () => this.scene.start('Menu'), { size: 32 });
-    txt(this, W / 2, 110, 'Tienda', 70, '#ffd93d', { stroke: '#3a1250', strokeW: 10 });
+    backBtn(this, () => this.scene.start('Menu'));
+    topBar(this, 'Tienda', { h: 340, depth: 0 });
     this.brickChip = chip(this, 905, 110, 230, 'ui_ladrillo', save.bricks);
     if (!save.tienda.visto) { save.tienda.visto = true; persist(); }
     this.tab = (data && data.tab) || 'poderes';
-    this.tabBtns = TABS.map(([id, name], i) => {
-      const b = button(this, 145 + i * 263, 265, 245, 96, name, id === 'shadow' ? 0x4a2a8a : 0x3a2e7a, () => this.show(id), { size: 36 });
-      b.tabId = id;
-      return b;
-    });
     this.layer = this.add.container(0, 0);
     this.show(this.tab);
   }
 
   show(id) {
     this.tab = id;
-    this.tabBtns.forEach((b) => {
-      const on = b.tabId === id;
-      b.setScale(on ? 1.06 : 1);
-      b.label.setColor(on ? '#ffd93d' : '#ffffff');
-      b.list[0].setAlpha(on ? 1 : 0.6);
-    });
+    (this.tabObjs || []).forEach((o) => o.destroy());
+    const antes = this.children.list.length;
+    pestanasUI(this, TABS.map(([tid, name]) => ({ id: tid, label: name, ir: () => this.show(tid) })), id, W / 2, 265, 1000, 5);
+    this.tabObjs = this.children.list.slice(antes);
     this.layer.removeAll(true);
     if (id === 'poderes') this.showPoderes();
     else if (id === 'temas') this.showTemas();
@@ -219,8 +212,7 @@ export default class Shop extends Phaser.Scene {
     const p = this.add.container(W / 2, 900);
     ov.add(p);
     const g = this.add.graphics();
-    g.fillStyle(0xaa5a1e, 1); g.fillRoundedRect(-430, -330, 860, 690, 50);
-    g.fillStyle(0xfff7e8, 1); g.fillRoundedRect(-430, -340, 860, 680, 50);
+    marco(g, -430, -340, 860, 680, 0xaa5a1e);
     p.add(g);
     p.add(txt(this, 0, -255, '☕ Invítame un café', 58, '#46286e'));
     p.add(txt(this, 0, -120, 'Bloquevilla lo hago yo solo. Si te gusta el juego, puedes apoyarme para que siga creciendo.', 32, '#6a5a8a', { weight: '700', wrap: 740 }));

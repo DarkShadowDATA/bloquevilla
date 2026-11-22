@@ -2,7 +2,7 @@
 import Phaser from 'phaser';
 import { W, H, BUILDINGS } from '../config.js';
 import { save } from '../save.js';
-import { txt, background, button } from '../ui.js';
+import { txt, background, button, backBtn } from '../ui.js';
 import { pestanas } from './Logros.js';
 import { LOGROS, totalMedallas } from '../logros.js';
 import { porcentajeColeccion, tenidas, totalPiezas } from '../coleccion.js';
@@ -57,7 +57,7 @@ export default class Estadisticas extends Phaser.Scene {
   create() {
     background(this, 'bg_menu', 'grad_menu');
     this.add.rectangle(W / 2, H / 2, W, H, 0x120c30, 0.78);
-    button(this, 120, 110, 170, 84, 'Menú', 0x2c3070, () => this.scene.start('Menu'), { size: 32 });
+    backBtn(this, () => this.scene.start('Menu'));
     pestanas(this, 'estadisticas');
 
     let y = 300;

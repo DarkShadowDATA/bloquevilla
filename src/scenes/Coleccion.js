@@ -2,7 +2,7 @@
 import Phaser from 'phaser';
 import { W, H, COLORS, DECO_POS } from '../config.js';
 import { save, persist } from '../save.js';
-import { txt, background, icon, button, toast, confetti } from '../ui.js';
+import { txt, background, icon, button, toast, confetti, backBtn, badge } from '../ui.js';
 import { sfx } from '../sfx.js';
 import { pestanas } from './Logros.js';
 import { PIEZAS, SECCIONES, PREMIO_COLECCION, tenidas, totalPiezas, porcentajeColeccion, premioListo, cobrarPremio, nuevos, marcarVistos } from '../coleccion.js';
@@ -49,8 +49,8 @@ export default class Coleccion extends Phaser.Scene {
     const hdr = this.add.graphics().setDepth(20);
     hdr.fillStyle(0x120c30, 1); hdr.fillRect(0, 0, W, TOP - 24);
     hdr.fillGradientStyle(0x120c30, 0x120c30, 0x120c30, 0x120c30, 1, 1, 0, 0); hdr.fillRect(0, TOP - 24, W, 30);
-    const top = this.add.container(0, 0).setDepth(21);
-    top.add(button(this, 120, 110, 170, 84, 'Menú', 0x2c3070, () => this.scene.start('Menu'), { size: 32 }));
+    const top = this.add.container(0, 0).setDepth(60);
+    top.add(backBtn(this, () => this.scene.start('Menu')));
     const antes = this.children.list.length;
     pestanas(this, 'coleccion');
     this.children.list.slice(antes).forEach((o) => o.setDepth(Math.max(22, o.depth + 21)));
@@ -120,9 +120,7 @@ export default class Coleccion extends Phaser.Scene {
       c.add(txt(this, 0, 104, p.como, 19, '#d8d0f0', { weight: '700', wrap: CW - 30 }));
     }
     if (esNuevo) {
-      const nv = txt(this, CW / 2 - 40, -CH / 2 + 6, '¡NUEVO!', 22, '#ffffff', { stroke: '#c8282a', strokeW: 7 }).setAngle(12);
-      c.add(nv);
-      this.tweens.add({ targets: nv, scale: 1.15, duration: 450, yoyo: true, repeat: -1 });
+      c.add(badge(this, CW / 2 - 30, -CH / 2 + 4, 'NUEVO').setScale(0.8));
     }
     // tocar: usar el tema, ir a la tienda o recordar cómo se consigue
     const zona = this.add.rectangle(0, 0, CW, CH, 0xffffff, 0).setInteractive({ useHandCursor: true });

@@ -250,4 +250,18 @@ export default {
   "Quedaron {} bloques": "{} blocks were left",
   "Sí se puede: prueba otro orden": "It can be done: try another order",
   "Mañana hay otro acertijo": "There's a new puzzle tomorrow",
+  // Menús v3
+  "NUEVO": "NEW",
+  "Tema: {}": "Theme: {}",
+  "Hechos hoy ✓": "Done today ✓",
+  "{}/2 hechos hoy": "{}/2 done today",
+  "60 niveles y jefes": "60 levels and bosses",
+  "{}/180 estrellas": "{}/180 stars",
+  "Limpia todo lo que puedas": "Clear as much as you can",
+  "Premios cada lunes": "Prizes every Monday",
+  "Premios en Shadow para los mejores": "Shadow prizes for the best",
+  "Regalo": "Gift",
+  "Logros {}%": "Awards {}%",
+  "Pozo de la semana": "Weekly Pot",
+  "Tema": "Theme",
 };

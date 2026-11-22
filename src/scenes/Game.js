@@ -10,7 +10,7 @@ import { generarAcertijo, ACERTIJO_PREMIO } from '../acertijo.js';
 import { EVENTO, eventoActivo, sumarFlores, temaBloques } from '../evento.js';
 import { sfx, vibe } from '../sfx.js';
 import { POWERS, RARITY, rollOffer } from '../powers.js';
-import { txt, background, icon, button, toast, floatText, chip, confetti } from '../ui.js';
+import { txt, background, icon, button, toast, floatText, chip, confetti, marco, backBtn } from '../ui.js';
 import { track } from '../stats.js';
 import { dsTrack } from '../dsev.js';
 import { rngDe, barajar } from '../rng.js';
@@ -197,7 +197,7 @@ export default class Game extends Phaser.Scene {
 
   // ---------- Construcción de la pantalla ----------
   buildHud() {
-    button(this, 120, 215, 170, 84, 'Menú', 0x2c3070, () => this.scene.start(this.nivel != null ? 'Aventura' : 'Menu'), { size: 32 });
+    backBtn(this, () => this.scene.start(this.nivel != null ? 'Aventura' : 'Menu'), 92, 215);
     this.scoreText = txt(this, W / 2, 205, '0', 88, '#ffffff', { stroke: '#141432', strokeW: 10 });
     this.recordText = txt(this, W / 2, 285, this.tiempo ? `Récord 60 s: ${save.tiempo.record.toLocaleString('es-MX')}` : `Récord ${save.record.toLocaleString('es-MX')}`, 28, '#b8b8e0', { weight: '700' });
     if (this.vs) this.recordText.setText(`Reto de ${this.vs.n}: ${this.vs.p.toLocaleString('es-MX')}`).setColor('#ffd93d');
@@ -1285,8 +1285,7 @@ export default class Game extends Phaser.Scene {
     const panel = this.add.container(W / 2, 900).setScale(0.3);
     layer.add(panel);
     const g = this.add.graphics();
-    g.fillStyle(gano ? 0x2a7a3a : 0xaa5a1e, 1); g.fillRoundedRect(-420, -430, 840, 900, 50);
-    g.fillStyle(0xfff7e8, 1); g.fillRoundedRect(-420, -440, 840, 890, 50);
+    marco(g, -420, -440, 840, 890, gano ? 0x2a7a3a : 0xaa5a1e);
     panel.add(g);
     panel.add(txt(this, 0, -360, gano ? `¡Nivel ${this.nivel + 1} superado!` : titulo, 62, '#46286e'));
     panel.add(txt(this, 0, -290, NIVELES[this.nivel].nombre, 34, '#8c7aa0', { weight: '700' }));
@@ -1511,8 +1510,7 @@ export default class Game extends Phaser.Scene {
     const panel = this.add.container(W / 2, 930).setScale(0.3);
     layer.add(panel);
     const g = this.add.graphics();
-    g.fillStyle(0x6a3ab8, 1); g.fillRoundedRect(-420, -400, 840, 820, 50);
-    g.fillStyle(0xfff7e8, 1); g.fillRoundedRect(-420, -410, 840, 810, 50);
+    marco(g, -420, -410, 840, 810, 0x6a3ab8);
     panel.add(g);
     panel.add(txt(this, 0, -330, ok ? `¡Acertijo #${R.numero} resuelto!` : '¡Casi!', 58, '#46286e'));
     panel.add(txt(this, 0, -235, ok ? 'Dejaste el tablero vacío' : (quedan === 1 ? 'Quedó 1 bloque' : `Quedaron ${quedan} bloques`), 40, ok ? '#2a9a4a' : '#c84a4a'));
@@ -1565,8 +1563,7 @@ export default class Game extends Phaser.Scene {
     const panel = this.add.container(W / 2, 930).setScale(0.3);
     layer.add(panel);
     const g = this.add.graphics();
-    g.fillStyle(0x6a3ab8, 1); g.fillRoundedRect(-420, -400, 840, 820, 50);
-    g.fillStyle(0xfff7e8, 1); g.fillRoundedRect(-420, -410, 840, 810, 50);
+    marco(g, -420, -410, 840, 810, 0x6a3ab8);
     panel.add(g);
     panel.add(txt(this, 0, -330, ok ? `¡Reto #${R.numero} superado!` : '¡Casi!', 62, '#46286e'));
     panel.add(txt(this, 0, -235, `Limpiaste ${Math.min(this.linesTotal, R.meta)} de ${R.meta} líneas`, 40, ok ? '#2a9a4a' : '#c84a4a'));
@@ -1673,8 +1670,7 @@ export default class Game extends Phaser.Scene {
     const panel = this.add.container(W / 2, 900).setScale(0.3);
     layer.add(panel);
     const g = this.add.graphics();
-    g.fillStyle(0xaa5a1e, 1); g.fillRoundedRect(-420, -430, 840, 1010, 50);
-    g.fillStyle(0xfff7e8, 1); g.fillRoundedRect(-420, -440, 840, 1000, 50);
+    marco(g, -420, -440, 840, 1000, 0xaa5a1e);
     panel.add(g);
     const vs = this.vs;
     const gano = vs && this.score > vs.p;

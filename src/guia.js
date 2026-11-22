@@ -4,7 +4,7 @@ import Phaser from 'phaser';
 import { W, H } from './config.js';
 import { save, persist } from './save.js';
 import { sfx } from './sfx.js';
-import { txt, button } from './ui.js';
+import { txt, button, marco } from './ui.js';
 
 // Demo: tablero chico (R×C) con bloques iniciales y «rondas»: cada ronda agrega bloques, coloca una pieza y limpia líneas.
 // Letras de bloques: r o y g b p = colores, gold, bomba, hielo, hueco, cadv (↕), cadh (↔), tierra
@@ -242,8 +242,7 @@ export function mostrarGuia(scene, id, { auto = false, alCerrar = null } = {}) {
   layer.add(panel);
   scene.tweens.add({ targets: panel, scale: 1, duration: 300, ease: 'Back.Out' });
   const g = scene.add.graphics();
-  g.fillStyle(0x3a2a7a, 1); g.fillRoundedRect(-470, -600, 940, 1210, 50);
-  g.fillStyle(0xf6f2ff, 1); g.fillRoundedRect(-470, -610, 940, 1200, 50);
+  marco(g, -470, -610, 940, 1200, 0x3a2a7a);
   panel.add(g);
   panel.add(txt(scene, 0, -535, `${G.emoji} ${G.titulo}`, 62, '#2a1a5e'));
   const zona = scene.add.container(0, -170);

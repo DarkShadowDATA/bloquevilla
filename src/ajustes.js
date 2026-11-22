@@ -4,7 +4,7 @@ import { W, H, VERSION } from './config.js';
 import { save, persist } from './save.js';
 import { sfx, vibe } from './sfx.js';
 import { musica } from './musica.js';
-import { txt, button } from './ui.js';
+import { txt, button, marco } from './ui.js';
 import { abrirListaGuia } from './guia.js';
 import { idioma, cambiarIdioma } from './i18n.js';
 
@@ -67,8 +67,7 @@ export function abrirAjustes(scene) {
   layer.add(panel);
   scene.tweens.add({ targets: panel, scale: 1, duration: 300, ease: 'Back.Out' });
   const g = scene.add.graphics();
-  g.fillStyle(0x3a2a7a, 1); g.fillRoundedRect(-460, -560, 920, 1130, 50);
-  g.fillStyle(0xf6f2ff, 1); g.fillRoundedRect(-460, -570, 920, 1120, 50);
+  marco(g, -460, -570, 920, 1120, 0x3a2a7a);
   panel.add(g);
   panel.add(txt(scene, 0, -490, 'Ajustes', 64, '#2a1a5e'));
 
