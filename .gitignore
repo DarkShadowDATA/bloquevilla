@@ -1,5 +1,6 @@
 node_modules/
 clips/out/
+clips/voz/
 clips/__pycache__/
 assets_originales/
 *.wav
