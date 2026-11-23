@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { W, H, TIENDA, COLORS, TIENDA_SHADOW, NOMBRE_TEMA, APOYO_SHADOW } from '../config.js';
-import { nube, comprar, loginUrl, shadowUrl } from '../nube.js';
+import { W, H, TIENDA, COLORS, TIENDA_SHADOW, NOMBRE_TEMA } from '../config.js';
+import { nube, comprar, onNube, abrirTienda, pendiente, guardarPendiente, quitarPendiente } from '../nube.js';
 import { maxPoderes, precioTienda } from '../bonos.js';
 import { save, persist } from '../save.js';
 import { POWERS, RARITY } from '../powers.js';
@@ -12,6 +12,9 @@ const TABS = [['poderes', 'Poderes'], ['temas', 'Temas'], ['deco', 'Pueblo'], ['
 const COLS = [290, 790];
 const ROWS = [600, 1030, 1460];
 const CW = 460, CH = 400;
+
+// Si cambia el saldo (regresó de pagar, entró a su cuenta, llegó un pago de OXXO) y está en la Tienda: terminar lo pendiente y repintar
+onNube(() => { const g = window.__game; if (g && g.scene.isActive('Shop')) g.scene.getScene('Shop').alCambiarNube(); });
 
 export default class Shop extends Phaser.Scene {
   constructor() { super('Shop'); }
@@ -25,7 +28,40 @@ export default class Shop extends Phaser.Scene {
     if (!save.tienda.visto) { save.tienda.visto = true; persist(); }
     this.tab = (data && data.tab) || 'poderes';
     this.layer = this.add.container(0, 0);
+    this.comprando = false;
     this.show(this.tab);
+    this.time.delayedCall(400, () => this.completarPendiente());
+  }
+
+  alCambiarNube() {
+    if (this.completarPendiente()) return;
+    if (this.tab === 'shadow' && !this.comprando) this.show('shadow');
+  }
+
+  // Lo que quería comprar cuando no le alcanzó: se compra solo en cuanto llega la Shadow
+  completarPendiente() {
+    const p = pendiente();
+    if (!p || !nube.on || this.comprando) return false;
+    const it = (nube.tienda.length ? nube.tienda : TIENDA_SHADOW).find((x) => x.id === p.item);
+    if (!it || (it.unaVez && (nube.compras[it.id] || 0) > 0)) { quitarPendiente(); return false; }
+    if (nube.shadow < it.shadow) return false;
+    quitarPendiente();
+    this.comprarShadow(it, null);
+    return true;
+  }
+
+  comprarShadow(it, c) {
+    this.comprando = true;
+    if (this.tab !== 'shadow') this.show('shadow');
+    return comprar(it.id).then((r) => {
+      this.comprando = false;
+      if (!this.scene.isActive()) return;
+      sfx.build(); vibe(40); confetti(this, c ? c.x : W / 2, c ? c.y - 60 : 700, 60);
+      if (it.tema) { save.theme = it.tema; persist(); }
+      this.brickChip.setValue(save.bricks);
+      toast(this, it.tema ? `¡Tema ${NOMBRE_TEMA[it.tema]} puesto!${r.sumados ? ` +${r.sumados} ladrillos` : ''}` : `+${r.sumados} ladrillos`, 1850, 2400);
+      this.time.delayedCall(300, () => this.show('shadow'));
+    }).catch((e) => { this.comprando = false; if (this.scene.isActive()) { toast(this, e.message, 1850, 2400); this.show('shadow'); } });
   }
 
   show(id) {
@@ -179,68 +215,25 @@ export default class Shop extends Phaser.Scene {
         return;
       }
       if (!nube.on) {
-        c.add(button(this, 0, 150, 300, 84, `${it.shadow}`, 0x6a5a8a, () => this.pedirSesion(), { size: 36, iconKey: 'ui_shadow' }));
+        c.add(button(this, 0, 150, 300, 84, `${it.shadow}`, 0x6a5a8a, () => abrirTienda(), { size: 36, iconKey: 'ui_shadow' }));   // la ventana pide entrar a la cuenta
         return;
       }
       let armado = false;
       const b = button(this, 0, 150, 300, 84, `${it.shadow}`, 0x7a4ad8, () => {
-        if (nube.shadow < it.shadow) { toast(this, `Te faltan ${it.shadow - nube.shadow} Shadow`, 1850, 1800); return; }
+        if (nube.shadow < it.shadow) {   // no alcanza: se compra justo lo que falta y al llegar la Shadow se termina la compra
+          guardarPendiente(it.id, it.shadow);
+          abrirTienda({ falta: it.shadow - nube.shadow });
+          return;
+        }
         if (!armado) { armado = true; b.label.setText('¿Comprar?'); b.list[2] && b.list[2].setVisible(false); return; }   // 2.º toque confirma
         b.setEnabled(false); b.label.setText('…');
-        comprar(it.id).then((r) => {
-          sfx.build(); vibe(40); confetti(this, c.x, c.y - 60, 60);
-          if (it.tema) { save.theme = it.tema; persist(); }
-          this.brickChip.setValue(save.bricks);
-          toast(this, it.tema ? `¡Tema ${NOMBRE_TEMA[it.tema]} puesto!${r.sumados ? ` +${r.sumados} ladrillos` : ''}` : `+${r.sumados} ladrillos`, 1850, 2400);
-          this.time.delayedCall(300, () => this.show('shadow'));
-        }).catch((e) => { toast(this, e.message, 1850, 2400); this.show('shadow'); });
+        this.comprarShadow(it, c);
       }, { size: 40, iconKey: 'ui_shadow' });
       c.add(b);
     });
-    const pie = nube.on
-      ? button(this, 700, 1755, 560, 100, 'Conseguir Shadow', 0x4a2a8a, () => { location.href = shadowUrl(); }, { size: 36, iconKey: 'ui_shadow' })
-      : button(this, 700, 1755, 560, 100, nube.can ? 'Iniciar sesión' : 'Ir a la página del juego', 0x6a3ab8, () => this.pedirSesion(), { size: 36 });
-    this.layer.add(pie);
-    // Apoyar al creador: opcional, sin ventaja; solo da la insignia ☕
-    this.layer.add(button(this, 215, 1755, 350, 100, '☕ Apoyar', 0x8a5a2a, () => this.abrirApoyo(), { size: 36 }));
-  }
-
-  abrirApoyo() {
-    track('apoyo_ver', {});
-    const ov = this.add.container(0, 0).setDepth(400);
-    ov.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.65).setInteractive());
-    const p = this.add.container(W / 2, 900);
-    ov.add(p);
-    const g = this.add.graphics();
-    marco(g, -430, -340, 860, 680, 0xaa5a1e);
-    p.add(g);
-    p.add(txt(this, 0, -255, '☕ Invítame un café', 58, '#46286e'));
-    p.add(txt(this, 0, -120, 'Bloquevilla lo hago yo solo. Si te gusta el juego, puedes apoyarme para que siga creciendo.', 32, '#6a5a8a', { weight: '700', wrap: 740 }));
-    p.add(txt(this, 0, 10, 'No da ninguna ventaja: solo la insignia ☕ en tu menú.', 28, '#8c7aa0', { weight: '600', wrap: 740 }));
-    if (save.apoyo > 0) p.add(txt(this, 0, 62, `¡Gracias! Ya me invitaste ${save.apoyo} ${save.apoyo === 1 ? 'café' : 'cafés'}`, 28, '#2a9a4a', { weight: '800' }));
-    const cerrar = () => ov.destroy();
-    const b = button(this, 0, 150, 520, 100, `${APOYO_SHADOW}`, 0x7a4ad8, () => {
-      if (!nube.on) { this.pedirSesion(); return; }
-      if (nube.shadow < APOYO_SHADOW) { toast(this, `Te faltan ${APOYO_SHADOW - nube.shadow} Shadow`, 1850, 1800); return; }
-      b.setEnabled(false); b.label.setText('…');
-      comprar('apoyo').then(() => {
-        sfx.build(); vibe(40); confetti(this, W / 2, 800, 80);
-        cerrar();
-        toast(this, '¡Muchas gracias por tu apoyo! ☕', 1850, 2600);
-        this.show('shadow');
-      }).catch((e) => { cerrar(); toast(this, e.message, 1850, 2400); });
-    }, { size: 44, iconKey: 'ui_shadow' });
-    p.add(b);
-    p.add(button(this, 0, 265, 360, 80, 'Ahora no', 0x8a7ab0, cerrar, { size: 32 }));
-    p.setScale(0.4);
-    this.tweens.add({ targets: p, scale: 1, duration: 260, ease: 'Back.Out' });
-  }
-
-  pedirSesion() {
-    if (nube.can) { location.href = loginUrl(); return; }
-    // Dentro de itch (o sin conexión con la cuenta): la tienda se usa en la página del juego
-    try { window.open('https://bloquevilla.darkshadow-studios.com/?src=itch', '_blank'); } catch (e) { /* nada */ }
-    toast(this, 'La Tienda Shadow se usa en bloquevilla.darkshadow-studios.com', 1850, 2600);
+    // Comprar Shadow y Apoyar al creador: la ventana del estudio, sin salir del juego (solo aquí en la Tienda)
+    this.layer.add(button(this, 735, 1755, 470, 100, 'Comprar Shadow', 0x4a2a8a, () => abrirTienda(), { size: 36, iconKey: 'ui_shadow' }));
+    this.layer.add(button(this, 270, 1755, 420, 100, '💜 Apoyar al creador', 0x8a3a8a, () => { track('apoyo_ver', {}); abrirTienda({ modo: 'apoyar' }); }, { size: 32 }));
   }
 
   showDeco() {

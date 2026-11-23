@@ -203,6 +203,7 @@ export default {
   '¡Tema {} puesto! Cámbialo en el menú cuando quieras': '{} theme on! Change it in the menu anytime', 'En uso': 'In use', 'Usar': 'Use', 'Los temas son tuyos para siempre': 'Themes are yours forever',
   'Cámbialos en el menú con el botón "Bloques"': 'Change them in the menu with the "Blocks" button', 'Tienes {} Shadow': 'You have {} Shadow', 'Tienes {}': 'You have {}', 'Opcional: todo el juego se puede jugar gratis': 'Optional: the whole game can be played for free',
   'Lo tienes': 'Owned', '{} Shadow': '{} Shadow', 'Te faltan {} Shadow': 'You need {} more Shadow', '¿Comprar?': 'Buy?', ' +{} ladrillos': ' +{} bricks', '¡Tema {} puesto!{}': '{} theme on!{}',
+  'Comprar Shadow': 'Buy Shadow', '💜 Apoyar al creador': '💜 Support the creator',
   'Conseguir Shadow': 'Get Shadow', 'Ir a la página del juego': "Go to the game's site", '☕ Apoyar': '☕ Support', '☕ Invítame un café': '☕ Buy me a coffee',
   'Bloquevilla lo hago yo solo. Si te gusta el juego, puedes apoyarme para que siga creciendo.': 'I make Bloquevilla on my own. If you like the game, you can support me so it keeps growing.',
   'No da ninguna ventaja: solo la insignia ☕ en tu menú.': 'It gives no advantage: just the ☕ badge in your menu.', 'café': 'coffee', 'cafés': 'coffees',

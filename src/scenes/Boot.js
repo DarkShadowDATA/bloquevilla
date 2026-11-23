@@ -22,6 +22,8 @@ export default class Boot extends Phaser.Scene {
     const vs = cap ? null : leerReto();
     const nuevo = save.games === 0 && save.built.length === 0 && !cap;
     const enCurso = !!save.partida && !cap;
+    // regreso de pagar Shadow en otra pestaña o en OXXO (…?pago=<orden>): de vuelta a la Tienda, donde se termina la compra
+    if (!cap && !vs && new URLSearchParams(location.search).get('pago')) return (this._destino = { k: 'Shop', d: { tab: 'shadow' } });
     this._destino = vs ? { k: 'Game', d: { reto: false, vs }, vs: true } : { k: nuevo || enCurso || esAnuncio() ? 'Game' : 'Menu', d: { reto: false, modo: null } };
     return this._destino;
   }

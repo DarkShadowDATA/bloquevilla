@@ -201,6 +201,7 @@ export default {
   '¡Tema {} puesto! Cámbialo en el menú cuando quieras': 'Tema {} ativado! Troque no menu quando quiser', 'En uso': 'Em uso', 'Usar': 'Usar', 'Los temas son tuyos para siempre': 'Os temas são seus para sempre',
   'Cámbialos en el menú con el botón "Bloques"': 'Troque no menu com o botão "Blocos"', 'Tienes {} Shadow': 'Você tem {} Shadow', 'Tienes {}': 'Você tem {}', 'Opcional: todo el juego se puede jugar gratis': 'Opcional: o jogo inteiro pode ser jogado de graça',
   'Lo tienes': 'Você tem', '{} Shadow': '{} Shadow', 'Te faltan {} Shadow': 'Faltam {} Shadow', '¿Comprar?': 'Comprar?', ' +{} ladrillos': ' +{} tijolos', '¡Tema {} puesto!{}': 'Tema {} ativado!{}',
+  'Comprar Shadow': 'Comprar Shadow', '💜 Apoyar al creador': '💜 Apoiar o criador',
   'Conseguir Shadow': 'Conseguir Shadow', 'Ir a la página del juego': 'Ir para o site do jogo', '☕ Apoyar': '☕ Apoiar', '☕ Invítame un café': '☕ Me pague um café',
   'Bloquevilla lo hago yo solo. Si te gusta el juego, puedes apoyarme para que siga creciendo.': 'Eu faço o Bloquevilla sozinho. Se você gosta do jogo, pode me apoiar para ele continuar crescendo.',
   'No da ninguna ventaja: solo la insignia ☕ en tu menú.': 'Não dá nenhuma vantagem: só a insígnia ☕ no seu menu.', 'café': 'café', 'cafés': 'cafés',
