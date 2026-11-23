@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { W, H, COLORS, HEX, BUILDINGS, DAILY, NOMBRE_TEMA, VERSION } from '../config.js';
-import { nube, loginUrl } from '../nube.js';
+import { nube, loginUrl, onNube } from '../nube.js';
 import { porCobrarLogros, porcentaje } from '../logros.js';
 import { pruebaDisponible } from '../prueba.js';
 import { temaDragon, nuevos, premioListo } from '../coleccion.js';
@@ -8,6 +8,7 @@ import { cobrarCofreSemanal } from '../bonos.js';
 import { save, persist, isBuilt, dailyAvailable, dailyIndex, today } from '../save.js';
 import { EVENTO, eventoActivo, diasRestantes } from '../evento.js';
 import { retoNumero } from '../reto.js';
+import { premioSemanal, cobrarSemanal } from '../pozo.js';
 import { acertijoNumero } from '../acertijo.js';
 import { abrirAjustes } from '../ajustes.js';
 import { sfx } from '../sfx.js';
@@ -128,6 +129,18 @@ export default class Menu extends Phaser.Scene {
         toast(this, `🎁 Cofre de la Tesorería: +${cofreSem} ladrillos`, 620, 3200);
       });
     }
+    // premio del Reto semanal de la semana pasada (solo ladrillos y medalla del juego)
+    const semanal = () => premioSemanal().then((p) => {
+      if (!p) return;
+      cobrarSemanal(p);
+      if (!this.sys.isActive()) return;
+      sfx.build();
+      confetti(this, W / 2, 700, 90);
+      toast(this, `¡Quedaste #${p.lugar} en el Reto semanal! +${p.premio} ladrillos`, 700, 3500);
+    }).catch(() => {});
+    semanal();
+    if (!Menu.oyeNube) { Menu.oyeNube = true; onNube(() => { const m = this.scene.get('Menu'); if (m && m.sys.isActive() && m.semanal) m.semanal(); else semanal(); }); }
+    this.semanal = semanal;
     premioPendiente().then((p) => {
       if (!p || !this.sys.isActive()) return;
       cobrarPremio(p);
@@ -137,7 +150,7 @@ export default class Menu extends Phaser.Scene {
     }).catch(() => {});
   }
 
-  // Tarjeta del Pozo de la semana (premios en Shadow)
+  // Tarjeta del Reto semanal (premios del juego para el top 10)
   bannerPozo(y) {
     const c = this.add.container(W / 2, y);
     const w = 900, h = 120;
@@ -147,9 +160,9 @@ export default class Menu extends Phaser.Scene {
     g.fillRoundedRect(-w / 2, -h / 2, w, h, 34);
     g.lineStyle(4, 0xfff0b8, 0.8); g.strokeRoundedRect(-w / 2, -h / 2, w, h, 34);
     c.add(g);
-    c.add(icon(this, -w / 2 + 70, 0, 'ui_shadow', 84));
-    const t1 = txt(this, -w / 2 + 130, -20, 'Pozo de la semana', 40, '#3a2200').setOrigin(0, 0.5);
-    const t2 = txt(this, -w / 2 + 130, 24, 'Premios en Shadow para los mejores', 26, '#5a3a08', { weight: '700' }).setOrigin(0, 0.5);
+    c.add(icon(this, -w / 2 + 70, 0, 'ui_trofeo', 84));
+    const t1 = txt(this, -w / 2 + 130, -20, 'Reto semanal', 40, '#3a2200').setOrigin(0, 0.5);
+    const t2 = txt(this, -w / 2 + 130, 24, 'El top 10 gana ladrillos cada lunes', 26, '#5a3a08', { weight: '700' }).setOrigin(0, 0.5);
     [t1, t2].forEach((t) => { if (t.width > w - 230) t.setScale((w - 230) / t.width); });
     c.add([t1, t2]);
     const fl = this.add.graphics();

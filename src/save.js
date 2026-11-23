@@ -27,6 +27,7 @@ const DEFAULT = {
   aventura: { estrellas: [] },
   apodo: null,
   rankingCobrado: null,
+  retoSemanal: { cobrado: null, oro: 0, plata: 0, bronce: 0, top10: 0 },   // premios del Reto semanal (solo del juego)
   misiones: null, // misiones diarias de hoy (misiones.js)
   misionesVistas: false,
   ladrillosCobrados: 0, // ladrillos comprados con Shadow que ya se sumaron (nube.js)
@@ -46,7 +47,7 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const d = JSON.parse(raw);
-      return { ...JSON.parse(JSON.stringify(DEFAULT)), ...d, reto: { ...DEFAULT.reto, ...(d.reto || {}) }, acertijo: { ...DEFAULT.acertijo, ...(d.acertijo || {}) }, muertos: { ...DEFAULT.muertos, ...(d.muertos || {}) }, tiempo: { ...DEFAULT.tiempo, ...(d.tiempo || {}) }, tienda: { ...DEFAULT.tienda, ...(d.tienda || {}) }, peligros: { ...DEFAULT.peligros, ...(d.peligros || {}) }, aventura: { ...DEFAULT.aventura, ...(d.aventura || {}) }, stats: { ...DEFAULT.stats, ...(d.stats || {}) } };
+      return { ...JSON.parse(JSON.stringify(DEFAULT)), ...d, reto: { ...DEFAULT.reto, ...(d.reto || {}) }, retoSemanal: { ...DEFAULT.retoSemanal, ...(d.retoSemanal || {}) }, acertijo: { ...DEFAULT.acertijo, ...(d.acertijo || {}) }, muertos: { ...DEFAULT.muertos, ...(d.muertos || {}) }, tiempo: { ...DEFAULT.tiempo, ...(d.tiempo || {}) }, tienda: { ...DEFAULT.tienda, ...(d.tienda || {}) }, peligros: { ...DEFAULT.peligros, ...(d.peligros || {}) }, aventura: { ...DEFAULT.aventura, ...(d.aventura || {}) }, stats: { ...DEFAULT.stats, ...(d.stats || {}) } };
     }
   } catch (e) { /* navegador sin almacenamiento */ }
   return JSON.parse(JSON.stringify(DEFAULT));
@@ -96,6 +97,10 @@ export function mergeSaves(local, nube) {
   out.coleccion = { vistos: [...new Set([...(ca.vistos || []), ...(cb.vistos || [])])], premio: !!(ca.premio || cb.premio) };
   out.cofreSemana = [out.cofreSemana || '', otro.cofreSemana || ''].sort().pop();
   out.finalVisto = !!(out.finalVisto || otro.finalVisto);
+  // Reto semanal: la última semana cobrada y las medallas, lo más alto de los dos (para no cobrar dos veces)
+  const ra = local.retoSemanal || {}, rb = nube.retoSemanal || {};
+  out.retoSemanal = { cobrado: [ra.cobrado || '', rb.cobrado || ''].sort().pop() || null };
+  for (const k of ['oro', 'plata', 'bronce', 'top10']) out.retoSemanal[k] = Math.max(ra[k] || 0, rb[k] || 0);
   // tema del día: si ya se usó hoy en cualquiera de los dos, ya se usó
   const pa = local.prueba, pb = nube.prueba;
   out.prueba = pa && pb && pa.dia === pb.dia ? { dia: pa.dia, usado: !!(pa.usado || pb.usado), enJuego: !!pa.enJuego }
