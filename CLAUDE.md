@@ -36,3 +36,8 @@
 - Si no le alcanza para algo: se guarda en `localStorage.bloquevilla_pendiente` (3 días) y se abre la ventana con `falta`; en cuanto llega la Shadow (al cerrar la ventana, al regresar con `?pago=` o al abrir la Tienda después de un pago en OXXO) la compra se hace sola (`Shop.completarPendiente`).
 - `?pago=<orden>` (regreso de pestaña de pago u OXXO) abre directo la Tienda Shadow.
 - «💜 Apoyar al creador» = `abrirTienda({ modo: 'apoyar' })` (insignia Patrocinador del estudio). El viejo «☕ Invítame un café» ya no se ofrece; la ruta `apoyo` de `/bq/comprar` sigue en el servidor para versiones viejas abiertas y la insignia ☕ de quien ya apoyó se queda.
+
+## Más juegos de DarkShadow (desde 2.8)
+- Botón «🎮 Más juegos de DarkShadow» (`src/masjuegos.js`) solo en el menú y debajo de las ventanas de fin de partida y de fin de nivel; nunca a media partida. Quien llegó por anuncio (`fb_ads`/`ig_ads`) no lo ve hasta terminar su primera partida o nivel (`puedeMostrar`).
+- Abre una ventanita con tarjetas de los juegos PÚBLICOS (Piñatazo, Noche de Leyendas, ¡Ahí No!, Mutantes; MecaBestias solo en compu). Cada una abre su juego en pestaña nueva con `?src=bloquevilla&campana=cruce` (lo mide web_events). Imágenes `src/assets/img/mj_*.webp` (de los banners de la página del estudio). Nunca juegos privados o en pausa (Tierras del Umbral, Ruta Loca, ¡Jálale!, El Valle).
+- Medición propia: evento `compartir` con `tipo: 'cruce_ver'` (abrió la ventana) y `tipo: 'cruce'` + `juego` (tocó una tarjeta).

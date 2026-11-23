@@ -11,6 +11,7 @@ import { EVENTO, eventoActivo, sumarFlores, temaBloques } from '../evento.js';
 import { sfx, vibe } from '../sfx.js';
 import { POWERS, RARITY, rollOffer } from '../powers.js';
 import { txt, background, icon, button, toast, floatText, chip, confetti, marco, backBtn } from '../ui.js';
+import { botonMasJuegos } from '../masjuegos.js';
 import { track, trackPrimeraPieza, esAnuncio } from '../stats.js';
 import { dsTrack } from '../dsev.js';
 import { rngDe, barajar } from '../rng.js';
@@ -1341,6 +1342,9 @@ export default class Game extends Phaser.Scene {
       panel.add(button(this, 0, 180, 600, 120, 'Reintentar', 0x5ac85a, () => this.scene.restart({ reto: false, nivel: this.nivel, intento: Math.floor(Math.random() * 1000) })));
     }
     panel.add(button(this, 0, 320, 600, 110, 'Mapa de niveles', 0x6a3ab8, () => this.scene.start('Aventura'), { size: 42 }));
+    // debajo de la ventana, sin tapar «Nivel siguiente» ni «Reintentar»
+    const mj = botonMasJuegos(this, 0, 560, 520, 80, 30);
+    if (mj) panel.add(mj);
     this.tweens.add({ targets: panel, scale: 1, duration: 380, ease: 'Back.Out' });
   }
 
@@ -1735,6 +1739,9 @@ export default class Game extends Phaser.Scene {
       panel.add(button(this, 0, 465, 600, 100, 'Ir al pueblo', 0xff8c2b, () => this.scene.start('Village'), { size: 38 }));
     }
     if (vs) panel.add(button(this, 0, 465, 600, 100, 'Ir al pueblo', 0x8a6a3a, () => this.scene.start('Village'), { size: 38 }));
+    // Más juegos de DarkShadow: debajo de la ventana (y debajo de la oferta del tema del día, si la hay)
+    const mj = botonMasJuegos(this, 0, this.pruebaTema ? 830 : 650, 520, 80, 30);
+    if (mj) panel.add(mj);
     // Jugó con el tema del día (prestado): se ofrece quedárselo, sin insistir
     if (this.pruebaTema) {
       const t = this.pruebaTema;

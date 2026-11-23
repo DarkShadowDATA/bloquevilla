@@ -1,3 +1,4 @@
+import { botonMasJuegos } from '../masjuegos.js';
 import Phaser from 'phaser';
 import { W, H, COLORS, HEX, BUILDINGS, DAILY, NOMBRE_TEMA, VERSION } from '../config.js';
 import { nube, loginUrl, onNube } from '../nube.js';
@@ -101,6 +102,9 @@ export default class Menu extends Phaser.Scene {
       }, { size: 32 });
       if (prueba) badge(this, W / 2 + 250, 1428, '¡GRATIS HOY!', UI.morado);
     }
+
+    // Más juegos de DarkShadow (quien llegó por anuncio lo ve hasta terminar su primera partida o nivel)
+    botonMasJuegos(this, W / 2, temas.length > 1 ? 1584 : 1478, 520, 80, 30);
 
     // Barra de abajo: pueblo, tienda, misiones, regalo y logros
     const M = misionesHoy();
