@@ -2,7 +2,7 @@
 
 ## Publicación (darkshadow-studios.com)
 - Cloudflare Pages publica el sitio directamente desde la carpeta `dist/` del repositorio, sin compilar nada en Cloudflare (sin comando de build).
-- Por eso, **antes de cada push**: ejecuta `npm run build` y sube en el mismo commit el `dist/` actualizado (`dist/index.html`). Nunca hagas push de cambios en `src/` sin su `dist/` recompilado.
+- Por eso, **antes de cada push**: ejecuta `npm run build` y sube en el mismo commit el `dist/` actualizado (desde 2.6: `dist/index.html` + `dist/assets/`, ya no es un solo archivo). Nunca hagas push de cambios en `src/` sin su `dist/` recompilado. Si `npm run build` dice `vite: not found`, corre `npm ci` antes (si no, el dist queda viejo sin avisar).
 - itch.io (desde 30 oct 2026) ya no usa el zip: tiene subido `itch/bloquevilla_itch.html`, que abre la versión en línea (`?src=itch`) en un iframe. Cada push al dominio llega solo a itch; no hay que regenerar ni resubir nada.
 
 ## Contenido para redes
@@ -25,3 +25,8 @@
 
 ## Moneda Shadow (regla desde el 15 nov 2026)
 - La Shadow se muestra **siempre con su imagen** (`src/assets/img/ui_shadow.webp`, la misma moneda de Noche de Leyendas), **nunca con emoji**. Junto a un número usa `shadowAmount(scene, x, y, n, size)` de `src/ui.js` (moneda del alto del texto); en botones `iconKey: 'ui_shadow'`. El 🔷 de «Piezas raras» no es Shadow y se queda.
+
+## Carga rápida y anuncios (desde 2.6)
+- Quien va directo a jugar (nuevo, partida a medias, reto de un amigo o link de anuncio) baja solo las imágenes de la partida (`esDePartida` en `src/assets.js`); el resto llega en segundo plano (escena `Fondo`, `src/carga.js`). Si abre otra pantalla antes, pasa por la escena `Carga` (barra corta). Quien abre el menú baja todo como antes. Imagen nueva que salga en la partida desde el primer cuadro: agregar su prefijo a `PARTIDA` en `src/assets.js`.
+- Link de anuncio: `?src=fb_ads&campana=<etiqueta>` (o `ig_ads`): cae directo a jugar, sin la ventana de «Cómo jugar» (solo aviso y un dedo que señala). `esAnuncio()` en `src/stats.js`.
+- Medición (tabla `bloquevilla_eventos`, solo acepta ciertos eventos): todos los eventos llevan en `datos` `llegada` (fb_ads, itch, estudio, directo…), `campana`, `sesion` y, si cambió, `primera`/`primeraCampana`. Primera pieza = evento `tiempo` con `tipo: 'primera_pieza'` (`s` = segundos desde que abrió); tiempo jugado = `tiempo` con `tipo: 'sesion'` (`s`, a los 1, 2, 3, 5, 10, 15, 20, 30 min y al salir; el máximo por `sesion` es lo que jugó).

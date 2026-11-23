@@ -14,6 +14,9 @@ import { musica } from './musica.js';
 import { mostrarGuia } from './guia.js';
 import Aventura from './scenes/Aventura.js';
 import Pozo from './scenes/Pozo.js';
+import Carga from './scenes/Carga.js';
+import Fondo from './scenes/Fondo.js';
+import { cargaLista } from './carga.js';
 import { startNube, onNube } from './nube.js';
 import { sfx } from './sfx.js';
 
@@ -59,7 +62,7 @@ async function start() {
     backgroundColor: '#161c4e',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     input: { activePointers: 1 },
-    scene: [Boot, Menu, Game, Village, Shop, Ranking, Aventura, Logros, Coleccion, Estadisticas, Pozo],
+    scene: [Boot, Menu, Game, Village, Shop, Ranking, Aventura, Logros, Coleccion, Estadisticas, Pozo, Carga, Fondo],
     render: { preserveDrawingBuffer: CAPTURE },
   });
   if (CAPTURE) setupCapture(game);
@@ -85,4 +88,13 @@ if (!CAPTURE || location.search.includes('devapi')) {   // en videos solo con el
 // Jugar sin internet: guarda el juego en el celular (se instala con «Agregar a pantalla de inicio»)
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost') && window.top === window.self) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+
+// Las pantallas que no son la partida esperan a la segunda tanda de imágenes (escena Carga), si todavía no termina
+{
+  const start = Phaser.Scenes.ScenePlugin.prototype.start;
+  Phaser.Scenes.ScenePlugin.prototype.start = function (key, data) {
+    if (!cargaLista() && !CAPTURE && key !== 'Game' && key !== 'Carga' && key !== 'Boot' && key !== 'Fondo') return start.call(this, 'Carga', { next: key, data });
+    return start.call(this, key, data);
+  };
 }

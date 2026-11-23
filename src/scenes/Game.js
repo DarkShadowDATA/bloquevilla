@@ -11,7 +11,7 @@ import { EVENTO, eventoActivo, sumarFlores, temaBloques } from '../evento.js';
 import { sfx, vibe } from '../sfx.js';
 import { POWERS, RARITY, rollOffer } from '../powers.js';
 import { txt, background, icon, button, toast, floatText, chip, confetti, marco, backBtn } from '../ui.js';
-import { track } from '../stats.js';
+import { track, trackPrimeraPieza, esAnuncio } from '../stats.js';
 import { dsTrack } from '../dsev.js';
 import { rngDe, barajar } from '../rng.js';
 import { compartirReto, pedirApodo } from '../share.js';
@@ -190,9 +190,30 @@ export default class Game extends Phaser.Scene {
     this.guardarPartida();
 
     if (save.games === 0) {
-      if (!window.__capture && !guiaVista('basico')) this.time.delayedCall(400, () => mostrarGuia(this, 'basico', { auto: true }));
-      else this.time.delayedCall(500, () => toast(this, 'Arrastra una pieza al tablero', 352, 2600));
+      // Quien llega de un anuncio juega sin ventanas: solo el aviso y una manita que señala qué arrastrar
+      if (!window.__capture && !guiaVista('basico') && !esAnuncio()) this.time.delayedCall(400, () => mostrarGuia(this, 'basico', { auto: true }));
+      else {
+        this.time.delayedCall(500, () => toast(this, 'Arrastra una pieza al tablero', 352, 2600));
+        if (!window.__capture) this.manita();
+      }
     }
+  }
+
+  // Manita que va de la bandeja al tablero hasta que pone la primera pieza
+  manita() {
+    const p = this.pieces && this.pieces[1];
+    if (!p) return;
+    // «dedo» dibujado (círculo blanco con aro), no depende de que el celular tenga emojis
+    const x0 = SLOTS[1] + 30, y0 = TRAY_Y + 40;
+    const m = this.add.container(x0, y0).setDepth(250);
+    const g = this.add.graphics();
+    g.fillStyle(0x000000, 0.25); g.fillCircle(4, 6, 38);
+    g.fillStyle(0xffffff, 0.95); g.fillCircle(0, 0, 38);
+    g.lineStyle(8, 0x6a4be0, 1); g.strokeCircle(0, 0, 38);
+    m.add(g);
+    this.tweens.add({ targets: m, x: W / 2 + 30, y: 860, duration: 1100, ease: 'Sine.InOut', yoyo: false, repeat: -1, repeatDelay: 450, hold: 250,
+      onRepeat: () => m.setPosition(x0, y0) });
+    this.manitaObj = m;
   }
 
   // ---------- Construcción de la pantalla ----------
@@ -455,6 +476,8 @@ export default class Game extends Phaser.Scene {
       this.addBlock(r + dr, c + dc, col, true);
     });
     this.addScore(pc.cells.length * SCORE.perCell);
+    if (this.manitaObj) { this.manitaObj.destroy(); this.manitaObj = null; }
+    trackPrimeraPieza({ modo: this.nivel != null ? 'aventura' : this.tiempo ? 'tiempo' : this.reto ? 'reto' : this.vs ? 'vs' : 'normal' });
     if (this.avisoFila) {
       this.avisoFila = false;
       if (!window.__capture) this.time.delayedCall(300, () => toast(this, 'Llena una fila o columna completa para borrarla', 352, 3000));
