@@ -1,0 +1,18 @@
+{
+ "voz": {
+  "voice": "es-MX-JorgeNeural",
+  "rate": "+12%",
+  "lines": [
+   {"at": 0, "text": "Limpié todo el tablero con un combo por siete."},
+   {"at": 2.9, "text": "Y no es solo un juego de bloques: hay sesenta niveles."},
+   {"at": 6.3, "text": "Hay bombas que explotan si no limpias su línea,"},
+   {"at": 8.75, "text": "hielo que necesita dos líneas,"},
+   {"at": 10.85, "text": "y al final, un dragón que te avienta bloques."},
+   {"at": 13.75, "text": "Si te atoras, un poder como el rayo te salva."},
+   {"at": "auto", "text": "Con los ladrillos que ganas compras poderes y temas,"},
+   {"at": "auto", "text": "y reconstruyes tu pueblo."},
+   {"at": "auto", "text": "Juega gratis, sin descargar nada."}
+  ]
+ },
+ "subs": {"font": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf", "y": 0.62}
+}
