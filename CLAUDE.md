@@ -41,3 +41,9 @@
 - Botón «🎮 Más juegos de DarkShadow» (`src/masjuegos.js`) solo en el menú y debajo de las ventanas de fin de partida y de fin de nivel; nunca a media partida. Quien llegó por anuncio (`fb_ads`/`ig_ads`) no lo ve hasta terminar su primera partida o nivel (`puedeMostrar`).
 - Abre una ventanita con tarjetas de los juegos PÚBLICOS (Piñatazo, Noche de Leyendas, ¡Ahí No!, Mutantes; MecaBestias solo en compu). Cada una abre su juego en pestaña nueva con `?src=bloquevilla&campana=cruce` (lo mide web_events). Imágenes `src/assets/img/mj_*.webp` (de los banners de la página del estudio). Nunca juegos privados o en pausa (Tierras del Umbral, Ruta Loca, ¡Jálale!, El Valle).
 - Medición propia: evento `compartir` con `tipo: 'cruce_ver'` (abrió la ventana) y `tipo: 'cruce'` + `juego` (tocó una tarjeta).
+
+## Únete a la comunidad (desde 2.9)
+- Tarjeta en la ventana de Misiones del día (`src/comunidad.js` + `openMisiones` en `Menu.js`): un botón por red con link en `https://darkshadow-studios.com/comunidad.json` (`{"discord","telegram","whatsapp"}`, solo `https://`; vacío = no se muestra). Si el archivo no carga, el Discord fijo `https://discord.gg/7pUXuTXvxk`. Se pide 2.5 s después de arrancar (no frena la entrada a jugar). El archivo necesita `Access-Control-Allow-Origin` para que Bloquevilla lo lea desde su subdominio.
+- Cada red da **25 ladrillos la primera vez que se toca** (`save.comunidad`, se junta con la nube para no cobrar dos veces); por confianza. Nunca Shadow ni nada de ranking, reto o Pozo. El link se abre en pestaña nueva en el mismo toque (`pointerup`) y la ventana se repinta al instante (con la pestaña nueva al frente el reloj del juego se detiene).
+- Aviso discreto: «NUEVO» en el botón de Misiones mientras haya una red sin tocar que no haya visto (`save.comunidadVista`): vuelve solo cuando se agrega una red al archivo. Nunca en la partida.
+- Medición: evento `compartir` con `tipo: 'comunidad'`, `red` y `primera`.

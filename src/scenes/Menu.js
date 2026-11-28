@@ -1,3 +1,4 @@
+import { redesVisibles, comunidadPendiente, unirse, PREMIO_COMUNIDAD } from '../comunidad.js';
 import { botonMasJuegos } from '../masjuegos.js';
 import Phaser from 'phaser';
 import { W, H, COLORS, HEX, BUILDINGS, DAILY, NOMBRE_TEMA, VERSION } from '../config.js';
@@ -115,7 +116,7 @@ export default class Menu extends Phaser.Scene {
     navBar(this, [
       { label: 'Mi pueblo', iconKey: 'bld_casa', iconSize: 84, onClick: () => this.scene.start('Village') },
       { label: 'Tienda', iconKey: 'ui_tienda', iconSize: 84, badge: !save.tienda.visto ? 'NUEVO' : null, onClick: () => this.scene.start('Shop') },
-      { label: `Misiones ${M.lista.filter(cumplida).length}/3`, dibujo: 'lista', badge: pend || (!save.misionesVistas ? 'NUEVO' : null), onClick: () => this.openMisiones() },
+      { label: `Misiones ${M.lista.filter(cumplida).length}/3`, dibujo: 'lista', badge: pend || (!save.misionesVistas ? 'NUEVO' : comunidadPendiente() ? 'NUEVO' : null), onClick: () => this.openMisiones() },
       { label: 'Regalo', iconKey: 'ui_regalo', iconSize: 74, apagado: !regaloHoy, badge: regaloHoy ? '!' : null,
         onClick: () => (regaloHoy ? this.openDaily() : toast(this, isBuilt('panaderia') ? 'Vuelve mañana por tu regalo diario' : 'Construye la Panadería para recibir regalos diarios', 1560, 2200)) },
       { label: `Logros ${porcentaje()}%`, iconKey: 'medalla_oro', iconSize: 74, badge: lp || (!save.logrosVistos ? 'NUEVO' : null), onClick: () => this.scene.start('Logros') },
@@ -298,16 +299,20 @@ export default class Menu extends Phaser.Scene {
     panel.add(button(this, 0, 340, 420, 100, 'Cerrar', 0x3a7ad8, () => layer.destroy(), { size: 40 }));
   }
 
-  openMisiones() {
-    if (!save.misionesVistas) { save.misionesVistas = true; persist(); }
+  openMisiones(rapido = false) {
+    const redes = redesVisibles();
+    const vistas = redes.map((r) => r.id);
+    if (!save.misionesVistas || vistas.some((k) => !(save.comunidadVista || []).includes(k))) {
+      save.misionesVistas = true; save.comunidadVista = [...new Set([...(save.comunidadVista || []), ...vistas])]; persist();
+    }
     const M = misionesHoy();
     const layer = this.add.container(0, 0).setDepth(300);
     layer.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.65).setInteractive());
-    const panel = this.add.container(W / 2, 960).setScale(0.3);
+    const panel = this.add.container(W / 2, 880).setScale(rapido ? 1 : 0.3);
     layer.add(panel);
-    this.tweens.add({ targets: panel, scale: 1, duration: 320, ease: 'Back.Out' });
+    if (!rapido) this.tweens.add({ targets: panel, scale: 1, duration: 320, ease: 'Back.Out' });
     const g = this.add.graphics();
-    marco(g, -460, -570, 920, 1120, 0x1e4a8a);
+    marco(g, -460, -570, 920, 1390, 0x1e4a8a);
     panel.add(g);
     panel.add(txt(this, 0, -490, 'Misiones del día', 64, '#163a6e'));
     panel.add(txt(this, 0, -420, `Nuevas en ${faltaParaNuevas()}`, 30, '#5a7aa8', { weight: '700' }));
@@ -377,7 +382,34 @@ export default class Menu extends Phaser.Scene {
     } else {
       panel.add(txt(this, 300, yc, `${M.lista.filter((m) => m.cobrada).length}/3`, 40, '#8a6a28'));
     }
-    panel.add(button(this, 0, 495, 420, 100, 'Cerrar', 0x3a7ad8, () => this.scene.restart({ reto: false }), { size: 40 }));
+    // Únete a la comunidad (una sola vez por red; por confianza)
+    const yu = 565;
+    const ug = this.add.graphics();
+    const todas = redes.every((r) => r.hecha);
+    ug.fillStyle(todas ? 0xdfe6f0 : 0xeef0ff, 1); ug.fillRoundedRect(-420, yu - 110, 840, 220, 30);
+    ug.lineStyle(5, todas ? 0xc8d4e6 : 0x5865f2, 1); ug.strokeRoundedRect(-420, yu - 110, 840, 220, 30);
+    panel.add(ug);
+    panel.add(txt(this, 0, yu - 70, 'Únete a la comunidad', 34, '#2a2a7a', { weight: '800' }));
+    panel.add(txt(this, 0, yu - 28, todas ? '¡Gracias por unirte!' : `+${PREMIO_COMUNIDAD} ladrillos por cada red, una sola vez`, 26, '#5a5a9a', { weight: '700' }));
+    const bw = Math.min(250, (800 - (redes.length - 1) * 20) / redes.length);
+    redes.forEach((r, i) => {
+      const x = (i - (redes.length - 1) / 2) * (bw + 20);
+      const b = button(this, x, yu + 50, bw, 84, r.hecha ? `${r.nombre} ✓` : r.nombre, r.hecha ? 0x8a8aa8 : r.color, null, { size: 32 });
+      // el link se abre al soltar el dedo (en el mismo toque; si no, el celular bloquea la pestaña nueva)
+      b.on('pointerup', () => {
+        const n = unirse(r.id);
+        // se repinta en el mismo toque: con la pestaña nueva al frente, el reloj del juego se detiene
+        layer.destroy();
+        this.openMisiones(true);
+        if (n) {
+          sfx.build();
+          confetti(this, W / 2, 700, 50);
+          toast(this, `+${n} ladrillos`, 700, 1400);
+        }
+      });
+      panel.add(b);
+    });
+    panel.add(button(this, 0, 745, 420, 100, 'Cerrar', 0x3a7ad8, () => this.scene.restart({ reto: false }), { size: 40 }));
   }
 
   openDaily() {

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { cargarComunidad } from './comunidad.js';
 import './i18n.js';   // traduce los textos si el juego está en inglés
 import { W, H } from './config.js';
 import Boot from './scenes/Boot.js';
@@ -66,6 +67,8 @@ async function start() {
     render: { preserveDrawingBuffer: CAPTURE },
   });
   if (CAPTURE) setupCapture(game);
+  // links de «Únete a la comunidad» (comunidad.json del estudio): después de arrancar, para no frenar la entrada a jugar
+  if (!CAPTURE) setTimeout(() => cargarComunidad(), 2500);
   window.addEventListener('pointerdown', () => { sfx.unlock(); musica.desbloquear(); }, { once: true });
   // Música según la pantalla: partidas (o jefe) y lo demás (pueblo)
   game.events.once('ready', () => game.scene.scenes.forEach((s) => s.events.on('create', () => {

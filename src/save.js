@@ -30,6 +30,8 @@ const DEFAULT = {
   retoSemanal: { cobrado: null, oro: 0, plata: 0, bronce: 0, top10: 0 },   // premios del Reto semanal (solo del juego)
   misiones: null, // misiones diarias de hoy (misiones.js)
   misionesVistas: false,
+  comunidad: {},            // redes de «Únete a la comunidad» ya tocadas (premio de una sola vez)
+  comunidadVista: [],       // redes que ya vio en Misiones (para el aviso del menú)
   ladrillosCobrados: 0, // ladrillos comprados con Shadow que ya se sumaron (nube.js)
   fundador: false,
   logros: { c: {}, cobrados: {} }, // logros.js
@@ -93,6 +95,8 @@ export function mergeSaves(local, nube) {
   out.aventura.meta150 = !!(out.aventura.meta150 || (otro.aventura && otro.aventura.meta150));
   out.aventura.vistos = { ...((otro.aventura && otro.aventura.vistos) || {}), ...(out.aventura.vistos || {}) };
   out.apoyo = Math.max(out.apoyo || 0, otro.apoyo || 0);
+  out.comunidad = { ...(otro.comunidad || {}), ...(out.comunidad || {}) };
+  out.comunidadVista = union(out.comunidadVista, otro.comunidadVista);   // red cobrada en cualquiera de los dos = cobrada
   const ca = out.coleccion || {}, cb = otro.coleccion || {};
   out.coleccion = { vistos: [...new Set([...(ca.vistos || []), ...(cb.vistos || [])])], premio: !!(ca.premio || cb.premio) };
   out.cofreSemana = [out.cofreSemana || '', otro.cofreSemana || ''].sort().pop();
